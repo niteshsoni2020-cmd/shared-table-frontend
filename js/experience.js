@@ -5,7 +5,6 @@ let isBookmarked = false;
 
 // --- SHARED HELPERS (Image Optimization) ---
 function getImageForExperience(exp) {
-  // Optimize Cloudinary images
   if (exp.imageUrl && exp.imageUrl.includes("cloudinary.com")) {
       return exp.imageUrl.replace('/upload/', '/upload/w_800,c_fill,q_auto/');
   }
@@ -25,14 +24,12 @@ function initMap(lat, lng) {
     const finalLat = lat || -37.8136;
     const finalLng = lng || 144.9631;
     
-    // Clean previous map if exists
     const container = document.getElementById('exp-map');
-    if(container._leaflet_id) return; // Already init
+    if(container._leaflet_id) return; 
 
     const map = L.map('exp-map').setView([finalLat, finalLng], 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
     
-    // Create a circle instead of a pin for privacy (approx location)
     L.circle([finalLat, finalLng], {
         color: '#ea580c',
         fillColor: '#ea580c',
@@ -63,26 +60,21 @@ async function loadExperience() {
     const btn = document.getElementById("bookmark-btn-hero");
     if(btn) btn.addEventListener("click", toggleCurrentBookmark);
 
-    // Setup Contact Host
     document.getElementById("contact-host-btn").addEventListener("click", () => showContactModal(exp));
 
-  } catch (err) { 
-      console.error(err);
-  }
+  } catch (err) { console.error(err); }
 }
 
 function renderExperience(exp) {
   document.getElementById("experience-title").textContent = exp.title;
-  document.getElementById("experience-city-top").textContent = exp.city; // Top Location
-  document.getElementById("experience-city").textContent = exp.city; // Body Location
+  document.getElementById("experience-city-top").textContent = exp.city;
+  document.getElementById("experience-city").textContent = exp.city;
   document.getElementById("experience-description").textContent = exp.description;
   document.getElementById("experience-price").textContent = `$${exp.price}`;
   document.getElementById("hero-category-badge").textContent = exp.tags[0] || "Experience";
   
-  // HOST BIO CARD POPULATION
+  // HOST BIO
   document.getElementById("host-name").textContent = exp.hostName || "Local Host";
-  
-  // Handle Host Avatar
   const avatarContainer = document.getElementById("host-avatar-container");
   if (exp.hostPic) {
       avatarContainer.innerHTML = `<img src="${exp.hostPic}" class="w-full h-full object-cover rounded-full">`;
@@ -90,13 +82,7 @@ function renderExperience(exp) {
       avatarContainer.innerHTML = `<span class="text-3xl">👤</span>`;
   }
 
-  // Handle Host Bio Preview (Mocked for now if not in DB)
-  const bioPreview = document.getElementById("host-bio-preview");
-  if(bioPreview) {
-      bioPreview.textContent = `Hi, I'm ${exp.hostName || 'your host'}. I love sharing my culture and stories through this experience. Can't wait to meet you!`;
-  }
-
-  // IMAGES (Handle Array)
+  // IMAGES
   let images = (exp.images && exp.images.length > 0) ? exp.images : [exp.imageUrl];
   document.getElementById("img-1").src = getImageForExperience({ imageUrl: images[0] });
   
@@ -116,25 +102,21 @@ async function showContactModal(exp) {
     const token = getToken();
     if (!token) { showModal("Login Required", "Please login to contact the host.", "error"); return; }
     
-    // Simple prompt for MVP
     const msg = prompt(`Send a message to ${exp.hostName}:`);
     if(msg && msg.trim() !== "") {
         try {
-            // Re-use the general contact endpoint for now
             const res = await fetch(`${API_BASE}/api/contact`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    name: "Registered User", // Backend will see the token if we updated auth there, but this is public endpoint
+                    name: "Registered User", 
                     email: "user@sharedtable.com", 
                     subject: `Message for Host (${exp.hostName})`,
                     message: `Regarding Experience: ${exp.title}\n\nMessage: ${msg}`
                 })
             });
             if(res.ok) showModal("Message Sent", "The host has been notified via email.", "success");
-        } catch(e) {
-            showModal("Error", "Could not send message.", "error");
-        }
+        } catch(e) { showModal("Error", "Could not send message.", "error"); }
     }
 }
 
@@ -144,7 +126,6 @@ async function loadReviews(expId) {
         const res = await fetch(`${API_BASE}/api/experiences/${expId}/reviews`);
         const reviews = await res.json();
         const listDiv = document.getElementById("reviews-list");
-        
         if (reviews.length > 0) {
             listDiv.innerHTML = reviews.map(r => `
                 <div class="mb-6 border-b border-gray-50 pb-6 last:border-0">
@@ -185,17 +166,14 @@ function updateBookmarkIcon() {
 async function toggleCurrentBookmark() {
     const token = getToken();
     if(!token) { showModal("Login Required", "Please login to save.", "error"); return; }
-    
-    // Optimistic
     isBookmarked = !isBookmarked; 
     updateBookmarkIcon();
-    
     try {
         await fetch(`${API_BASE}/api/bookmarks/${currentExperience.id}`, { method: "POST", headers: {"Authorization":`Bearer ${token}`} });
     } catch(e) { isBookmarked = !isBookmarked; updateBookmarkIcon(); }
 }
 
-// --- BOOKING ---
+// --- BOOKING LOGIC ---
 function setupBookingForm(exp) {
   const dateInput = document.getElementById("booking-date");
   const slotSelect = document.getElementById("booking-timeslot");
@@ -204,9 +182,26 @@ function setupBookingForm(exp) {
   dateInput.min = exp.startDate; 
   dateInput.max = exp.endDate;
   
-  // Pre-populate first valid date
-  dateInput.value = exp.startDate;
-  
+  // NEW: Validate Day of Week on Change
+  dateInput.addEventListener("change", (e) => {
+      const selected = new Date(e.target.value);
+      const dayName = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][selected.getUTCDay()];
+      
+      // Check if paused
+      if (exp.isPaused) {
+          showModal("Unavailable", "The host is currently not accepting bookings.", "error");
+          e.target.value = "";
+          return;
+      }
+
+      // Check if day is allowed
+      if (exp.availableDays && !exp.availableDays.includes(dayName)) {
+          showModal("Closed", `The host is not available on ${dayName}s.`, "info");
+          e.target.value = "";
+          return;
+      }
+  });
+
   slotSelect.innerHTML = "";
   if (exp.timeSlots && exp.timeSlots.length > 0) {
       exp.timeSlots.forEach(s => slotSelect.appendChild(new Option(s, s)));
@@ -224,7 +219,6 @@ function setupBookingForm(exp) {
 function updatePricePreview() {
     const guests = document.getElementById("guest-count").value;
     const isPrivate = document.getElementById("private-toggle").checked;
-    
     let total = 0;
     if (isPrivate && currentExperience.privatePrice) {
         total = currentExperience.privatePrice;
@@ -263,7 +257,7 @@ document.getElementById("booking-form").addEventListener("submit", async (e) => 
      const data = await res.json();
 
      if (res.ok && data.url) {
-         window.location.href = data.url; // Go to Stripe
+         window.location.href = data.url; 
      } else {
          showModal("Booking Failed", data.message || "Could not init payment.", "error");
          btn.textContent = "Reserve"; 

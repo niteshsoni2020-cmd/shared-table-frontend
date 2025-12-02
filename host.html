@@ -7,23 +7,37 @@
   <title>Host an Experience | The Shared Table Story</title>
   <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/3447/3447693.png">
 
-  <meta name="description" content="Share your culture and cuisine with the world. Become a host on The Shared Table Story.">
-  <meta property="og:title" content="Host an Experience | The Shared Table Story">
-  <meta property="og:description" content="Share your culture and cuisine with the world. Earn money doing what you love.">
-  <meta property="og:image" content="https://images.unsplash.com/photo-1556910103-1c02745a30bf?q=80&w=1200&auto=format&fit=crop">
-
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
   
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-  <style> body { font-family: 'Inter', sans-serif; } </style>
+  <style> 
+    body { font-family: 'Inter', sans-serif; } 
+    /* Delete Button Overlay */
+    .img-delete-btn {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        background: rgba(0,0,0,0.6);
+        color: white;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    .img-delete-btn:hover { background: red; }
+  </style>
 </head>
 <body class="bg-gray-50 text-gray-900">
 
   <nav class="sticky top-0 z-50 flex items-center justify-between px-6 py-6 bg-white/95 backdrop-blur shadow-sm border-b border-gray-100 transition-all">
-    
     <a href="index.html" class="flex items-center gap-3 hover:opacity-90 transition group">
       <div class="h-10 w-10 bg-orange-600 rounded-full flex items-center justify-center shadow-lg border-2 border-transparent group-hover:scale-105 transition">
         <span class="font-bold text-white text-lg">Q</span>
@@ -33,13 +47,11 @@
         <p class="text-[10px] tracking-[0.2em] uppercase text-orange-600 font-bold mt-0.5">Experiences</p>
       </div>
     </a>
-
     <div class="hidden md:flex items-center space-x-8 text-sm font-semibold tracking-wide text-gray-600">
       <a href="explore.html" class="hover:text-orange-600 transition duration-300">Explore</a>
       <a href="host.html" class="text-orange-600 font-bold">Host an Experience</a>
       <div id="nav-auth"></div>
     </div>
-
     <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 focus:outline-none hover:text-orange-600 transition">
         <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
     </button>
@@ -52,11 +64,7 @@
               <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
           </button>
       </div>
-      <div class="space-y-4 text-lg font-medium">
-          <a href="explore.html" class="block border-b border-gray-100 pb-4 hover:text-orange-600 transition">Explore Experiences</a>
-          <a href="host.html" class="block border-b border-gray-100 pb-4 text-orange-600 font-bold">Host an Experience</a>
-          <div id="mobile-auth"></div>
-      </div>
+      <div id="mobile-auth"></div>
   </div>
 
   <main class="max-w-6xl mx-auto px-4 py-12">
@@ -102,11 +110,11 @@
             </div>
 
             <div>
-              <label class="block text-sm font-bold text-gray-700 mb-1">Gallery (Max 3 Images)</label>
+              <label class="block text-sm font-bold text-gray-700 mb-1">Gallery (Max 5 Images)</label>
               <input id="imageUpload" type="file" multiple accept="image/*" class="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 cursor-pointer" />
-              <p class="text-xs text-gray-400 mt-1">First image will be the cover. High quality recommended.</p>
-              <input type="hidden" id="finalImageUrls" />
-              <div id="image-preview" class="flex gap-4 mt-4 h-24 overflow-hidden"></div>
+              <p class="text-xs text-gray-400 mt-1">First image will be the cover. Add more anytime.</p>
+              
+              <div id="image-preview" class="flex flex-wrap gap-4 mt-4 min-h-[6rem]"></div>
             </div>
 
             <div>
@@ -117,10 +125,25 @@
 
           <div class="space-y-6 pt-6 border-t border-gray-100">
             <h2 class="text-xl font-bold border-b pb-2">Logistics</h2>
+            
             <div class="grid md:grid-cols-2 gap-6">
               <div><label class="block text-sm font-bold text-gray-700 mb-1">Available From</label><input id="startDate" type="date" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg" required /></div>
               <div><label class="block text-sm font-bold text-gray-700 mb-1">Until</label><input id="endDate" type="date" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg" required /></div>
             </div>
+
+            <div>
+               <label class="block text-sm font-bold text-gray-700 mb-2">Which days are you available?</label>
+               <div class="flex flex-wrap gap-2">
+                   <label class="cursor-pointer"><input type="checkbox" name="days" value="Mon" checked class="peer sr-only"><div class="px-4 py-2 border border-gray-200 rounded-lg peer-checked:bg-black peer-checked:text-white peer-checked:border-black text-sm font-bold transition">Mon</div></label>
+                   <label class="cursor-pointer"><input type="checkbox" name="days" value="Tue" checked class="peer sr-only"><div class="px-4 py-2 border border-gray-200 rounded-lg peer-checked:bg-black peer-checked:text-white peer-checked:border-black text-sm font-bold transition">Tue</div></label>
+                   <label class="cursor-pointer"><input type="checkbox" name="days" value="Wed" checked class="peer sr-only"><div class="px-4 py-2 border border-gray-200 rounded-lg peer-checked:bg-black peer-checked:text-white peer-checked:border-black text-sm font-bold transition">Wed</div></label>
+                   <label class="cursor-pointer"><input type="checkbox" name="days" value="Thu" checked class="peer sr-only"><div class="px-4 py-2 border border-gray-200 rounded-lg peer-checked:bg-black peer-checked:text-white peer-checked:border-black text-sm font-bold transition">Thu</div></label>
+                   <label class="cursor-pointer"><input type="checkbox" name="days" value="Fri" checked class="peer sr-only"><div class="px-4 py-2 border border-gray-200 rounded-lg peer-checked:bg-black peer-checked:text-white peer-checked:border-black text-sm font-bold transition">Fri</div></label>
+                   <label class="cursor-pointer"><input type="checkbox" name="days" value="Sat" checked class="peer sr-only"><div class="px-4 py-2 border border-gray-200 rounded-lg peer-checked:bg-black peer-checked:text-white peer-checked:border-black text-sm font-bold transition">Sat</div></label>
+                   <label class="cursor-pointer"><input type="checkbox" name="days" value="Sun" checked class="peer sr-only"><div class="px-4 py-2 border border-gray-200 rounded-lg peer-checked:bg-black peer-checked:text-white peer-checked:border-black text-sm font-bold transition">Sun</div></label>
+               </div>
+            </div>
+
             <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
                <label class="block text-sm font-bold text-gray-700 mb-3">Daily Schedule</label>
                <div class="grid grid-cols-2 gap-4 mb-3">

@@ -3,6 +3,7 @@
 let isEditing = false;
 let editId = null;
 let map, marker;
+let stagedImages = []; // Global state for images
 
 document.addEventListener("DOMContentLoaded", async () => {
   const user = getCurrentUser();
@@ -32,27 +33,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   map.on('click', function(e) { setPin(e.latlng.lat, e.latlng.lng); });
   setPin(defaultLat, defaultLng); 
   
-  // 4. IMAGE UPLOAD
+  // 4. IMAGE UPLOAD LISTENER
   const fileInput = document.getElementById("imageUpload");
   if (fileInput) {
-    fileInput.addEventListener("change", async (e) => {
-        const files = e.target.files;
-        if (files.length > 3) { showModal("Limit Reached", "Maximum 3 images allowed.", "error"); fileInput.value = ""; return; }
-
-        const formData = new FormData();
-        for (let i = 0; i < files.length; i++) formData.append("photos", files[i]);
-
-        document.getElementById("image-preview").innerHTML = `<span class="text-xs text-orange-600 font-bold animate-pulse">Uploading...</span>`;
-
-        try {
-            const res = await fetch(`${API_BASE}/api/upload`, { method: "POST", body: formData });
-            const data = await res.json();
-            if (res.ok) {
-                document.getElementById("finalImageUrls").value = JSON.stringify(data.images);
-                document.getElementById("image-preview").innerHTML = data.images.map(u => `<img src="${u}" class="h-full w-auto rounded-lg border shadow-sm object-cover" />`).join("");
-            } else { showModal("Upload Failed", data.message, "error"); document.getElementById("image-preview").innerHTML = ""; }
-        } catch (err) { showModal("Error", "Network error uploading images.", "error"); document.getElementById("image-preview").innerHTML = ""; }
-    });
+    fileInput.addEventListener("change", handleImageUpload);
   }
 
   // 5. CHECK EDIT MODE
@@ -61,7 +45,67 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (id) { isEditing = true; editId = id; loadExperienceForEdit(id); }
 });
 
-// --- FUNCTIONS ---
+// --- IMAGE MANAGEMENT ---
+
+async function handleImageUpload(e) {
+    const files = e.target.files;
+    if (stagedImages.length + files.length > 5) { 
+        showModal("Limit Reached", "Maximum 5 images allowed total.", "error"); 
+        e.target.value = ""; 
+        return; 
+    }
+
+    const formData = new FormData();
+    for (let i = 0; i < files.length; i++) formData.append("photos", files[i]);
+
+    // Show temporary loading text
+    const previewDiv = document.getElementById("image-preview");
+    const loadingSpan = document.createElement("span");
+    loadingSpan.className = "text-xs text-orange-600 font-bold animate-pulse";
+    loadingSpan.textContent = "Uploading...";
+    previewDiv.appendChild(loadingSpan);
+
+    try {
+        const res = await fetch(`${API_BASE}/api/upload`, { method: "POST", body: formData });
+        const data = await res.json();
+        
+        if (res.ok) {
+            // Append new images to global state
+            stagedImages = [...stagedImages, ...data.images];
+            renderImagePreview();
+        } else { 
+            showModal("Upload Failed", data.message, "error"); 
+        }
+    } catch (err) { 
+        showModal("Error", "Network error uploading images.", "error"); 
+    } finally {
+        if(previewDiv.contains(loadingSpan)) previewDiv.removeChild(loadingSpan);
+        e.target.value = ""; // Reset input
+    }
+}
+
+function renderImagePreview() {
+    const container = document.getElementById("image-preview");
+    container.innerHTML = "";
+    
+    stagedImages.forEach((url, index) => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "relative h-24 w-24 rounded-lg overflow-hidden border border-gray-200 shadow-sm group";
+        
+        wrapper.innerHTML = `
+            <img src="${url}" class="w-full h-full object-cover">
+            <div onclick="removeImage(${index})" class="img-delete-btn" title="Remove Image">✕</div>
+        `;
+        container.appendChild(wrapper);
+    });
+}
+
+function removeImage(index) {
+    stagedImages.splice(index, 1);
+    renderImagePreview();
+}
+
+// --- STANDARD FUNCTIONS ---
 
 function setPin(lat, lng) {
     if (marker) map.removeLayer(marker);
@@ -105,16 +149,21 @@ async function loadExperienceForEdit(id) {
     if(exp.privatePrice) document.getElementById("privatePrice").value = exp.privatePrice;
     if(exp.privateCapacity) document.getElementById("privateCapacity").value = exp.privateCapacity;
 
-    // Map
+    if (exp.availableDays && exp.availableDays.length > 0) {
+        document.querySelectorAll("input[name='days']").forEach(cb => {
+            cb.checked = exp.availableDays.includes(cb.value);
+        });
+    }
+
     if(exp.lat && exp.lng) {
         setPin(exp.lat, exp.lng);
         map.setView([exp.lat, exp.lng], 13);
     }
 
-    // Images
+    // Load Images into State
     if(exp.images && exp.images.length > 0) {
-        document.getElementById("finalImageUrls").value = JSON.stringify(exp.images);
-        document.getElementById("image-preview").innerHTML = exp.images.map(u => `<img src="${u}" class="h-full w-auto rounded-lg border shadow-sm object-cover" />`).join("");
+        stagedImages = exp.images;
+        renderImagePreview();
     }
 }
 
@@ -122,13 +171,12 @@ async function handleCreateExperience(e) {
   e.preventDefault();
   const token = getToken();
   
-  const rawImages = document.getElementById("finalImageUrls").value;
-  const images = rawImages ? JSON.parse(rawImages) : [];
+  // Use global stagedImages instead of hidden input
+  const images = stagedImages;
 
   const s1Start = document.getElementById("slot1Start").value;
   const s1Dur = document.getElementById("slot1Duration").value;
   
-  // Validation
   if (!s1Start || !s1Dur) {
       showModal("Missing Info", "Please select a start time and duration.", "error");
       return;
@@ -136,10 +184,15 @@ async function handleCreateExperience(e) {
 
   const slots = [`${s1Start}-${addMinutesToTime(s1Start, Number(s1Dur))}`];
   
-  // Slot 2 (Optional)
   const s2Start = document.getElementById("slot2Start").value;
   const s2Dur = document.getElementById("slot2Duration").value;
   if(s2Start && s2Dur) slots.push(`${s2Start}-${addMinutesToTime(s2Start, Number(s2Dur))}`);
+
+  const days = Array.from(document.querySelectorAll("input[name='days']:checked")).map(cb => cb.value);
+  if (days.length === 0) {
+      showModal("Missing Info", "Please select at least one available day.", "error");
+      return;
+  }
 
   const payload = {
     title: document.getElementById("title").value,
@@ -150,6 +203,7 @@ async function handleCreateExperience(e) {
     startDate: document.getElementById("startDate").value,
     endDate: document.getElementById("endDate").value,
     tags: [document.getElementById("category").value],
+    availableDays: days, 
     timeSlots: slots,
     lat: document.getElementById("lat").value,
     lng: document.getElementById("lng").value,

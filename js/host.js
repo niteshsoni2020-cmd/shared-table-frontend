@@ -37,7 +37,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (fileInput) {
     fileInput.addEventListener("change", async (e) => {
         const files = e.target.files;
-        if (files.length > 3) { alert("Max 3 images allowed."); fileInput.value = ""; return; }
+        if (files.length > 3) { showModal("Limit Reached", "Maximum 3 images allowed.", "error"); fileInput.value = ""; return; }
 
         const formData = new FormData();
         for (let i = 0; i < files.length; i++) formData.append("photos", files[i]);
@@ -50,8 +50,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             if (res.ok) {
                 document.getElementById("finalImageUrls").value = JSON.stringify(data.images);
                 document.getElementById("image-preview").innerHTML = data.images.map(u => `<img src="${u}" class="h-full w-auto rounded-lg border shadow-sm object-cover" />`).join("");
-            } else { alert("Upload failed"); }
-        } catch (err) { alert("Network error"); }
+            } else { showModal("Upload Failed", data.message, "error"); document.getElementById("image-preview").innerHTML = ""; }
+        } catch (err) { showModal("Error", "Network error uploading images.", "error"); document.getElementById("image-preview").innerHTML = ""; }
     });
   }
 
@@ -89,10 +89,10 @@ function addMinutesToTime(start, mins) {
 
 async function loadExperienceForEdit(id) {
     document.querySelector("h1").textContent = "Edit your experience";
-    document.querySelector("button[type='submit']").textContent = "Update";
+    document.querySelector("button[type='submit']").textContent = "Update Experience";
     const res = await fetch(`${API_BASE}/api/experiences/${id}`);
     const exp = await res.json();
-    if (!res.ok) return alert("Error loading");
+    if (!res.ok) return showModal("Error", "Could not load experience.", "error");
 
     document.getElementById("title").value = exp.title;
     document.getElementById("city").value = exp.city;
@@ -127,7 +127,19 @@ async function handleCreateExperience(e) {
 
   const s1Start = document.getElementById("slot1Start").value;
   const s1Dur = document.getElementById("slot1Duration").value;
+  
+  // Validation
+  if (!s1Start || !s1Dur) {
+      showModal("Missing Info", "Please select a start time and duration.", "error");
+      return;
+  }
+
   const slots = [`${s1Start}-${addMinutesToTime(s1Start, Number(s1Dur))}`];
+  
+  // Slot 2 (Optional)
+  const s2Start = document.getElementById("slot2Start").value;
+  const s2Dur = document.getElementById("slot2Duration").value;
+  if(s2Start && s2Dur) slots.push(`${s2Start}-${addMinutesToTime(s2Start, Number(s2Dur))}`);
 
   const payload = {
     title: document.getElementById("title").value,
@@ -151,6 +163,9 @@ async function handleCreateExperience(e) {
   const url = isEditing ? `${API_BASE}/api/experiences/${editId}` : `${API_BASE}/api/experiences`;
   const method = isEditing ? "PUT" : "POST";
 
+  const statusEl = document.getElementById("status-message");
+  statusEl.textContent = "Processing...";
+
   try {
     const res = await fetch(url, {
       method: method,
@@ -158,10 +173,12 @@ async function handleCreateExperience(e) {
       body: JSON.stringify(payload)
     });
     if (res.ok) {
-        window.location.href = "my-bookings.html?view=hosting";
+        showModal("Success!", isEditing ? "Experience updated." : "Experience published.", "success");
+        setTimeout(() => window.location.href = "my-bookings.html?view=hosting", 1500);
     } else {
         const data = await res.json();
-        document.getElementById("status-message").textContent = data.message;
+        showModal("Error", data.message, "error");
+        statusEl.textContent = "";
     }
-  } catch (err) { alert("Network error"); }
+  } catch (err) { showModal("Error", "Network error.", "error"); statusEl.textContent = ""; }
 }

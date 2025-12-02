@@ -3,68 +3,140 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard – The Shared Table Story</title>
+  
+  <title>Dashboard | The Shared Table Story</title>
+  <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/3447/3447693.png">
+
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style> body { font-family: 'Inter', sans-serif; } </style>
 </head>
-<body class="bg-gray-50 text-gray-900">
+<body class="bg-gray-50 text-gray-900 flex flex-col min-h-screen">
 
-  <nav class="sticky top-0 z-50 flex items-center justify-between px-8 py-6 bg-white/95 backdrop-blur shadow-sm border-b border-gray-100 transition-all">
+  <nav class="sticky top-0 z-50 flex items-center justify-between px-6 py-6 bg-white/95 backdrop-blur shadow-sm border-b border-gray-100 transition-all">
+    
     <a href="index.html" class="flex items-center gap-3 hover:opacity-90 transition group">
-      <div class="h-10 w-10 bg-orange-600 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg">Q</div>
-      <h1 class="text-2xl font-bold tracking-tight text-gray-900">The Shared Table Story</h1>
+      <div class="h-10 w-10 bg-orange-600 rounded-full flex items-center justify-center shadow-lg border-2 border-transparent group-hover:scale-105 transition">
+        <span class="font-bold text-white text-lg">Q</span>
+      </div>
+      <div>
+        <h1 class="text-2xl font-bold tracking-tight leading-none text-gray-900">The Shared Table Story</h1>
+        <p class="text-[10px] tracking-[0.2em] uppercase text-orange-600 font-bold mt-0.5">Experiences</p>
+      </div>
     </a>
-    <div class="hidden md:flex items-center space-x-8 text-sm font-semibold text-gray-600">
-      <a href="explore.html" class="hover:text-orange-600">Explore</a>
-      <a href="host.html" class="hover:text-orange-600">Host</a>
+
+    <div class="hidden md:flex items-center space-x-8 text-sm font-semibold tracking-wide text-gray-600">
+      <a href="explore.html" class="hover:text-orange-600 transition duration-300">Explore</a>
+      <a href="host.html" class="hover:text-orange-600 transition duration-300">Host an Experience</a>
       <div id="nav-auth"></div>
     </div>
+
+    <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 focus:outline-none hover:text-orange-600 transition">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+    </button>
   </nav>
+
+  <div id="mobile-menu" class="hidden fixed inset-0 z-[100] bg-white text-gray-900 p-6 animate-fade-in overflow-y-auto">
+      <div class="flex justify-between items-center mb-8">
+          <h2 class="text-2xl font-bold">Menu</h2>
+          <button onclick="toggleMobileMenu()" class="text-gray-500 hover:text-black p-2 rounded-full hover:bg-gray-100 transition">
+              <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+      </div>
+      <div class="space-y-4 text-lg font-medium">
+          <a href="explore.html" class="block border-b border-gray-100 pb-4 hover:text-orange-600 transition">Explore Experiences</a>
+          <a href="host.html" class="block border-b border-gray-100 pb-4 hover:text-orange-600 transition">Host an Experience</a>
+          <div id="mobile-auth"></div>
+      </div>
+  </div>
 
   <div class="bg-white border-b border-gray-200 pt-10 pb-0">
     <div class="max-w-5xl mx-auto px-4">
       <h1 class="text-3xl font-bold mb-2">Dashboard</h1>
-      <div class="flex gap-8">
-        <button id="tab-trips" onclick="switchTab('trips')" class="pb-4 border-b-2 border-orange-600 text-orange-600 font-bold text-sm">My Trips</button>
-        <button id="tab-saved" onclick="switchTab('saved')" class="pb-4 border-b-2 border-transparent text-gray-500 font-medium text-sm hover:text-gray-800">My Saved</button>
-        <button id="tab-hosting" onclick="switchTab('hosting')" class="pb-4 border-b-2 border-transparent text-gray-500 font-medium text-sm hover:text-gray-800">My Hosting</button>
+      <p class="text-gray-500 mb-8">Manage your travels and your hosted experiences.</p>
+      <div class="flex gap-8 overflow-x-auto no-scrollbar">
+        <button id="tab-trips" onclick="switchTab('trips')" class="pb-4 border-b-2 border-orange-600 text-orange-600 font-bold text-sm whitespace-nowrap transition">My Trips</button>
+        <button id="tab-saved" onclick="switchTab('saved')" class="pb-4 border-b-2 border-transparent text-gray-500 font-medium text-sm whitespace-nowrap hover:text-gray-800 transition">My Saved</button>
+        <button id="tab-hosting" onclick="switchTab('hosting')" class="pb-4 border-b-2 border-transparent text-gray-500 font-medium text-sm whitespace-nowrap hover:text-gray-800 transition">My Hosting</button>
       </div>
     </div>
   </div>
 
-  <main class="max-w-5xl mx-auto px-4 py-10 min-h-[60vh]">
+  <main class="max-w-5xl mx-auto px-4 py-10 flex-grow">
     
     <div id="view-trips" class="space-y-10">
-      <div id="trips-loading" class="text-center py-12 hidden">Loading...</div>
-      <div id="trips-empty" class="hidden text-center py-12 bg-white rounded-2xl border border-gray-100"><div class="text-5xl mb-4">🌏</div><h3 class="text-lg font-bold mb-2">No trips yet</h3><a href="explore.html" class="text-orange-600 font-bold hover:underline">Start Exploring</a></div>
+      <div id="trips-loading" class="text-center py-12 hidden"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mx-auto mb-4"></div><p class="text-gray-500">Loading itinerary...</p></div>
+      
+      <div id="trips-empty" class="hidden text-center py-16 bg-white rounded-2xl border border-gray-100 shadow-sm">
+          <div class="text-6xl mb-4">🌏</div>
+          <h3 class="text-xl font-bold mb-2 text-gray-900">No trips booked yet</h3>
+          <p class="text-gray-500 mb-6">Time to pack your bags and find something new.</p>
+          <a href="explore.html" class="px-6 py-3 bg-orange-600 text-white rounded-full font-bold shadow-md hover:bg-orange-700 transition">Start Exploring</a>
+      </div>
+      
       <section id="trips-content" class="space-y-8 hidden">
-        <div><h2 class="text-xl font-bold mb-4">Current & Upcoming</h2><div id="upcoming-list" class="grid gap-4"></div></div>
-        <div id="past-container" class="hidden"><h2 class="text-xl font-bold mb-4 text-gray-400 mt-8 border-t pt-8">Past Bookings</h2><div id="past-list" class="grid gap-4 opacity-75"></div></div>
+        <div><h2 class="text-xl font-bold mb-4 flex items-center gap-2"><span class="w-2 h-2 bg-green-500 rounded-full"></span> Upcoming Adventures</h2><div id="upcoming-list" class="grid gap-4"></div></div>
+        <div id="past-container" class="hidden"><h2 class="text-xl font-bold mb-4 text-gray-400 mt-10 border-t pt-8">Past Bookings</h2><div id="past-list" class="grid gap-4 opacity-75 hover:opacity-100 transition"></div></div>
       </section>
     </div>
 
     <div id="view-saved" class="hidden space-y-10">
-        <div id="saved-loading" class="text-center py-12 hidden">Loading saved items...</div>
-        <div id="saved-empty" class="hidden text-center py-12 bg-white rounded-2xl border border-gray-100">
-            <div class="text-5xl mb-4">❤️</div>
-            <h3 class="text-lg font-bold mb-2">No saved experiences</h3>
-            <p class="text-gray-500">Tap the heart icon on any experience to save it here.</p>
+        <div id="saved-loading" class="text-center py-12 hidden"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mx-auto mb-4"></div><p class="text-gray-500">Loading saved items...</p></div>
+        <div id="saved-empty" class="hidden text-center py-16 bg-white rounded-2xl border border-gray-100 shadow-sm">
+            <div class="text-6xl mb-4">❤️</div>
+            <h3 class="text-xl font-bold mb-2 text-gray-900">No saved experiences</h3>
+            <p class="text-gray-500 mb-6">Tap the heart icon on any experience to save it for later.</p>
+            <a href="explore.html" class="px-6 py-3 bg-gray-900 text-white rounded-full font-bold shadow-md hover:bg-black transition">Browse Experiences</a>
         </div>
         <div id="saved-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
     </div>
 
     <div id="view-hosting" class="hidden space-y-8">
       <div id="hosting-header"></div> 
-      <div id="hosting-loading" class="text-center py-12 hidden"><p class="text-gray-500">Loading listings...</p></div>
+      <div id="hosting-loading" class="text-center py-12 hidden"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mx-auto mb-4"></div><p class="text-gray-500">Loading listings...</p></div>
       <div id="hosting-empty" class="hidden text-center py-12 bg-white rounded-2xl border border-gray-100"><h3 class="text-lg font-bold">No listings yet</h3></div>
       <div id="hosting-grid" class="grid grid-cols-1 gap-6"></div>
     </div>
   </main>
 
-  <div id="review-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center"><div class="bg-white p-6 rounded-xl w-full max-w-md"><h2 class="font-bold text-xl mb-4">Write Review</h2><form id="review-form" class="space-y-4"><input type="hidden" id="review-booking-id"><input type="hidden" id="review-exp-id"><select id="review-rating" class="w-full p-2 border rounded"><option value="5">5 Stars</option><option value="4">4 Stars</option></select><textarea id="review-comment" class="w-full p-2 border rounded" placeholder="Comment"></textarea><div class="flex gap-2"><button type="button" onclick="closeReviewModal()" class="flex-1 py-2 bg-gray-100 rounded">Cancel</button><button type="submit" class="flex-1 py-2 bg-orange-600 text-white rounded">Submit</button></div></form></div></div>
-  
-  <div id="host-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center"><div class="bg-white p-6 rounded-xl w-full max-w-lg"><h2 class="font-bold text-xl mb-4">Host Setup</h2><form id="host-onboard-form" class="space-y-4"><input id="bank-name" placeholder="Acct Name" class="w-full p-2 border rounded"><input id="bank-bsb" placeholder="BSB" class="w-full p-2 border rounded"><input id="bank-acc" placeholder="Acct Number" class="w-full p-2 border rounded"><label class="flex gap-2"><input type="checkbox" id="host-declare"> I agree to indemnity.</label><button type="submit" class="w-full py-2 bg-orange-600 text-white rounded">Confirm</button></form><button onclick="document.getElementById('host-modal').classList.add('hidden')" class="mt-2 text-sm text-gray-500">Cancel</button></div></div>
+  <div id="host-modal" class="hidden fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
+      <div class="bg-white p-8 rounded-2xl w-full max-w-lg shadow-2xl">
+          <h2 class="text-2xl font-bold mb-4 text-gray-900">Host Setup</h2>
+          <form id="host-onboard-form" class="space-y-4">
+              <div class="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                  <label class="text-xs font-bold text-blue-800 uppercase block mb-2">Australian Bank Details</label>
+                  <input id="bank-name" placeholder="Account Name" class="w-full p-2 border rounded mb-2" required>
+                  <div class="grid grid-cols-2 gap-2">
+                      <input id="bank-bsb" placeholder="BSB (000-000)" class="w-full p-2 border rounded" required>
+                      <input id="bank-acc" placeholder="Account Number" class="w-full p-2 border rounded" required>
+                  </div>
+              </div>
+              <label class="flex items-start gap-3 p-2 bg-gray-50 rounded border border-gray-200 cursor-pointer">
+                  <input type="checkbox" id="host-declare" class="mt-1" required> 
+                  <span class="text-sm text-gray-600">I agree to the <a href="terms.html" target="_blank" class="underline text-orange-600">Host Indemnity & Terms</a>.</span>
+              </label>
+              <div class="flex gap-3 pt-2">
+                  <button type="button" onclick="document.getElementById('host-modal').classList.add('hidden')" class="flex-1 py-3 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200">Cancel</button>
+                  <button type="submit" class="flex-1 py-3 bg-orange-600 text-white font-bold rounded-xl hover:bg-orange-700 shadow-lg">Confirm & Start</button>
+              </div>
+          </form>
+      </div>
+  </div>
+
+  <div id="review-modal" class="hidden fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
+      <div class="bg-white p-6 rounded-2xl w-full max-w-md shadow-2xl">
+          <h2 class="text-xl font-bold mb-4">Write a Review</h2>
+          <form id="review-form" class="space-y-4">
+              <input type="hidden" id="review-booking-id"><input type="hidden" id="review-exp-id">
+              <div><label class="block text-sm font-bold mb-1">Rating</label><select id="review-rating" class="w-full p-3 border rounded-lg"><option value="5">⭐⭐⭐⭐⭐ Excellent</option><option value="4">⭐⭐⭐⭐ Good</option><option value="3">⭐⭐⭐ Average</option><option value="2">⭐⭐ Poor</option><option value="1">⭐ Terrible</option></select></div>
+              <div><label class="block text-sm font-bold mb-1">Comment</label><textarea id="review-comment" rows="3" class="w-full p-3 border rounded-lg" placeholder="What did you like?" required></textarea></div>
+              <div class="flex gap-3 pt-2">
+                  <button type="button" onclick="document.getElementById('review-modal').classList.add('hidden')" class="flex-1 py-3 bg-gray-100 font-bold rounded-xl">Cancel</button>
+                  <button type="submit" class="flex-1 py-3 bg-orange-600 text-white font-bold rounded-xl">Submit Review</button>
+              </div>
+          </form>
+      </div>
+  </div>
 
   <script src="js/common.js"></script>
   <script src="js/my-bookings.js"></script>

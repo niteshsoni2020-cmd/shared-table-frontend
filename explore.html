@@ -3,7 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Explore – The Shared Table Story</title>
+  
+  <title>Explore Experiences | The Shared Table Story</title>
+  <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/3447/3447693.png">
+
+  <meta name="description" content="Find and book unique local experiences in Australia. Culture, food, and nature tours hosted by locals.">
+  <meta property="og:title" content="Explore Experiences | The Shared Table Story">
+  <meta property="og:description" content="Find and book unique local experiences in Australia.">
+  <meta property="og:image" content="https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=1200&auto=format&fit=crop">
+  <meta property="twitter:card" content="summary_large_image">
+
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
@@ -14,14 +23,17 @@
 </head>
 <body class="bg-gray-50 text-gray-900">
 
-  <nav class="sticky top-0 z-50 flex items-center justify-between px-8 py-6 bg-white/95 backdrop-blur shadow-sm border-b border-gray-100 transition-all">
+  <nav class="sticky top-0 z-50 flex items-center justify-between px-6 py-6 bg-white/95 backdrop-blur shadow-sm border-b border-gray-100 transition-all">
+    
     <a href="index.html" class="flex items-center gap-3 hover:opacity-90 transition group">
-      <div class="h-10 w-10 bg-orange-600 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg border-2 border-transparent group-hover:scale-105 transition">
-        <span class="mb-0.5">Q</span>
+      <div class="h-10 w-10 bg-orange-600 rounded-full flex items-center justify-center shadow-lg border-2 border-transparent group-hover:scale-105 transition">
+        <span class="font-bold text-white text-lg">Q</span>
       </div>
       <div>
         <h1 class="text-2xl font-bold tracking-tight leading-none text-gray-900">The Shared Table Story</h1>
-        <p class="text-[10px] tracking-[0.2em] uppercase text-orange-600 font-bold mt-0.5">Experiences</p>
+        <p class="text-[10px] tracking-[0.2em] uppercase text-orange-600 font-bold mt-0.5">
+          Experiences
+        </p>
       </div>
     </a>
 
@@ -30,10 +42,31 @@
       <a href="host.html" class="hover:text-orange-600 transition duration-300">Host an Experience</a>
       <div id="nav-auth"></div>
     </div>
+
+    <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 focus:outline-none hover:text-orange-600 transition">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+        </svg>
+    </button>
   </nav>
+
+  <div id="mobile-menu" class="hidden fixed inset-0 z-[100] bg-white text-gray-900 p-6 animate-fade-in overflow-y-auto">
+      <div class="flex justify-between items-center mb-8">
+          <h2 class="text-2xl font-bold">Menu</h2>
+          <button onclick="toggleMobileMenu()" class="text-gray-500 hover:text-black p-2 rounded-full hover:bg-gray-100 transition">
+              <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+      </div>
+      <div class="space-y-4 text-lg font-medium">
+          <a href="explore.html" class="block border-b border-gray-100 pb-4 text-orange-600 font-bold">Explore Experiences</a>
+          <a href="host.html" class="block border-b border-gray-100 pb-4 hover:text-orange-600 transition">Host an Experience</a>
+          <div id="mobile-auth"></div>
+      </div>
+  </div>
 
   <header class="bg-white border-b border-gray-200 sticky top-[88px] z-40 shadow-sm">
     <div class="max-w-7xl mx-auto px-4 py-4 space-y-4">
+      
       <div class="flex flex-col md:flex-row gap-3">
         <div class="flex-1 relative group">
             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -41,12 +74,14 @@
             </div>
             <input id="what-input" class="w-full pl-11 pr-4 py-3 bg-gray-100 rounded-full text-sm outline-none focus:ring-2 focus:ring-orange-200 focus:bg-white transition" placeholder="What are you looking for?" />
         </div>
+        
         <div class="flex-1 relative group">
             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                 <svg class="h-5 w-5 text-gray-400 group-focus-within:text-orange-500 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
             </div>
             <input id="location-input" class="w-full pl-11 pr-4 py-3 bg-gray-100 rounded-full text-sm outline-none focus:ring-2 focus:ring-orange-200 focus:bg-white transition" placeholder="Location (e.g. Melbourne)" />
         </div>
+
         <div class="flex items-center gap-2">
            <select id="sort-select" class="px-4 py-3 bg-gray-100 rounded-full text-sm outline-none cursor-pointer hover:bg-gray-200 border-r-8 border-transparent">
               <option value="relevance">Sort: Relevance</option>
@@ -57,16 +92,19 @@
            <button onclick="searchExperiences()" class="px-6 py-3 bg-gray-900 text-white rounded-full font-bold text-sm shadow hover:bg-black transition transform active:scale-95">Search</button>
         </div>
       </div>
+
       <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
         <button onclick="setCategory('')" class="chip active px-4 py-2 rounded-full border border-gray-200 bg-white text-xs font-bold whitespace-nowrap hover:border-black transition">All</button>
         <button onclick="setCategory('Culture & Festivals')" class="chip px-4 py-2 rounded-full border border-gray-200 bg-white text-xs font-bold whitespace-nowrap hover:border-black transition">Culture & Festivals</button>
         <button onclick="setCategory('Food & Dining')" class="chip px-4 py-2 rounded-full border border-gray-200 bg-white text-xs font-bold whitespace-nowrap hover:border-black transition">Food & Dining</button>
         <button onclick="setCategory('Nature & Tours')" class="chip px-4 py-2 rounded-full border border-gray-200 bg-white text-xs font-bold whitespace-nowrap hover:border-black transition">Nature & Tours</button>
       </div>
+      
     </div>
   </header>
 
   <main class="max-w-7xl mx-auto px-4 py-8 min-h-screen">
+    
     <section id="recommend-section" class="mb-12 hidden">
       <div class="flex items-end justify-between mb-6">
          <div>
@@ -76,13 +114,16 @@
       </div>
       <div id="recommend-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"></div>
     </section>
+
     <section>
       <h2 class="text-xl font-bold mb-6 tracking-tight">All Experiences</h2>
       <div id="experience-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-10">
          <p class="text-gray-500 col-span-full text-center py-20">Loading experiences...</p>
       </div>
     </section>
+
   </main>
+
   <script src="js/common.js"></script>
   <script src="js/explore.js"></script>
 </body>

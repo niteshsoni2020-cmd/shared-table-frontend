@@ -4,53 +4,98 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Your Profile – The Shared Table Story</title>
+  <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/3447/3447693.png">
+  
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style> body { font-family: 'Inter', sans-serif; } </style>
 </head>
-<body class="bg-gray-50 text-gray-900">
+<body class="bg-gray-50 text-gray-900 flex flex-col min-h-screen">
 
-  <nav class="sticky top-0 z-50 flex items-center justify-between px-8 py-6 bg-white/95 backdrop-blur shadow-sm border-b border-gray-100 transition-all">
+  <nav class="sticky top-0 z-50 flex items-center justify-between px-6 py-6 bg-white/95 backdrop-blur shadow-sm border-b border-gray-100 transition-all">
     <a href="index.html" class="flex items-center gap-3 hover:opacity-90 transition group">
       <div class="h-10 w-10 bg-orange-600 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg">Q</div>
       <h1 class="text-2xl font-bold tracking-tight text-gray-900">The Shared Table Story</h1>
     </a>
+
     <div class="hidden md:flex items-center space-x-8 text-sm font-semibold tracking-wide text-gray-600">
-      <a href="explore.html" class="hover:text-orange-600">Explore</a>
-      <a href="host.html" class="hover:text-orange-600">Host</a>
+      <a href="explore.html" class="hover:text-orange-600 transition duration-300">Explore</a>
+      <a href="host.html" class="hover:text-orange-600 transition duration-300">Host an Experience</a>
       <div id="nav-auth"></div>
     </div>
+
+    <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 focus:outline-none hover:text-orange-600 transition">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+    </button>
   </nav>
 
-  <main class="max-w-3xl mx-auto px-4 py-12 space-y-12">
+  <div id="mobile-menu" class="hidden fixed inset-0 z-[100] bg-white text-gray-900 p-6 animate-fade-in overflow-y-auto">
+      <div class="flex justify-between items-center mb-8">
+          <h2 class="text-2xl font-bold">Menu</h2>
+          <button onclick="toggleMobileMenu()" class="text-gray-500 hover:text-black p-2 rounded-full hover:bg-gray-100 transition">
+              <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+      </div>
+      <div class="space-y-4 text-lg font-medium">
+          <a href="explore.html" class="block border-b border-gray-100 pb-4 hover:text-orange-600 transition">Explore Experiences</a>
+          <a href="host.html" class="block border-b border-gray-100 pb-4 hover:text-orange-600 transition">Host an Experience</a>
+          <div id="mobile-auth"></div>
+      </div>
+  </div>
+
+  <main class="max-w-3xl mx-auto px-4 py-12 flex-grow">
+    
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
       <div class="bg-gray-50 px-8 py-6 border-b border-gray-100">
         <h2 class="text-xl font-bold text-gray-900">Personal Profile</h2>
-        <p class="text-sm text-gray-500">Tell us about yourself to get better recommendations.</p>
+        <p class="text-sm text-gray-500">Manage your identity and preferences.</p>
       </div>
       
       <div class="p-8">
+        <div class="flex items-center gap-6 mb-8">
+           <div class="h-20 w-20 bg-orange-100 rounded-full flex items-center justify-center text-3xl font-bold text-orange-600 shadow-inner border-2 border-white ring-2 ring-orange-50">
+              <span id="profile-initial">?</span>
+           </div>
+           <div>
+              <h3 class="font-bold text-gray-900" id="profile-name-display">Loading...</h3>
+              <p class="text-xs text-gray-500" id="profile-email-display">...</p>
+           </div>
+        </div>
+
         <form id="profile-form" class="space-y-6">
+           
            <div class="grid md:grid-cols-2 gap-6">
-               <div><label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Full Name</label><input id="display-name" type="text" class="w-full p-3 bg-white border border-gray-300 rounded-lg outline-none" /></div>
-               <div><label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Email</label><input id="display-email" type="email" class="w-full p-3 bg-gray-100 border border-gray-200 rounded-lg text-gray-500" disabled /></div>
-               <div><label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Mobile</label><input id="mobile" type="tel" class="w-full p-3 bg-white border border-gray-300 rounded-lg outline-none" /></div>
-               <div><label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Location (City)</label><input id="location" type="text" class="w-full p-3 bg-white border border-gray-300 rounded-lg outline-none" placeholder="e.g. Melbourne" /></div>
+               <div>
+                   <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Full Name</label>
+                   <input id="display-name" type="text" class="w-full p-3 bg-white border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-orange-200 transition" />
+               </div>
+               <div>
+                   <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Email</label>
+                   <input id="display-email" type="email" class="w-full p-3 bg-gray-100 border border-gray-200 rounded-lg text-gray-500 cursor-not-allowed" disabled />
+               </div>
+               <div>
+                   <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Mobile</label>
+                   <input id="mobile" type="tel" class="w-full p-3 bg-white border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-orange-200 transition" placeholder="0400 000 000" />
+               </div>
+               <div>
+                   <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Location</label>
+                   <input id="location" type="text" class="w-full p-3 bg-white border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-orange-200 transition" placeholder="e.g. Melbourne" />
+               </div>
            </div>
 
-           <div>
-               <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">What do you love? (Select all that apply)</label>
+           <div class="pt-4 border-t border-gray-50">
+               <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Your Interests (For Recommendations)</label>
                <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
                    <label class="flex items-center space-x-2 bg-gray-50 p-3 rounded-lg border border-gray-200 cursor-pointer hover:bg-orange-50 hover:border-orange-200 transition">
-                       <input type="checkbox" name="prefs" value="Culture & Festivals" class="h-4 w-4 text-orange-600 rounded">
+                       <input type="checkbox" name="prefs" value="Culture & Festivals" class="h-4 w-4 text-orange-600 rounded border-gray-300 focus:ring-orange-500">
                        <span class="text-sm font-medium">Culture & Festivals</span>
                    </label>
                    <label class="flex items-center space-x-2 bg-gray-50 p-3 rounded-lg border border-gray-200 cursor-pointer hover:bg-orange-50 hover:border-orange-200 transition">
-                       <input type="checkbox" name="prefs" value="Food & Dining" class="h-4 w-4 text-orange-600 rounded">
+                       <input type="checkbox" name="prefs" value="Food & Dining" class="h-4 w-4 text-orange-600 rounded border-gray-300 focus:ring-orange-500">
                        <span class="text-sm font-medium">Food & Dining</span>
                    </label>
                    <label class="flex items-center space-x-2 bg-gray-50 p-3 rounded-lg border border-gray-200 cursor-pointer hover:bg-orange-50 hover:border-orange-200 transition">
-                       <input type="checkbox" name="prefs" value="Nature & Tours" class="h-4 w-4 text-orange-600 rounded">
+                       <input type="checkbox" name="prefs" value="Nature & Tours" class="h-4 w-4 text-orange-600 rounded border-gray-300 focus:ring-orange-500">
                        <span class="text-sm font-medium">Nature & Tours</span>
                    </label>
                </div>
@@ -58,41 +103,26 @@
 
            <div>
               <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Bio</label>
-              <textarea id="bio" rows="3" class="w-full p-3 bg-white border border-gray-300 rounded-lg outline-none" placeholder="I love spicy food and long walks..."></textarea>
+              <textarea id="bio" rows="3" class="w-full p-3 bg-white border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-orange-200 transition" placeholder="Tell hosts a little about yourself..."></textarea>
            </div>
 
-           <div class="pt-4 border-t border-gray-100 flex items-center gap-4">
-              <button type="submit" class="px-8 py-3 bg-gray-900 text-white font-bold rounded-xl hover:bg-black transition shadow-lg">Save & Continue</button>
-              <span id="save-msg" class="text-green-600 font-bold text-sm hidden">Changes saved!</span>
+           <div class="pt-4 border-t border-gray-100 flex items-center justify-between">
+              <span id="save-msg" class="text-green-600 font-bold text-sm hidden flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> 
+                Profile Saved!
+              </span>
+              <button type="submit" class="px-8 py-3 bg-black text-white font-bold rounded-xl hover:bg-gray-800 transition shadow-lg transform active:scale-95">
+                Save Changes
+              </button>
            </div>
         </form>
       </div>
     </div>
 
-    <div id="host-section" class="bg-gradient-to-br from-orange-50 to-white rounded-2xl shadow-sm border border-orange-100 p-8 flex flex-col md:flex-row items-center justify-between gap-6">
-       <div><h2 class="text-2xl font-bold mb-2 text-gray-900">Become a Host</h2><p class="text-gray-600 max-w-lg">Start earning by sharing your table.</p></div>
-       <button onclick="openHostModal()" class="px-6 py-3 bg-orange-600 text-white font-bold rounded-xl shadow-lg hover:bg-orange-700">Set up Host Account</button>
-    </div>
-  </main>
+    <div id="host-status-card" class="mt-8 hidden">
+       </div>
 
-  <div id="host-modal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-[100] hidden backdrop-blur-sm p-4">
-    <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl h-auto max-h-[90vh] overflow-y-auto flex flex-col">
-        <div class="p-6 border-b border-gray-100 flex justify-between items-center"><h2 class="text-xl font-bold text-gray-900">Host Onboarding</h2><button onclick="document.getElementById('host-modal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">✕</button></div>
-        <div class="p-6 space-y-6">
-            <form id="host-onboard-form" class="space-y-6">
-                <div class="bg-blue-50 p-5 rounded-xl border border-blue-100"><h3 class="font-bold text-sm mb-4 uppercase text-blue-800">Australian Payout Details</h3>
-                    <div class="space-y-4">
-                        <div><label class="text-xs font-bold text-gray-600 block mb-1">Account Name</label><input id="bank-name" type="text" class="w-full p-2 border rounded" required /></div>
-                        <div class="grid grid-cols-2 gap-4"><div><label class="text-xs font-bold text-gray-600 block mb-1">BSB</label><input id="bank-bsb" type="text" class="w-full p-2 border rounded" placeholder="000-000" required /></div><div><label class="text-xs font-bold text-gray-600 block mb-1">Acc Number</label><input id="bank-acc" type="text" class="w-full p-2 border rounded" required /></div></div>
-                    </div>
-                </div>
-                <div class="bg-red-50 p-5 rounded-xl border border-red-100 text-xs text-gray-700 leading-relaxed"><h3 class="font-bold text-sm mb-2 text-red-800">Declaration</h3><p>I agree to indemnify "The Shared Table Story".</p></div>
-                <div class="flex items-start gap-3 p-2"><input id="host-declare" type="checkbox" class="mt-1 h-5 w-5 text-orange-600 rounded" required /><label for="host-declare" class="text-xs font-bold text-gray-700">I agree to the Host Declaration.</label></div>
-                <div class="pt-2"><button type="submit" class="w-full py-4 bg-gray-900 text-white font-bold rounded-xl shadow-lg">Confirm & Start Hosting</button></div>
-            </form>
-        </div>
-    </div>
-  </div>
+  </main>
 
   <script src="js/common.js"></script>
   <script src="js/profile.js"></script>

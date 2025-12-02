@@ -31,7 +31,7 @@
     
     <div class="absolute inset-0 bg-black/40"></div>
 
-    <nav class="relative z-50 flex items-center justify-between px-6 py-6 text-white">
+    <nav class="relative z-50 flex items-center justify-between px-6 py-6 text-white transition-all">
       
       <a href="index.html" class="flex items-center gap-3 hover:opacity-90 transition group">
         <div class="h-10 w-10 bg-orange-600 rounded-full flex items-center justify-center shadow-lg border-2 border-transparent group-hover:border-white transition">
@@ -65,11 +65,7 @@
                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
         </div>
-        <div class="space-y-4 text-lg font-medium">
-            <a href="explore.html" class="block border-b border-gray-100 pb-4 hover:text-orange-600 transition">Explore Experiences</a>
-            <a href="host.html" class="block border-b border-gray-100 pb-4 hover:text-orange-600 transition">Host an Experience</a>
-            <div id="mobile-auth"></div>
-        </div>
+        <div id="mobile-auth" class="space-y-4 text-lg font-medium"></div>
     </div>
 
     <div class="relative z-10 flex flex-col items-center justify-center h-full text-center px-4 -mt-20">
@@ -84,7 +80,7 @@
       
       <a href="explore.html"
          class="px-10 py-5 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-full text-lg shadow-xl hover:scale-105 transition transform duration-300 ring-4 ring-orange-600/30">
-        Explore Experiences
+        Find Your Adventure
       </a>
     </div>
   </div>
@@ -124,7 +120,7 @@
   </section>
 
   <section class="max-w-4xl mx-auto px-6 pb-20">
-    <div id="discount-card" class="bg-gradient-to-r from-orange-50 to-orange-100 rounded-2xl p-6 md:p-8 flex items-center justify-between cursor-pointer hover:shadow-lg transition border border-orange-100 group">
+    <div id="discount-card" onclick="window.location.href='explore.html?sort=discount_desc'" class="bg-gradient-to-r from-orange-50 to-orange-100 rounded-2xl p-6 md:p-8 flex items-center justify-between cursor-pointer hover:shadow-lg transition border border-orange-100 group">
       <div>
         <h3 class="text-xl font-bold text-gray-900 mb-2 group-hover:text-orange-700 transition">Save on shared experiences</h3>
         <p id="max-discount-banner" class="text-gray-600">Discover hosts offering group discounts.</p>
@@ -133,6 +129,7 @@
         <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
       </div>
     </div>
+
     <div id="home-recommend" class="mt-12 hidden">
       <h2 class="text-2xl font-bold mb-6 text-gray-900">Recommended for you</h2>
       <div id="home-recommend-list" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>

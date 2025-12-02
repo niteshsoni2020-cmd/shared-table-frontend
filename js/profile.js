@@ -26,9 +26,16 @@ document.addEventListener("DOMContentLoaded", async () => {
         document.getElementById("profile-name-display").textContent = user.name || "User";
         document.getElementById("profile-email-display").textContent = user.email || "";
 
-        // Avatar Initial
-        const initial = (user.name || "U").charAt(0).toUpperCase();
-        document.getElementById("profile-initial").textContent = initial;
+        // Avatar Handling
+        const avatarContainer = document.getElementById("profile-initial").parentElement;
+        if (user.profilePic) {
+            avatarContainer.innerHTML = `<img src="${user.profilePic}" class="w-full h-full object-cover rounded-full" />`;
+            // Store hidden URL for form submission
+            document.getElementById("profile-pic-url").value = user.profilePic;
+        } else {
+            const initial = (user.name || "U").charAt(0).toUpperCase();
+            document.getElementById("profile-initial").textContent = initial;
+        }
 
         // Checkboxes
         const userPrefs = user.preferences || [];
@@ -70,11 +77,51 @@ document.addEventListener("DOMContentLoaded", async () => {
     } catch (err) { console.error(err); }
 });
 
+// --- IMAGE UPLOAD LOGIC ---
+document.getElementById("upload-btn").addEventListener("click", () => {
+    document.getElementById("file-input").click();
+});
+
+document.getElementById("file-input").addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const btn = document.getElementById("upload-btn");
+    const originalText = btn.textContent;
+    btn.textContent = "Uploading...";
+    btn.disabled = true;
+
+    const formData = new FormData();
+    formData.append("photos", file);
+
+    try {
+        const res = await fetch(`${API_BASE}/api/upload`, { method: "POST", body: formData });
+        const data = await res.json();
+        
+        if (res.ok && data.images.length > 0) {
+            const url = data.images[0];
+            // Update UI immediately
+            const avatarContainer = document.getElementById("profile-initial").parentElement;
+            avatarContainer.innerHTML = `<img src="${url}" class="w-full h-full object-cover rounded-full" />`;
+            // Store for save
+            document.getElementById("profile-pic-url").value = url;
+            showModal("Success", "Photo uploaded! Click 'Save Changes' to make it permanent.", "success");
+        } else {
+            showModal("Error", "Upload failed.", "error");
+        }
+    } catch (err) {
+        showModal("Error", "Network error.", "error");
+    } finally {
+        btn.textContent = originalText;
+        btn.disabled = false;
+    }
+});
+
 // --- SAVE LOGIC ---
 document.getElementById("profile-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     const token = getToken();
-    const btn = e.target.querySelector("button");
+    const btn = e.target.querySelector("button[type='submit']");
     const originalText = btn.textContent;
     
     btn.textContent = "Saving..."; 
@@ -88,6 +135,7 @@ document.getElementById("profile-form").addEventListener("submit", async (e) => 
         bio: document.getElementById("bio").value,
         mobile: document.getElementById("mobile").value,
         location: document.getElementById("location").value,
+        profilePic: document.getElementById("profile-pic-url").value,
         preferences: prefs
     };
 
@@ -107,12 +155,6 @@ document.getElementById("profile-form").addEventListener("submit", async (e) => 
             const msg = document.getElementById("save-msg");
             msg.classList.remove("hidden");
             setTimeout(() => msg.classList.add("hidden"), 3000);
-            
-            // Handle Redirect if present
-            const params = new URLSearchParams(window.location.search);
-            if(params.get("redirect")) {
-                setTimeout(() => window.location.href = decodeURIComponent(params.get("redirect")), 800);
-            }
         } else {
             showModal("Error", "Failed to update profile.", "error");
         }

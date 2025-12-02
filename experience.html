@@ -45,11 +45,7 @@
               <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
           </button>
       </div>
-      <div class="space-y-4 text-lg font-medium">
-          <a href="explore.html" class="block border-b border-gray-100 pb-4 hover:text-orange-600 transition">Explore Experiences</a>
-          <a href="host.html" class="block border-b border-gray-100 pb-4 hover:text-orange-600 transition">Host an Experience</a>
-          <div id="mobile-auth"></div>
-      </div>
+      <div id="mobile-auth"></div>
   </div>
 
   <div class="max-w-7xl mx-auto px-4 pt-8 pb-4">
@@ -88,11 +84,14 @@
          <span id="experience-rating" class="flex items-center gap-1 font-medium text-gray-900">New</span>
       </div>
       
-      <div class="flex items-center gap-4 py-2">
-         <div class="h-14 w-14 bg-orange-100 rounded-full flex items-center justify-center text-2xl">👤</div>
+      <div class="bg-gray-50 p-6 rounded-2xl border border-gray-100 flex items-center gap-6">
+         <div id="host-avatar-container" class="h-20 w-20 bg-orange-100 rounded-full flex items-center justify-center text-3xl overflow-hidden shadow-sm flex-shrink-0">
+            👤
+         </div>
          <div>
              <h3 class="text-lg font-bold text-gray-900">Hosted by <span id="host-name">Local Host</span></h3>
-             <p class="text-sm text-gray-500">Identity verified • Superhost</p>
+             <p class="text-sm text-gray-500 mb-2">Verified Host • Identity Checked</p>
+             <button id="contact-host-btn" class="text-sm font-bold text-gray-900 underline hover:text-orange-600">Contact Host</button>
          </div>
       </div>
 
@@ -123,8 +122,6 @@
                 <p class="text-2xl font-bold text-gray-900" id="experience-price">$0</p>
                 <p class="text-sm text-gray-500">per person</p>
             </div>
-            <div class="flex gap-1">
-                 </div>
         </div>
 
         <form id="booking-form" class="space-y-4">
@@ -154,6 +151,11 @@
           <div class="flex justify-between items-center pt-2 text-gray-700">
               <span class="underline decoration-gray-300 decoration-dashed">Total Price</span>
               <span id="price-preview" class="font-bold text-gray-900">$0.00</span>
+          </div>
+
+          <div class="text-[10px] text-gray-500 text-center leading-tight">
+              Free cancellation up to 48 hours before start time. <br>
+              <a href="terms.html?section=terms" target="_blank" class="underline hover:text-gray-900">See details</a>.
           </div>
 
           <button id="booking-submit" type="submit" class="w-full py-3.5 bg-gradient-to-r from-orange-600 to-red-500 text-white font-bold rounded-xl shadow-lg hover:from-orange-700 hover:to-red-600 transition transform active:scale-95">

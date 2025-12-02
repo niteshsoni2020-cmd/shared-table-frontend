@@ -3,7 +3,6 @@
 // --- 1. SHARED HELPERS (With Image Optimization) ---
 function getImageForExperience(exp) {
   // Optimizing Cloudinary Images for Speed
-  // We inject 'w_400,h_300,c_fill,q_auto' to request a smaller, optimized version
   if (exp.imageUrl && exp.imageUrl.includes("cloudinary.com")) {
     return exp.imageUrl.replace('/upload/', '/upload/w_400,h_300,c_fill,q_auto/');
   }
@@ -28,14 +27,25 @@ document.addEventListener("DOMContentLoaded", async () => {
     const sortSelect = document.getElementById("sort-select");
     const whatInput = document.getElementById("what-input");
     const locInput = document.getElementById("location-input");
+    const dateInput = document.getElementById("date-input");
 
     if (sortSelect) sortSelect.addEventListener("change", searchExperiences);
     if (whatInput) whatInput.addEventListener("keyup", (e) => { if(e.key === 'Enter') searchExperiences(); });
     if (locInput) locInput.addEventListener("keyup", (e) => { if(e.key === 'Enter') searchExperiences(); });
+    if (dateInput) dateInput.addEventListener("change", searchExperiences);
 
-    // Load Data
-    await loadBookmarks();
-    searchExperiences();
+    // Check URL params for Deals link
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("sort") === "discount_desc") {
+        if(sortSelect) sortSelect.value = "discount_desc";
+    }
+    if (params.get("cat")) {
+        setCategory(params.get("cat")); // Will trigger search
+    } else {
+        await loadBookmarks();
+        searchExperiences();
+    }
+    
     loadExploreRecommendations();
 });
 
@@ -86,7 +96,7 @@ async function toggleBookmark(e, expId) {
 }
 
 // --- 4. RENDER FUNCTION ---
-function renderExperiences(experiences, containerId) {
+function renderExperiences(experiences, containerId, isFallback = false) {
   const container = document.getElementById(containerId);
   if (!container) return;
   container.innerHTML = "";
@@ -94,6 +104,10 @@ function renderExperiences(experiences, containerId) {
   if (experiences.length === 0) {
     container.innerHTML = '<div class="col-span-full text-center py-12 bg-gray-50 rounded-xl"><p class="text-gray-500">No experiences found matching your search.</p></div>';
     return;
+  }
+
+  if (isFallback) {
+      container.insertAdjacentHTML('afterbegin', `<div class="col-span-full mb-4 p-4 bg-orange-50 text-orange-800 rounded-lg border border-orange-100 text-sm font-bold text-center">We couldn't find exact matches, but here are some top-rated experiences you might like!</div>`);
   }
 
   experiences.forEach(exp => {
@@ -144,18 +158,30 @@ async function searchExperiences() {
   try {
     const what = document.getElementById("what-input")?.value.trim() || "";
     const loc = document.getElementById("location-input")?.value.trim() || "";
+    const date = document.getElementById("date-input")?.value || "";
     const sort = document.getElementById("sort-select")?.value || "relevance";
 
     const params = new URLSearchParams();
     if (what) params.append("q", what);
     if (loc) params.append("city", loc);
+    if (date) params.append("date", date); // NEW: Send date to backend
     if (sort) params.append("sort", sort);
     
     const res = await fetch(`${API_BASE}/api/experiences?${params.toString()}`);
     let experiences = await res.json();
 
     if (currentCategory) experiences = experiences.filter(e => e.tags && e.tags.includes(currentCategory));
-    renderExperiences(experiences, "experience-list");
+    
+    // SMART FALLBACK LOGIC
+    if (experiences.length === 0) {
+        // Fetch top rated instead
+        const fallbackRes = await fetch(`${API_BASE}/api/experiences?sort=rating_desc`);
+        const fallbackExps = await fallbackRes.json();
+        renderExperiences(fallbackExps.slice(0, 4), "experience-list", true); // Pass true for fallback flag
+    } else {
+        renderExperiences(experiences, "experience-list");
+    }
+
   } catch (err) { console.error(err); }
 }
 
@@ -175,7 +201,10 @@ async function loadExploreRecommendations() {
 function setCategory(cat) {
   currentCategory = cat;
   document.querySelectorAll(".chip").forEach(btn => {
-    btn.className = (btn.textContent.trim() === (cat || "All")) 
+    // Basic text match check (can be improved)
+    const isActive = (cat === '' && btn.textContent === 'All') || btn.textContent.includes(cat);
+    
+    btn.className = isActive
         ? "chip active px-4 py-2 rounded-full border border-black bg-black text-white text-xs font-bold transition"
         : "chip px-4 py-2 rounded-full border border-gray-200 bg-white text-gray-900 text-xs font-bold transition hover:border-black";
   });

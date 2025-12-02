@@ -7,11 +7,9 @@ let isBookmarked = false;
 function getImageForExperience(exp) {
   // Optimize Cloudinary images
   if (exp.imageUrl && exp.imageUrl.includes("cloudinary.com")) {
-      // Request medium size for main view
       return exp.imageUrl.replace('/upload/', '/upload/w_800,c_fill,q_auto/');
   }
   if (exp.imageUrl && exp.imageUrl.startsWith("http")) return exp.imageUrl;
-  
   return "https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=800&auto=format&fit=crop";
 }
 
@@ -65,9 +63,11 @@ async function loadExperience() {
     const btn = document.getElementById("bookmark-btn-hero");
     if(btn) btn.addEventListener("click", toggleCurrentBookmark);
 
+    // Setup Contact Host
+    document.getElementById("contact-host-btn").addEventListener("click", () => showContactModal(exp));
+
   } catch (err) { 
       console.error(err);
-      // showModal("Error", "Could not load experience details.", "error");
   }
 }
 
@@ -77,28 +77,42 @@ function renderExperience(exp) {
   document.getElementById("experience-description").textContent = exp.description;
   document.getElementById("experience-price").textContent = `$${exp.price}`;
   document.getElementById("hero-category-badge").textContent = exp.tags[0] || "Experience";
+  
+  // HOST BIO CARD
   document.getElementById("host-name").textContent = exp.hostName || "Local Host";
+  const avatarContainer = document.getElementById("host-avatar-container");
+  if (exp.hostPic) {
+      avatarContainer.innerHTML = `<img src="${exp.hostPic}" class="w-full h-full object-cover rounded-full">`;
+  } else {
+      avatarContainer.innerHTML = `<span class="text-3xl">👤</span>`;
+  }
 
   // IMAGES (Handle Array)
   let images = (exp.images && exp.images.length > 0) ? exp.images : [exp.imageUrl];
-  
-  // Main Image
   document.getElementById("img-1").src = getImageForExperience({ imageUrl: images[0] });
   
-  // Side Images (Hide if missing)
   const img2 = document.getElementById("img-2");
   const img3 = document.getElementById("img-3");
-  
-  if (images[1]) img2.src = getThumbnail(images[1]);
-  else img2.parentElement.style.display = 'none';
-
-  if (images[2]) img3.src = getThumbnail(images[2]);
-  else img3.parentElement.style.display = 'none';
+  if (images[1]) img2.src = getThumbnail(images[1]); else img2.parentElement.style.display = 'none';
+  if (images[2]) img3.src = getThumbnail(images[2]); else img3.parentElement.style.display = 'none';
   
   // RATING
   const ratingEl = document.getElementById("experience-rating");
   if (exp.averageRating > 0) ratingEl.innerHTML = `⭐ ${exp.averageRating.toFixed(1)} <span class="text-gray-400 font-normal">(${exp.reviewCount})</span>`;
   else ratingEl.innerHTML = "New Activity";
+}
+
+// --- CONTACT HOST MODAL ---
+function showContactModal(exp) {
+    const token = getToken();
+    if (!token) { showModal("Login Required", "Please login to contact the host.", "error"); return; }
+    
+    // Quick simple prompt for now
+    const msg = prompt(`Message for ${exp.hostName}:`);
+    if(msg && msg.trim() !== "") {
+        // In a real app, send to API. For MVP, we simulate success.
+        showModal("Message Sent", "The host has been notified.", "success");
+    }
 }
 
 // --- REVIEWS ---

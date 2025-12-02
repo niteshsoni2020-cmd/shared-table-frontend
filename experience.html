@@ -58,6 +58,13 @@
           </div>
       </div>
 
+      <div class="flex items-center gap-2 text-sm text-gray-500 mb-6">
+          <svg class="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+          <span id="experience-city-top" class="font-medium underline decoration-dotted">Loading location...</span>
+          <span class="text-gray-300">|</span>
+          <span id="hero-category-badge" class="bg-gray-100 px-2 py-1 rounded text-xs font-bold text-gray-600">Category</span>
+      </div>
+
       <div id="gallery-grid" class="grid grid-cols-1 md:grid-cols-4 gap-2 h-[300px] md:h-[450px] rounded-2xl overflow-hidden">
           <div class="md:col-span-2 h-full bg-gray-100 relative group cursor-pointer">
               <img id="img-1" class="w-full h-full object-cover transition duration-700 group-hover:scale-105" src="" onerror="this.style.display='none'">
@@ -76,22 +83,18 @@
   <main class="max-w-7xl mx-auto px-4 py-8 grid md:grid-cols-3 gap-12">
     
     <section class="md:col-span-2 space-y-8">
-      <div class="flex flex-wrap items-center gap-4 text-sm text-gray-500 border-b border-gray-100 pb-6">
-         <span id="experience-city" class="font-bold text-gray-900 text-base">City</span> 
-         <span>•</span> 
-         <span id="hero-category-badge" class="bg-gray-100 px-2 py-1 rounded">Category</span> 
-         <span>•</span> 
-         <span id="experience-rating" class="flex items-center gap-1 font-medium text-gray-900">New</span>
-      </div>
       
-      <div class="bg-gray-50 p-6 rounded-2xl border border-gray-100 flex items-center gap-6">
-         <div id="host-avatar-container" class="h-20 w-20 bg-orange-100 rounded-full flex items-center justify-center text-3xl overflow-hidden shadow-sm flex-shrink-0">
+      <div class="bg-gray-50 p-6 rounded-2xl border border-gray-100 flex flex-col sm:flex-row items-center sm:items-start gap-6 text-center sm:text-left">
+         <div id="host-avatar-container" class="h-20 w-20 bg-orange-100 rounded-full flex items-center justify-center text-3xl overflow-hidden shadow-sm flex-shrink-0 border-2 border-white ring-2 ring-gray-100">
             👤
          </div>
-         <div>
+         <div class="flex-1">
              <h3 class="text-lg font-bold text-gray-900">Hosted by <span id="host-name">Local Host</span></h3>
-             <p class="text-sm text-gray-500 mb-2">Verified Host • Identity Checked</p>
-             <button id="contact-host-btn" class="text-sm font-bold text-gray-900 underline hover:text-orange-600">Contact Host</button>
+             <p class="text-sm text-gray-500 mb-3">Verified Host • Identity Checked</p>
+             <p id="host-bio-preview" class="text-sm text-gray-600 mb-4 line-clamp-2 italic">"I love sharing my culture through food..."</p>
+             <button id="contact-host-btn" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 text-xs font-bold rounded-lg hover:bg-gray-50 transition shadow-sm">
+                Contact Host
+             </button>
          </div>
       </div>
 
@@ -107,7 +110,10 @@
       </div>
 
       <div class="py-8 border-t border-gray-100" id="reviews-container">
-          <h2 class="text-xl font-bold mb-6">Reviews</h2>
+          <div class="flex items-center justify-between mb-6">
+              <h2 class="text-xl font-bold">Reviews</h2>
+              <div id="experience-rating" class="flex items-center gap-1 font-bold text-gray-900 bg-gray-100 px-3 py-1 rounded-full text-sm">New</div>
+          </div>
           <div id="reviews-list" class="space-y-6">
               <p class="text-gray-500 italic">No reviews yet. Be the first!</p>
           </div>
@@ -153,9 +159,9 @@
               <span id="price-preview" class="font-bold text-gray-900">$0.00</span>
           </div>
 
-          <div class="text-[10px] text-gray-500 text-center leading-tight">
+          <div class="text-[10px] text-gray-500 text-center leading-tight bg-gray-50 p-2 rounded border border-gray-100">
               Free cancellation up to 48 hours before start time. <br>
-              <a href="terms.html?section=terms" target="_blank" class="underline hover:text-gray-900">See details</a>.
+              <a href="terms.html?section=terms" target="_blank" class="underline hover:text-gray-900">Read full policy</a>.
           </div>
 
           <button id="booking-submit" type="submit" class="w-full py-3.5 bg-gradient-to-r from-orange-600 to-red-500 text-white font-bold rounded-xl shadow-lg hover:from-orange-700 hover:to-red-600 transition transform active:scale-95">

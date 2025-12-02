@@ -73,18 +73,27 @@ async function loadExperience() {
 
 function renderExperience(exp) {
   document.getElementById("experience-title").textContent = exp.title;
-  document.getElementById("experience-city").textContent = exp.city;
+  document.getElementById("experience-city-top").textContent = exp.city; // Top Location
+  document.getElementById("experience-city").textContent = exp.city; // Body Location
   document.getElementById("experience-description").textContent = exp.description;
   document.getElementById("experience-price").textContent = `$${exp.price}`;
   document.getElementById("hero-category-badge").textContent = exp.tags[0] || "Experience";
   
-  // HOST BIO CARD
+  // HOST BIO CARD POPULATION
   document.getElementById("host-name").textContent = exp.hostName || "Local Host";
+  
+  // Handle Host Avatar
   const avatarContainer = document.getElementById("host-avatar-container");
   if (exp.hostPic) {
       avatarContainer.innerHTML = `<img src="${exp.hostPic}" class="w-full h-full object-cover rounded-full">`;
   } else {
       avatarContainer.innerHTML = `<span class="text-3xl">👤</span>`;
+  }
+
+  // Handle Host Bio Preview (Mocked for now if not in DB)
+  const bioPreview = document.getElementById("host-bio-preview");
+  if(bioPreview) {
+      bioPreview.textContent = `Hi, I'm ${exp.hostName || 'your host'}. I love sharing my culture and stories through this experience. Can't wait to meet you!`;
   }
 
   // IMAGES (Handle Array)
@@ -103,15 +112,29 @@ function renderExperience(exp) {
 }
 
 // --- CONTACT HOST MODAL ---
-function showContactModal(exp) {
+async function showContactModal(exp) {
     const token = getToken();
     if (!token) { showModal("Login Required", "Please login to contact the host.", "error"); return; }
     
-    // Quick simple prompt for now
-    const msg = prompt(`Message for ${exp.hostName}:`);
+    // Simple prompt for MVP
+    const msg = prompt(`Send a message to ${exp.hostName}:`);
     if(msg && msg.trim() !== "") {
-        // In a real app, send to API. For MVP, we simulate success.
-        showModal("Message Sent", "The host has been notified.", "success");
+        try {
+            // Re-use the general contact endpoint for now
+            const res = await fetch(`${API_BASE}/api/contact`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    name: "Registered User", // Backend will see the token if we updated auth there, but this is public endpoint
+                    email: "user@sharedtable.com", 
+                    subject: `Message for Host (${exp.hostName})`,
+                    message: `Regarding Experience: ${exp.title}\n\nMessage: ${msg}`
+                })
+            });
+            if(res.ok) showModal("Message Sent", "The host has been notified via email.", "success");
+        } catch(e) {
+            showModal("Error", "Could not send message.", "error");
+        }
     }
 }
 

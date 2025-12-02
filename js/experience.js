@@ -60,7 +60,9 @@ async function loadExperience() {
     const btn = document.getElementById("bookmark-btn-hero");
     if(btn) btn.addEventListener("click", toggleCurrentBookmark);
 
+    // Wire up Modals
     document.getElementById("contact-host-btn").addEventListener("click", () => showContactModal(exp));
+    document.getElementById("report-listing-btn").addEventListener("click", () => showReportModal(exp));
 
   } catch (err) { console.error(err); }
 }
@@ -97,36 +99,135 @@ function renderExperience(exp) {
   else ratingEl.innerHTML = "New Activity";
 }
 
-// --- CONTACT HOST MODAL ---
-async function showContactModal(exp) {
+// --- MODAL: CONTACT HOST ---
+function showContactModal(exp) {
     const token = getToken();
     if (!token) { showModal("Login Required", "Please login to contact the host.", "error"); return; }
+
+    let modal = document.getElementById('contact-modal-dynamic');
+    if (!modal) {
+        const html = `
+        <div id="contact-modal-dynamic" class="fixed inset-0 bg-black/60 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+            <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl p-6">
+                <h3 class="text-xl font-bold mb-2">Contact Host</h3>
+                <p class="text-sm text-gray-500 mb-4">Send a message to ${exp.hostName}.</p>
+                <textarea id="contact-msg-input" rows="4" class="w-full p-3 border border-gray-200 rounded-lg outline-none mb-4" placeholder="Hi, I have a question about..."></textarea>
+                <div class="flex gap-3">
+                    <button onclick="document.getElementById('contact-modal-dynamic').classList.add('hidden')" class="flex-1 py-3 bg-gray-100 font-bold rounded-xl text-gray-700">Cancel</button>
+                    <button id="send-contact-btn" class="flex-1 py-3 bg-orange-600 font-bold rounded-xl text-white">Send</button>
+                </div>
+            </div>
+        </div>`;
+        document.body.insertAdjacentHTML('beforeend', html);
+        modal = document.getElementById('contact-modal-dynamic');
+    }
     
-    const msg = prompt(`Send a message to ${exp.hostName}:`);
-    if(msg && msg.trim() !== "") {
+    // Reset & Show
+    document.getElementById('contact-msg-input').value = "";
+    modal.classList.remove('hidden');
+
+    // Attach Handler (Remove old ones to prevent duplicates)
+    const sendBtn = document.getElementById('send-contact-btn');
+    const newBtn = sendBtn.cloneNode(true);
+    sendBtn.parentNode.replaceChild(newBtn, sendBtn);
+    
+    newBtn.addEventListener('click', async () => {
+        const msg = document.getElementById('contact-msg-input').value;
+        if(!msg.trim()) return;
+        
+        newBtn.textContent = "Sending...";
         try {
             const res = await fetch(`${API_BASE}/api/contact`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    name: "Registered User", 
-                    email: "user@sharedtable.com", 
+                    name: "Registered User", email: "user@sharedtable.com", 
                     subject: `Message for Host (${exp.hostName})`,
-                    message: `Regarding Experience: ${exp.title}\n\nMessage: ${msg}`
+                    message: `Regarding: ${exp.title}\n\n${msg}`
                 })
             });
-            if(res.ok) showModal("Message Sent", "The host has been notified via email.", "success");
+            if(res.ok) {
+                showModal("Message Sent", "The host has been notified.", "success");
+                modal.classList.add('hidden');
+            }
         } catch(e) { showModal("Error", "Could not send message.", "error"); }
-    }
+        newBtn.textContent = "Send";
+    });
 }
 
-// --- REVIEWS ---
+// --- MODAL: REPORT LISTING ---
+function showReportModal(exp) {
+    let modal = document.getElementById('report-modal-dynamic');
+    if (!modal) {
+        const html = `
+        <div id="report-modal-dynamic" class="fixed inset-0 bg-black/60 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+            <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl p-6">
+                <h3 class="text-xl font-bold mb-2 text-red-600">Report Listing</h3>
+                <p class="text-sm text-gray-500 mb-4">Why are you reporting this experience?</p>
+                <select id="report-reason" class="w-full p-3 border border-gray-200 rounded-lg outline-none mb-4 bg-white">
+                    <option>This is a scam / fake listing</option>
+                    <option>Inappropriate content</option>
+                    <option>Host is abusive</option>
+                    <option>Other issue</option>
+                </select>
+                <div class="flex gap-3">
+                    <button onclick="document.getElementById('report-modal-dynamic').classList.add('hidden')" class="flex-1 py-3 bg-gray-100 font-bold rounded-xl text-gray-700">Cancel</button>
+                    <button id="submit-report-btn" class="flex-1 py-3 bg-red-600 font-bold rounded-xl text-white">Report</button>
+                </div>
+            </div>
+        </div>`;
+        document.body.insertAdjacentHTML('beforeend', html);
+        modal = document.getElementById('report-modal-dynamic');
+    }
+    
+    modal.classList.remove('hidden');
+
+    const submitBtn = document.getElementById('submit-report-btn');
+    const newBtn = submitBtn.cloneNode(true);
+    submitBtn.parentNode.replaceChild(newBtn, submitBtn);
+
+    newBtn.addEventListener('click', async () => {
+        const reason = document.getElementById('report-reason').value;
+        newBtn.textContent = "Reporting...";
+        try {
+            await fetch(`${API_BASE}/api/contact`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    name: "System Reporter", email: "admin@sharedtable.com", 
+                    subject: `REPORT LISTING: ${exp.title}`,
+                    message: `Reason: ${reason}\nListing ID: ${exp.id}`
+                })
+            });
+            showModal("Report Received", "Thank you for keeping our community safe.", "info");
+            modal.classList.add('hidden');
+        } catch(e) { showModal("Error", "Network error.", "error"); }
+        newBtn.textContent = "Report";
+    });
+}
+
+// --- REVIEWS & FEATURED QUOTE ---
 async function loadReviews(expId) {
     try {
         const res = await fetch(`${API_BASE}/api/experiences/${expId}/reviews`);
         const reviews = await res.json();
         const listDiv = document.getElementById("reviews-list");
+        
         if (reviews.length > 0) {
+            // 1. POPULATE FEATURED REVIEW (Best 5-star with text)
+            const bestReview = reviews.find(r => r.rating === 5 && r.comment.length > 20);
+            if (bestReview) {
+                const featBox = document.getElementById("featured-review");
+                const featUser = document.getElementById("feat-user");
+                if(featBox && featUser) {
+                    // Truncate if too long
+                    const text = bestReview.comment.length > 60 ? bestReview.comment.substring(0,60) + "..." : bestReview.comment;
+                    featBox.innerHTML = `<span class="font-bold text-orange-600">"${text}"</span> - <span class="text-gray-500">${bestReview.guestName || 'Guest'}</span>`;
+                    featBox.classList.remove("hidden");
+                }
+            }
+
+            // 2. POPULATE LIST
             listDiv.innerHTML = reviews.map(r => `
                 <div class="mb-6 border-b border-gray-50 pb-6 last:border-0">
                     <div class="flex items-center gap-3 mb-2">
@@ -187,18 +288,13 @@ function setupBookingForm(exp) {
       const selected = new Date(e.target.value);
       const dayName = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][selected.getUTCDay()];
       
-      // Check if paused
       if (exp.isPaused) {
           showModal("Unavailable", "The host is currently not accepting bookings.", "error");
-          e.target.value = "";
-          return;
+          e.target.value = ""; return;
       }
-
-      // Check if day is allowed
       if (exp.availableDays && !exp.availableDays.includes(dayName)) {
           showModal("Closed", `The host is not available on ${dayName}s.`, "info");
-          e.target.value = "";
-          return;
+          e.target.value = ""; return;
       }
   });
 

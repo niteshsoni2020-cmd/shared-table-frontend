@@ -1,5 +1,8 @@
 // js/my-bookings.js
 
+let currentReviewType = "guest_to_host"; // State to track review mode
+let currentTargetId = null; // State to track who is being reviewed
+
 // --- HELPER: Image Optimization ---
 function getImageForExperience(exp) {
   if (exp.imageUrl && exp.imageUrl.includes("cloudinary.com")) {
@@ -79,24 +82,20 @@ function createTripCard(booking, exp, isUpcoming) {
     let statusBadge = `<span class="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">Confirmed</span>`;
     let actionBtn = "";
 
-    // 1. CANCELLED STATE
     if (booking.status.includes('cancelled')) {
         statusBadge = `<span class="px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700">Cancelled</span>`;
         actionBtn = `<div class="mt-4 text-xs text-red-600 font-bold bg-red-50 p-2 rounded border border-red-100 text-center">Refund: $${booking.refundAmount}</div>`;
     } 
-    // 2. PAST TRIP STATE
     else if (!isUpcoming) {
         statusBadge = `<span class="px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-600">Completed</span>`;
-        // Add Report Issue Button for past trips
+        // GUEST REVIEWING HOST
         actionBtn = `
         <div class="mt-4 grid grid-cols-2 gap-2">
-            <button onclick="openReviewModal('${booking.id}', '${booking.experienceId}')" class="py-2 bg-gray-900 text-white font-bold rounded-lg text-xs hover:bg-black transition">Write Review</button>
+            <button onclick="openReviewModal('${booking.id}', '${booking.experienceId}', 'guest_to_host')" class="py-2 bg-gray-900 text-white font-bold rounded-lg text-xs hover:bg-black transition">Write Review</button>
             <button onclick="reportIssue('${booking.id}')" class="py-2 border border-gray-300 text-gray-600 font-bold rounded-lg text-xs hover:bg-gray-50 transition">Report Issue</button>
         </div>`;
     } 
-    // 3. UPCOMING TRIP STATE
     else {
-        // Add Reschedule Button
         actionBtn = `
         <div class="mt-4 grid grid-cols-2 gap-2">
             <button onclick="rescheduleBooking('${booking.id}', '${booking.experienceId}')" class="py-2 border border-blue-200 text-blue-600 hover:bg-blue-50 font-bold rounded-lg text-xs transition">Change Date</button>
@@ -123,14 +122,10 @@ function createTripCard(booking, exp, isUpcoming) {
     </div>`;
 }
 
-// --- NEW FEATURES: RESCHEDULE & REPORT ---
-
+// --- FEATURES: RESCHEDULE & REPORT ---
 async function rescheduleBooking(bookingId, expId) {
     const newDate = prompt("Enter new date (YYYY-MM-DD):");
     if (!newDate) return;
-    
-    // In a real app, we would fetch available slots for that date first.
-    // For MVP, we ask the user to type the time.
     const newSlot = prompt("Enter new time (e.g., 18:00-20:00):");
     if (!newSlot) return;
 
@@ -142,19 +137,14 @@ async function rescheduleBooking(bookingId, expId) {
             body: JSON.stringify({ newDate, newSlot })
         });
         const data = await res.json();
-        if (res.ok) {
-            showModal("Success", "Booking rescheduled!", "success");
-            loadTrips();
-        } else {
-            showModal("Failed", data.message, "error");
-        }
+        if (res.ok) { showModal("Success", "Booking rescheduled!", "success"); loadTrips(); } 
+        else { showModal("Failed", data.message, "error"); }
     } catch(e) { showModal("Error", "Network error.", "error"); }
 }
 
 async function reportIssue(bookingId) {
     const reason = prompt("Please describe the issue with this experience:");
     if (!reason) return;
-
     const token = getToken();
     try {
         const res = await fetch(`${API_BASE}/api/bookings/${bookingId}/report`, {
@@ -172,14 +162,12 @@ async function cancelBooking(id) {
     try {
         const res = await fetch(`${API_BASE}/api/bookings/${id}/cancel`, { method: "POST", headers: { "Authorization": `Bearer ${token}` } });
         const data = await res.json();
-        if (res.ok) { 
-            showModal("Booking Cancelled", `Refund Amount: $${data.refund.amount} (${data.refund.reason})`, "info");
-            loadTrips(); 
-        } else showModal("Error", data.message, "error");
+        if (res.ok) { showModal("Booking Cancelled", `Refund Amount: $${data.refund.amount} (${data.refund.reason})`, "info"); loadTrips(); } 
+        else showModal("Error", data.message, "error");
     } catch (err) { showModal("Error", "Network error", "error"); }
 }
 
-// --- HOSTING & SAVED LOGIC (Unchanged but included for file completeness) ---
+// --- HOSTING & SAVED ---
 async function loadSaved() {
     const grid = document.getElementById("saved-grid");
     const loading = document.getElementById("saved-loading");
@@ -229,12 +217,13 @@ async function loadHosting() {
   });
 }
 
-// --- GUEST LIST MODAL ---
+// --- GUEST LIST & HOST REVIEWS ---
 async function viewGuestList(expId, title) {
     const token = getToken();
     let modal = document.getElementById('guest-list-modal');
     if (!modal) {
-        const html = `<div id="guest-list-modal" class="fixed inset-0 bg-black/60 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm"><div class="bg-white rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden max-h-[80vh] flex flex-col"><div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50"><div><h2 class="text-xl font-bold text-gray-900" id="guest-modal-title"></h2><p class="text-xs text-gray-500">Upcoming guests for this experience</p></div><button onclick="document.getElementById('guest-list-modal').classList.add('hidden')" class="text-gray-400 hover:text-gray-900 text-2xl">&times;</button></div><div class="p-0 overflow-y-auto flex-1"><table class="w-full text-left text-sm"><thead class="bg-gray-50 text-gray-500 font-bold uppercase text-xs"><tr><th class="px-6 py-3">Guest</th><th class="px-6 py-3">Date</th><th class="px-6 py-3">Pax</th><th class="px-6 py-3">Contact</th></tr></thead><tbody id="guest-list-body" class="divide-y divide-gray-100"></tbody></table><div id="guest-list-empty" class="hidden p-8 text-center text-gray-400">No bookings yet.</div></div></div></div>`;
+        // Modal with title
+        const html = `<div id="guest-list-modal" class="fixed inset-0 bg-black/60 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm"><div class="bg-white rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden max-h-[80vh] flex flex-col"><div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50"><div><h2 class="text-xl font-bold text-gray-900" id="guest-modal-title"></h2><p class="text-xs text-gray-500">Upcoming guests for this experience</p></div><button onclick="document.getElementById('guest-list-modal').classList.add('hidden')" class="text-gray-400 hover:text-gray-900 text-2xl">&times;</button></div><div class="p-0 overflow-y-auto flex-1"><table class="w-full text-left text-sm"><thead class="bg-gray-50 text-gray-500 font-bold uppercase text-xs"><tr><th class="px-6 py-3">Guest</th><th class="px-6 py-3">Date</th><th class="px-6 py-3">Pax</th><th class="px-6 py-3">Actions</th></tr></thead><tbody id="guest-list-body" class="divide-y divide-gray-100"></tbody></table><div id="guest-list-empty" class="hidden p-8 text-center text-gray-400">No bookings yet.</div></div></div></div>`;
         document.body.insertAdjacentHTML('beforeend', html);
         modal = document.getElementById('guest-list-modal');
     }
@@ -243,21 +232,85 @@ async function viewGuestList(expId, title) {
     const empty = document.getElementById('guest-list-empty');
     tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-4 text-center text-gray-500">Loading...</td></tr>';
     modal.classList.remove('hidden');
+    
     try {
         const res = await fetch(`${API_BASE}/api/host/bookings/${expId}`, { headers: { Authorization: `Bearer ${token}` } });
         const bookings = await res.json();
         tbody.innerHTML = "";
+        
         if(bookings.length === 0) { empty.classList.remove('hidden'); } else {
             empty.classList.add('hidden');
+            const now = new Date();
+            
             tbody.innerHTML = bookings.map(b => {
                 const guestName = b.guestId ? b.guestId.name : (b.guestName || "Unknown");
-                const guestEmail = b.guestId ? b.guestId.email : (b.guestEmail || "-");
-                return `<tr class="hover:bg-gray-50 transition"><td class="px-6 py-4 font-bold text-gray-900">${guestName}</td><td class="px-6 py-4 text-gray-600">${formatBookingDate(b.bookingDate)}<br><span class="text-xs text-gray-400">${b.timeSlot}</span></td><td class="px-6 py-4 font-mono text-gray-600">${b.numGuests}</td><td class="px-6 py-4 text-blue-600 hover:underline"><a href="mailto:${guestEmail}">${guestEmail}</a></td></tr>`;
+                const guestId = b.guestId ? b.guestId._id : null;
+                const isPast = new Date(b.bookingDate) < now;
+                
+                // Show "Rate" button if trip is over
+                let action = `<a href="mailto:${b.guestEmail || ''}" class="text-blue-600 hover:underline">Contact</a>`;
+                if (isPast && guestId) {
+                    action = `<button onclick="openReviewModal('${b.id}', '${expId}', 'host_to_guest', '${guestId}')" class="px-3 py-1 bg-orange-100 text-orange-700 font-bold text-xs rounded hover:bg-orange-200">⭐ Rate Guest</button>`;
+                }
+
+                return `<tr class="hover:bg-gray-50 transition"><td class="px-6 py-4 font-bold text-gray-900">${guestName}</td><td class="px-6 py-4 text-gray-600">${formatBookingDate(b.bookingDate)}<br><span class="text-xs text-gray-400">${b.timeSlot}</span></td><td class="px-6 py-4 font-mono text-gray-600">${b.numGuests}</td><td class="px-6 py-4">${action}</td></tr>`;
             }).join('');
         }
     } catch(e) { tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-4 text-center text-red-500">Error loading guests.</td></tr>'; }
 }
 
+// --- SHARED REVIEW MODAL (SMART) ---
+function openReviewModal(bookingId, experienceId, type, targetId = null) {
+  document.getElementById("review-booking-id").value = bookingId;
+  document.getElementById("review-exp-id").value = experienceId;
+  
+  // Set Global Context
+  currentReviewType = type;
+  currentTargetId = targetId;
+
+  // Change UI Title based on type
+  const title = document.querySelector("#review-modal h2");
+  if (type === "host_to_guest") {
+      title.textContent = "Review Guest";
+  } else {
+      title.textContent = "Write a Review";
+  }
+
+  document.getElementById("review-modal").classList.remove("hidden");
+}
+
+document.getElementById("review-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const token = getToken();
+  
+  const payload = {
+      bookingId: document.getElementById("review-booking-id").value,
+      experienceId: document.getElementById("review-exp-id").value,
+      rating: document.getElementById("review-rating").value,
+      comment: document.getElementById("review-comment").value,
+      type: currentReviewType, // "guest_to_host" or "host_to_guest"
+      targetId: currentTargetId  // Only used for host reviewing guest
+  };
+
+  try {
+    const res = await fetch(`${API_BASE}/api/reviews`, { 
+        method: "POST", 
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(payload)
+    });
+    
+    if (res.ok) { 
+        showModal("Thank you", "Review posted successfully!", "success"); 
+        document.getElementById("review-modal").classList.add("hidden"); 
+        e.target.reset();
+    } else {
+        const d = await res.json();
+        showModal("Error", d.message, "error");
+    }
+  } catch (err) { showModal("Error", "Network error", "error"); }
+});
+
+// --- INIT ---
 async function deleteListing(id) {
   if (!confirm("Delete this listing?")) return;
   const token = getToken();
@@ -276,10 +329,4 @@ document.addEventListener("DOMContentLoaded", () => {
     const params = new URLSearchParams(window.location.search);
     const view = params.get('view');
     switchTab(view === 'saved' ? 'saved' : view === 'hosting' ? 'hosting' : 'trips');
-});
-
-function openReviewModal(bId, eId) { document.getElementById("review-booking-id").value = bId; document.getElementById("review-exp-id").value = eId; document.getElementById("review-modal").classList.remove("hidden"); }
-document.getElementById("review-form").addEventListener("submit", async (e) => {
-  e.preventDefault(); const token = getToken();
-  try { const res = await fetch(`${API_BASE}/api/reviews`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ bookingId: document.getElementById("review-booking-id").value, experienceId: document.getElementById("review-exp-id").value, rating: document.getElementById("review-rating").value, comment: document.getElementById("review-comment").value }) }); if (res.ok) { showModal("Thank you", "Review posted!", "success"); document.getElementById("review-modal").classList.add("hidden"); } } catch (err) { showModal("Error", "Network error", "error"); }
 });

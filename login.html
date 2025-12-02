@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login / Sign Up – The Shared Table Story</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style> body { font-family: 'Inter', sans-serif; } .hidden { display: none; } </style>
+</head>
+<body class="bg-gray-50 flex flex-col min-h-screen">
+
+  <nav class="flex items-center justify-between px-8 py-6 bg-white shadow-sm">
+    <a href="index.html" class="flex items-center gap-3">
+      <div class="h-10 w-10 bg-orange-600 rounded-full flex items-center justify-center text-white font-bold text-lg">Q</div>
+      <h1 class="text-xl font-bold tracking-tight text-gray-900">The Shared Table Story</h1>
+    </a>
+  </nav>
+
+  <div class="flex-grow flex items-center justify-center p-4">
+    <div class="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+      
+      <div class="flex border-b border-gray-200 mb-6">
+        <button id="tab-login" onclick="toggleAuth('login')" class="flex-1 pb-3 font-bold text-orange-600 border-b-2 border-orange-600">Log In</button>
+        <button id="tab-signup" onclick="toggleAuth('signup')" class="flex-1 pb-3 font-medium text-gray-500 hover:text-gray-800">Sign Up</button>
+      </div>
+
+      <form id="form-login" class="space-y-5" onsubmit="handleLogin(event)">
+        <h2 class="text-2xl font-bold">Welcome Back</h2>
+        <input id="login-email" type="email" class="w-full p-3 bg-gray-50 border rounded-lg" placeholder="Email Address" required />
+        <input id="login-password" type="password" class="w-full p-3 bg-gray-50 border rounded-lg" placeholder="Password" required />
+        
+        <div class="text-right">
+            <a href="#" onclick="alert('Verification link sent to your email.');" class="text-xs text-orange-600 hover:underline">Forgot Password?</a>
+        </div>
+
+        <button type="submit" class="w-full py-3 bg-gray-900 text-white font-bold rounded-lg hover:bg-black">Log In</button>
+      </form>
+
+      <form id="form-signup" class="space-y-5 hidden" onsubmit="handleSignup(event)">
+        <h2 class="text-2xl font-bold">Create Profile</h2>
+        <p class="text-xs text-gray-500">Join our community to book or host experiences.</p>
+        
+        <input id="signup-name" type="text" class="w-full p-3 bg-gray-50 border rounded-lg" placeholder="Full Name" required />
+        <input id="signup-email" type="email" class="w-full p-3 bg-gray-50 border rounded-lg" placeholder="Email Address" required />
+        <input id="signup-password" type="password" class="w-full p-3 bg-gray-50 border rounded-lg" placeholder="Create Password" required />
+
+        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 h-40 overflow-y-auto text-[11px] text-gray-600 leading-relaxed space-y-3">
+            <p class="font-bold text-gray-900">TERMS OF SERVICE & WAIVER</p>
+            
+            <p><strong>1. Marketplace Only:</strong> "The Shared Table Story" is a technology platform that connects independent Hosts with Guests. We do not own, operate, or provide the experiences, food, tours, or transportation. The contract for any experience is directly between the Host and the Guest.</p>
+            
+            <p><strong>2. Assumption of Risk:</strong> You acknowledge that participation in experiences (including dining, hiking, travel) carries inherent risks, including but not limited to food allergies, illness, bodily injury, or property damage. You voluntarily assume all such risks.</p>
+            
+            <p><strong>3. Liability Waiver:</strong> To the maximum extent permitted by Australian Consumer Law, you release "The Shared Table Story," its owners, and affiliates from any liability, claims, or damages arising from your use of the platform or participation in any experience.</p>
+            
+            <p><strong>4. User Responsibility:</strong> Guests are responsible for verifying the suitability of an experience for their health needs (e.g., allergies). Hosts are solely responsible for compliance with local laws, food safety standards, and insurance.</p>
+            
+            <p><strong>5. Jurisdiction:</strong> These terms are governed by the laws of Australia. Any disputes shall be resolved in the courts of the relevant State or Territory.</p>
+        </div>
+
+        <div class="flex items-start gap-3 pt-2">
+            <input id="signup-terms" type="checkbox" class="mt-1 h-4 w-4 text-orange-600 rounded cursor-pointer" required />
+            <label for="signup-terms" class="text-xs text-gray-700 cursor-pointer">
+                I have read and agree to the <strong>Terms of Service</strong>, <strong>Assumption of Risk</strong>, and <strong>Privacy Policy</strong> above.
+            </label>
+        </div>
+
+        <button type="submit" class="w-full py-3 bg-orange-600 text-white font-bold rounded-lg hover:bg-orange-700 shadow-md transition transform hover:scale-[1.02]">
+            Create Account
+        </button>
+      </form>
+
+    </div>
+  </div>
+
+  <script src="js/common.js"></script>
+  <script src="js/login.js"></script>
+</body>
+</html>

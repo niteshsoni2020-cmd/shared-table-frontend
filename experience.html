@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Experience Details – The Shared Table Story</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style> body { font-family: 'Inter', sans-serif; } </style>
+</head>
+<body class="bg-white text-gray-900">
+
+  <nav class="sticky top-0 z-50 flex items-center justify-between px-8 py-6 bg-white/95 backdrop-blur shadow-sm border-b border-gray-100 transition-all">
+    <a href="index.html" class="flex items-center gap-3 hover:opacity-90 transition group">
+      <div class="h-10 w-10 bg-orange-600 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg">Q</div>
+      <h1 class="text-2xl font-bold tracking-tight text-gray-900">The Shared Table Story</h1>
+    </a>
+    <div class="hidden md:flex items-center space-x-8 text-sm font-semibold text-gray-600">
+      <a href="explore.html" class="hover:text-orange-600">Explore</a>
+      <a href="host.html" class="hover:text-orange-600">Host</a>
+      <div id="nav-auth"></div>
+    </div>
+  </nav>
+
+  <div class="max-w-7xl mx-auto px-4 pt-8 pb-4">
+      <div class="flex justify-between items-start mb-4">
+          <h1 id="experience-title" class="text-3xl font-bold text-gray-900">Loading...</h1>
+          <div class="flex gap-2">
+             <button id="bookmark-btn-hero" class="p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition">❤️ Save</button>
+          </div>
+      </div>
+      <div id="gallery-grid" class="grid grid-cols-1 md:grid-cols-4 gap-2 h-[400px] rounded-2xl overflow-hidden">
+          <div class="md:col-span-2 h-full bg-gray-200 relative group"><img id="img-1" class="w-full h-full object-cover transition duration-700 group-hover:scale-105" src=""></div>
+          <div class="hidden md:grid md:col-span-2 grid-rows-2 gap-2 h-full">
+              <div class="bg-gray-100 overflow-hidden relative group"><img id="img-2" class="w-full h-full object-cover transition duration-700 group-hover:scale-105" src=""></div>
+              <div class="bg-gray-100 overflow-hidden relative group"><img id="img-3" class="w-full h-full object-cover transition duration-700 group-hover:scale-105" src=""></div>
+          </div>
+      </div>
+  </div>
+
+  <main class="max-w-7xl mx-auto px-4 py-8 grid md:grid-cols-3 gap-12">
+    <section class="md:col-span-2 space-y-8">
+      <div class="flex items-center gap-4 text-sm text-gray-500 border-b border-gray-200 pb-6">
+         <span id="experience-city" class="font-bold text-gray-900">City</span> • <span id="hero-category-badge">Category</span> • <span id="experience-rating">New</span>
+      </div>
+      <div class="py-4"><h2 class="text-xl font-bold mb-3">About this experience</h2><p id="experience-description" class="text-gray-700 text-lg font-light leading-relaxed">Loading...</p></div>
+      
+      <div class="py-8 border-t border-gray-100 mt-6">
+          <h2 class="text-xl font-bold mb-4 text-gray-900">Where you'll be</h2>
+          <div id="exp-map" class="h-80 w-full rounded-xl shadow-sm border border-gray-200 z-0"></div>
+      </div>
+    </section>
+
+    <aside class="md:col-span-1 relative">
+      <div class="sticky top-28 bg-white rounded-2xl shadow-xl border border-gray-100 p-6 space-y-5">
+        <div class="flex justify-between items-end pb-4 border-b border-gray-100"><div><p class="text-2xl font-bold text-gray-900" id="experience-price">$0</p><p class="text-sm text-gray-500">per person</p></div></div>
+        <form id="booking-form" class="space-y-4">
+          <div class="border border-gray-300 rounded-lg overflow-hidden">
+             <div class="p-2 border-b border-gray-300"><label class="block text-[10px] uppercase font-bold text-gray-500">Date</label><input id="booking-date" type="date" class="w-full text-sm outline-none bg-transparent" required /></div>
+             <div class="p-2 bg-white"><label class="block text-[10px] uppercase font-bold text-gray-500">Time</label><select id="booking-timeslot" class="w-full text-sm outline-none bg-transparent"><option value="">Select</option></select></div>
+          </div>
+          <div class="border border-gray-300 rounded-lg p-2"><label class="block text-[10px] uppercase font-bold text-gray-500">Guests</label><input id="guest-count" type="number" min="1" max="6" value="1" class="w-full text-sm outline-none" required /></div>
+          <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"><label for="private-toggle" class="text-sm font-medium cursor-pointer">Private Booking?</label><input id="private-toggle" type="checkbox" class="h-4 w-4 text-orange-600 rounded cursor-pointer" /></div>
+          <div id="price-preview" class="text-sm text-gray-600 flex justify-between pt-2"><span>Total</span><span class="font-bold text-gray-900">$0.00</span></div>
+          <button id="booking-submit" type="submit" class="w-full py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold rounded-lg shadow-lg hover:from-orange-600 hover:to-orange-700 transition">Reserve</button>
+          <p id="booking-status" class="text-center text-xs font-bold mt-1"></p>
+        </form>
+      </div>
+    </aside>
+  </main>
+
+  <div id="booking-success-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] hidden">
+    <div class="bg-white rounded-2xl p-8 max-w-sm w-full text-center shadow-2xl">
+      <h2 class="text-2xl font-bold mb-2">You're going!</h2>
+      <button id="booking-success-close" class="w-full py-3 bg-gray-900 text-white rounded-xl font-bold mt-4">Keep Exploring</button>
+    </div>
+  </div>
+
+  <script src="js/common.js"></script>
+  <script src="js/experience.js"></script>
+</body>
+</html>

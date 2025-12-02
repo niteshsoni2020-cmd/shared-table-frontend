@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Host an Experience – The Shared Table Story</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style> body { font-family: 'Inter', sans-serif; } </style>
+</head>
+<body class="bg-gray-50 text-gray-900">
+
+  <nav class="sticky top-0 z-50 flex items-center justify-between px-8 py-6 bg-white/95 backdrop-blur shadow-sm border-b border-gray-100 transition-all">
+    <a href="index.html" class="flex items-center gap-3 hover:opacity-90 transition group">
+      <div class="h-10 w-10 bg-orange-600 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg border-2 border-transparent group-hover:scale-105 transition">
+        <span class="mb-0.5">Q</span>
+      </div>
+      <div>
+        <h1 class="text-2xl font-bold tracking-tight leading-none text-gray-900">The Shared Table Story</h1>
+        <p class="text-[10px] tracking-[0.2em] uppercase text-orange-600 font-bold mt-0.5">Experiences</p>
+      </div>
+    </a>
+    <div class="hidden md:flex items-center space-x-8 text-sm font-semibold tracking-wide text-gray-600">
+      <a href="explore.html" class="hover:text-orange-600 transition duration-300">Explore</a>
+      <a href="host.html" class="text-orange-600 font-bold">Host an Experience</a>
+      <div id="nav-auth"></div>
+    </div>
+  </nav>
+
+  <main class="max-w-6xl mx-auto px-4 py-12">
+    <div class="grid md:grid-cols-3 gap-12">
+      
+      <div class="md:col-span-2">
+        <div class="mb-8">
+          <h1 class="text-3xl font-bold mb-3">Share your world</h1>
+          <p class="text-gray-500 text-lg">Create a listing for visitors to discover your unique cultural or dining experience.</p>
+        </div>
+
+        <form id="host-form" onsubmit="handleCreateExperience(event)" class="space-y-8 bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+          
+          <div class="space-y-6">
+            <h2 class="text-xl font-bold border-b pb-2">The Basics</h2>
+            
+            <div>
+              <label class="block text-sm font-bold text-gray-700 mb-1">Experience Title</label>
+              <input id="title" type="text" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-orange-100 transition" placeholder="e.g. Authentic Diwali Dinner in Carlton" required />
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-4">
+               <div>
+                 <label class="block text-sm font-bold text-gray-700 mb-1">City / Suburb</label>
+                 <input id="city" type="text" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-orange-100 transition" placeholder="e.g. Carlton, Melbourne" required />
+               </div>
+               <div>
+                 <label class="block text-sm font-bold text-gray-700 mb-1">Category</label>
+                 <select id="category" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-orange-100 transition cursor-pointer">
+                   <option value="Culture & Festivals">Culture & Festivals</option>
+                   <option value="Food & Dining">Food & Dining</option>
+                   <option value="Nature & Tours">Nature & Tours</option>
+                 </select>
+               </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-2">Pin Exact Location</label>
+                <div id="map-picker" class="h-64 w-full rounded-lg border border-gray-200 z-0 shadow-sm"></div>
+                <p class="text-xs text-gray-400 mt-1">Click on the map to set the meeting point.</p>
+                <input type="hidden" id="lat" name="lat" />
+                <input type="hidden" id="lng" name="lng" />
+            </div>
+
+            <div>
+              <label class="block text-sm font-bold text-gray-700 mb-1">Gallery (Max 3 Images)</label>
+              <input id="imageUpload" type="file" multiple accept="image/*" class="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 cursor-pointer" />
+              <p class="text-xs text-gray-400 mt-1">First image will be the cover. High quality recommended.</p>
+              <input type="hidden" id="finalImageUrls" />
+              <div id="image-preview" class="flex gap-4 mt-4 h-24 overflow-hidden"></div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-bold text-gray-700 mb-1">Description</label>
+              <textarea id="description" rows="4" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-orange-100 transition" placeholder="Describe what guests will do..." required></textarea>
+            </div>
+          </div>
+
+          <div class="space-y-6 pt-6 border-t border-gray-100">
+            <h2 class="text-xl font-bold border-b pb-2">Logistics</h2>
+            <div class="grid md:grid-cols-2 gap-6">
+              <div><label class="block text-sm font-bold text-gray-700 mb-1">Available From</label><input id="startDate" type="date" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg" required /></div>
+              <div><label class="block text-sm font-bold text-gray-700 mb-1">Until</label><input id="endDate" type="date" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg" required /></div>
+            </div>
+            <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
+               <label class="block text-sm font-bold text-gray-700 mb-3">Daily Schedule</label>
+               <div class="grid grid-cols-2 gap-4 mb-3">
+                 <div><span class="text-xs text-gray-500 uppercase font-bold">Start Time</span><select id="slot1Start" class="w-full mt-1 p-2 bg-white border border-gray-200 rounded-lg" required></select></div>
+                 <div><span class="text-xs text-gray-500 uppercase font-bold">Duration</span><select id="slot1Duration" class="w-full mt-1 p-2 bg-white border border-gray-200 rounded-lg" required><option value="60">1 hour</option><option value="90">1.5 hours</option><option value="120">2 hours</option><option value="180">3 hours</option></select></div>
+               </div>
+               <div class="grid grid-cols-2 gap-4 opacity-70">
+                 <div><span class="text-xs text-gray-400 uppercase font-bold">Start Time (Optional)</span><select id="slot2Start" class="w-full mt-1 p-2 bg-white border border-gray-200 rounded-lg"></select></div>
+                 <div><span class="text-xs text-gray-400 uppercase font-bold">Duration</span><select id="slot2Duration" class="w-full mt-1 p-2 bg-white border border-gray-200 rounded-lg"><option value="">Select</option><option value="60">1 hour</option><option value="120">2 hours</option></select></div>
+               </div>
+            </div>
+          </div>
+
+          <div class="space-y-6 pt-6 border-t border-gray-100">
+            <h2 class="text-xl font-bold border-b pb-2">Pricing & Rules</h2>
+            <div class="grid md:grid-cols-2 gap-6">
+               <div>
+                 <label class="block text-sm font-bold text-gray-700 mb-1">Price per Person (AUD)</label>
+                 <div class="relative"><span class="absolute left-3 top-3 text-gray-400">$</span><input id="price" type="number" class="w-full pl-8 p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none" required /></div>
+               </div>
+               <div><label class="block text-sm font-bold text-gray-700 mb-1">Max Guests</label><input id="maxGuests" type="number" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg" placeholder="10" /></div>
+            </div>
+
+            <div class="bg-orange-50 p-4 rounded-xl border border-orange-100">
+                <h3 class="font-bold text-orange-900 mb-2 text-sm">Allow Private Events? (Optional)</h3>
+                <div class="grid md:grid-cols-2 gap-4">
+                  <div><label class="block text-xs font-bold text-orange-800 mb-1">Private Price Total</label><input id="privatePrice" type="number" class="w-full p-2 bg-white border border-orange-200 rounded-lg" /></div>
+                  <div><label class="block text-xs font-bold text-orange-800 mb-1">Max Private Guests</label><input id="privateCapacity" type="number" class="w-full p-2 bg-white border border-orange-200 rounded-lg" /></div>
+                </div>
+            </div>
+
+            <div>
+               <label class="block text-sm font-bold text-gray-700 mb-2">Group Discounts</label>
+               <div class="grid grid-cols-3 gap-2">
+                 <div><span class="text-xs text-gray-500">1-2 Guests</span><select id="discSmall" class="w-full mt-1 p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"></select></div>
+                 <div><span class="text-xs text-gray-500">3-4 Guests</span><select id="discMedium" class="w-full mt-1 p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"></select></div>
+                 <div><span class="text-xs text-gray-500">5-6 Guests</span><select id="discLarge" class="w-full mt-1 p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"></select></div>
+               </div>
+            </div>
+          </div>
+
+          <div class="pt-6">
+             <button type="submit" class="w-full py-4 bg-orange-600 hover:bg-orange-700 text-white font-bold text-lg rounded-xl shadow-lg transition transform hover:scale-[1.01]">Publish Experience</button>
+             <p id="status-message" class="text-center text-sm mt-3 text-gray-500"></p>
+          </div>
+
+        </form>
+      </div>
+
+      <aside class="hidden md:block col-span-1 space-y-6">
+         <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 sticky top-28">
+            <h3 class="font-bold text-lg mb-4 text-gray-900">Hosting Tips</h3>
+            <div class="space-y-4">
+               <div class="flex gap-3"><div class="h-8 w-8 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center shrink-0 text-lg">📸</div><div><h4 class="font-bold text-sm">Great Photos Matter</h4><p class="text-xs text-gray-500 leading-relaxed">Guests love to see where they will be eating or walking.</p></div></div>
+               <div class="flex gap-3"><div class="h-8 w-8 bg-green-50 text-green-600 rounded-full flex items-center justify-center shrink-0 text-lg">🏷️</div><div><h4 class="font-bold text-sm">Pricing Smart</h4><p class="text-xs text-gray-500 leading-relaxed">Start with a lower price to get your first reviews.</p></div></div>
+            </div>
+         </div>
+      </aside>
+    </div>
+  </main>
+
+  <script src="js/common.js"></script>
+  <script src="js/host.js"></script>
+</body>
+</html>

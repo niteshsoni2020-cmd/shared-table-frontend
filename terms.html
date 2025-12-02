@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Legal & Privacy – The Shared Table Story</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style> body { font-family: 'Inter', sans-serif; } </style>
+</head>
+<body class="bg-gray-50 text-gray-900">
+
+  <nav class="sticky top-0 z-50 flex items-center justify-between px-8 py-6 bg-white/95 backdrop-blur shadow-sm border-b border-gray-100">
+    <a href="index.html" class="flex items-center gap-3">
+      <div class="h-10 w-10 bg-orange-600 rounded-full flex items-center justify-center text-white font-bold text-lg">Q</div>
+      <h1 class="text-xl font-bold tracking-tight text-gray-900">The Shared Table Story</h1>
+    </a>
+    <div class="hidden md:flex items-center space-x-8 text-sm font-semibold tracking-wide text-gray-600">
+      <a href="explore.html" class="hover:text-orange-600">Explore</a>
+      <a href="host.html" class="hover:text-orange-600">Host</a>
+      <div id="nav-auth"></div>
+    </div>
+  </nav>
+
+  <main class="max-w-4xl mx-auto px-4 py-12">
+    <h1 class="text-4xl font-bold mb-8">Legal Center</h1>
+
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      
+      <div class="flex border-b border-gray-100 bg-gray-50">
+        <button onclick="showTab('terms')" id="btn-terms" class="px-8 py-4 font-bold text-orange-600 border-b-2 border-orange-600 bg-white">Terms of Service</button>
+        <button onclick="showTab('privacy')" id="btn-privacy" class="px-8 py-4 font-medium text-gray-500 hover:text-gray-900">Privacy Policy</button>
+        <button onclick="showTab('host')" id="btn-host" class="px-8 py-4 font-medium text-gray-500 hover:text-gray-900">Host Indemnity</button>
+      </div>
+
+      <div class="p-8 text-sm leading-relaxed text-gray-700 space-y-6 min-h-[400px]">
+        
+        <div id="tab-terms">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">1. The Marketplace Platform</h2>
+            <p>"The Shared Table Story" is a marketplace that connects independent Hosts with Guests. We are not a tour operator, travel agency, or food provider. We do not own, sell, resell, furnish, provide, rent, re-rent, manage and/or control properties, or transportation or tourism services.</p>
+            
+            <h2 class="text-xl font-bold text-gray-900 mb-4 pt-4">2. Assumption of Risk</h2>
+            <p>You acknowledge and agree that your participation in any Experience may carry inherent risks (e.g. consumption of food, physical activity, travel). You voluntarily assume all such risks. For example, if you have food allergies, it is your responsibility to verify ingredients with the Host.</p>
+
+            <h2 class="text-xl font-bold text-gray-900 mb-4 pt-4">3. Australian Consumer Law</h2>
+            <p>Nothing in these Terms excludes, restricts or modifies any guarantee, right or remedy that under Australian Consumer Law cannot be excluded, restricted or modified. However, to the maximum extent permitted by law, our liability is limited to the facilitation of the connection between Host and Guest.</p>
+        </div>
+
+        <div id="tab-privacy" class="hidden">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">1. Data Collection</h2>
+            <p>We collect personal information such as your name, email, phone number, and payment details to facilitate bookings and comply with legal requirements.</p>
+            
+            <h2 class="text-xl font-bold text-gray-900 mb-4 pt-4">2. Data Usage</h2>
+            <p>We use your data to:</p>
+            <ul class="list-disc pl-5 space-y-1">
+                <li>Connect you with Hosts/Guests.</li>
+                <li>Process payments via our secure third-party provider.</li>
+                <li>Send booking confirmations and platform updates.</li>
+            </ul>
+        </div>
+
+        <div id="tab-host" class="hidden">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">Host Obligations & Indemnity</h2>
+            <p class="mb-4 font-bold bg-orange-50 p-4 border border-orange-100 rounded-lg">By listing an Experience, you agree to the following:</p>
+            
+            <p><strong>1. Compliance:</strong> You are solely responsible for ensuring your Experience complies with all applicable laws, including food safety, alcohol licensing, business registration, and insurance requirements.</p>
+            <p class="pt-2"><strong>2. Indemnity:</strong> You agree to release, defend, indemnify, and hold "The Shared Table Story" harmless from and against any claims, liabilities, damages, losses, and expenses, including, without limitation, reasonable legal and accounting fees, arising out of or in any way connected with your violation of these Terms or your interaction with any Member.</p>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <script src="js/common.js"></script>
+  <script>
+    function showTab(name) {
+        ['terms', 'privacy', 'host'].forEach(t => {
+            document.getElementById(`tab-${t}`).classList.add('hidden');
+            document.getElementById(`btn-${t}`).className = "px-8 py-4 font-medium text-gray-500 hover:text-gray-900";
+        });
+        document.getElementById(`tab-${name}`).classList.remove('hidden');
+        document.getElementById(`btn-${name}`).className = "px-8 py-4 font-bold text-orange-600 border-b-2 border-orange-600 bg-white";
+    }
+    
+    // Auto-select tab from URL ?section=privacy
+    const params = new URLSearchParams(window.location.search);
+    if(params.get('section')) showTab(params.get('section'));
+  </script>
+</body>
+</html>

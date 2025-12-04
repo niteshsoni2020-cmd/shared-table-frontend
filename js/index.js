@@ -1,253 +1,140 @@
 // js/index.js
 
-let experiencesCachePromise = null;
-
-// Reuse API base + getToken from common.js
-// API_BASE and getToken() are defined globally in common.js
-
-// ---- Helpers ----
-
-// Fetch all experiences once and cache the promise
-function getAllExperiences() {
-  if (!experiencesCachePromise) {
-    experiencesCachePromise = fetch(`${API_BASE}/api/experiences`)
-      .then(res => {
-        if (!res.ok) throw new Error("Failed to load experiences");
-        return res.json();
-      })
-      .catch(err => {
-        console.error("Error fetching experiences for homepage:", err);
-        return [];
-      });
+// --- 1. DATA: CURATED COLLECTIONS (From GPT-5 Strategy) ---
+const collectionsData = [
+  {
+    id: "solo-traveller-friendly",
+    title: "Solo Friendly",
+    description: "Intimate tables where you'll feel like family, not a stranger.",
+    icon: "🧭",
+    searchQuery: "solo"
+  },
+  {
+    id: "date-night",
+    title: "Date Night",
+    description: "Candlelit dinners and cozy homes perfect for conversation.",
+    icon: "💫",
+    searchQuery: "romantic"
+  },
+  {
+    id: "budget-eats",
+    title: "Budget Eats",
+    description: "Affordable home-cooked meals rich in flavor and stories.",
+    icon: "🍲",
+    searchQuery: "budget"
+  },
+  {
+    id: "family-and-friends",
+    title: "Family Tables",
+    description: "Experiences where kids and groups are welcomed with open arms.",
+    icon: "👨‍👩‍👧‍👦",
+    searchQuery: "family"
   }
-  return experiencesCachePromise;
+];
+
+// --- 2. RENDER LOGIC ---
+function renderCollections() {
+    const container = document.getElementById("collections-list");
+    if (!container) return;
+
+    container.innerHTML = collectionsData.map(col => `
+        <div onclick="window.location.href='explore.html?q=${col.searchQuery}'" 
+             class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition cursor-pointer group flex flex-col justify-between h-full">
+            <div>
+                <div class="h-12 w-12 bg-gray-50 rounded-full flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition">
+                    ${col.icon}
+                </div>
+                <h3 class="text-lg font-bold text-gray-900 mb-2 group-hover:text-orange-600 transition">${col.title}</h3>
+                <p class="text-sm text-gray-500 leading-relaxed">${col.description}</p>
+            </div>
+            <div class="mt-6 flex items-center text-xs font-bold text-orange-600">
+                Browse Collection <span>→</span>
+            </div>
+        </div>
+    `).join("");
 }
 
-// Compute max discount for a single experience
-function getMaxDiscountFromExp(exp) {
-  if (!exp) return null;
-
-  if (typeof exp.maxDiscountPercent === "number") {
-    return exp.maxDiscountPercent;
-  }
-
-  const dd = exp.dynamicDiscounts;
-  if (!dd || typeof dd !== "object") return null;
-
-  let max = 0;
-  for (let g = 1; g <= 12; g++) {
-    const key1 = g;
-    const key2 = String(g);
-    const v = dd[key1] ?? dd[key2];
-    if (typeof v === "number" && v > max) {
-      max = v;
-    }
-  }
-  return max || null;
-}
-
-// Find the experience with the overall highest discount
-function findBestDiscountExperience(experiences) {
-  let best = null;
-  let bestDiscount = 0;
-
-  experiences.forEach(exp => {
-    const d = getMaxDiscountFromExp(exp);
-    if (typeof d === "number" && d > bestDiscount) {
-      bestDiscount = d;
-      best = exp;
-    }
-  });
-
-  if (!best || bestDiscount <= 0) return null;
-
-  return { exp: best, discount: bestDiscount };
-}
-
-// Pick top-N recommendations from a list (prefer higher rating)
-function pickTopRecommendations(experiences, n = 3) {
-  if (!Array.isArray(experiences) || experiences.length === 0) {
-    return [];
-  }
-
-  const expsCopy = [...experiences];
-
-  expsCopy.sort((a, b) => {
-    const ar = typeof a.averageRating === "number" ? a.averageRating : 0;
-    const br = typeof b.averageRating === "number" ? b.averageRating : 0;
-    // Descending rating
-    if (br !== ar) return br - ar;
-
-    // Tie-breaker: more reviews first
-    const ac = typeof a.reviewCount === "number" ? a.reviewCount : 0;
-    const bc = typeof b.reviewCount === "number" ? b.reviewCount : 0;
-    return bc - ac;
-  });
-
-  return expsCopy.slice(0, n);
-}
-
-// Render a single recommendation card
-function renderRecommendationCard(container, exp) {
-  const card = document.createElement("article");
-  card.className =
-    "bg-white rounded-2xl shadow p-4 flex flex-col gap-2 cursor-pointer hover:shadow-md transition border border-gray-100";
-
-  const title = exp.title || "Shared table experience";
-  const city = (exp.city || "").trim();
-  const tags = Array.isArray(exp.tags) ? exp.tags : [];
-  const price = typeof exp.price === "number" ? exp.price : null;
-  const rating = typeof exp.averageRating === "number" ? exp.averageRating : null;
-  const reviewCount = typeof exp.reviewCount === "number" ? exp.reviewCount : null;
-  const maxDiscount = getMaxDiscountFromExp(exp);
-
-  card.innerHTML = `
-    <div class="flex flex-col gap-1">
-      <h3 class="text-base font-semibold text-gray-900">${title}</h3>
-      <p class="text-xs text-gray-500">
-        ${city || "Hosted nearby"}
-        ${
-          tags && tags.length
-            ? " · " + tags.slice(0, 2).join(", ")
-            : ""
-        }
-      </p>
-      ${
-        rating !== null
-          ? `<p class="text-xs text-gray-500">
-               ⭐ ${rating.toFixed(1)}${
-                 reviewCount
-                   ? ` · ${reviewCount} review${reviewCount === 1 ? "" : "s"}`
-                   : ""
-               }
-             </p>`
-          : ""
-      }
-    </div>
-
-    <div class="mt-2 flex items-baseline justify-between">
-      <div>
-        ${
-          price !== null
-            ? `<p class="text-sm font-semibold text-gray-900">
-                 From $${price.toFixed(2)} per person
-               </p>`
-            : ""
-        }
-        ${
-          maxDiscount
-            ? `<p class="text-xs text-green-700 mt-1">
-                 Up to ${maxDiscount}% off on group bookings
-               </p>`
-            : ""
-        }
-      </div>
-    </div>
-  `;
-
-  card.addEventListener("click", () => {
-    if (typeof exp.id !== "undefined") {
-      window.location.href = `experience.html?id=${exp.id}`;
-    }
-  });
-
-  container.appendChild(card);
-}
-
-// ---- Banner: max discount text ----
-
+// --- 3. RECOMMENDATIONS & DEALS (Existing Logic) ---
 async function updateMaxDiscountBanner() {
   const bannerEl = document.getElementById("max-discount-banner");
-  const discountCard = document.getElementById("discount-card");
   if (!bannerEl) return;
 
-  const experiences = await getAllExperiences();
-  if (!Array.isArray(experiences) || experiences.length === 0) {
-    bannerEl.textContent = "Discover hosts offering group discounts.";
-    return;
-  }
+  try {
+      const res = await fetch(`${API_BASE}/api/experiences`);
+      const experiences = await res.json();
+      
+      // Find max discount
+      let maxDiscount = 0;
+      experiences.forEach(exp => {
+          if (exp.dynamicDiscounts) {
+              const vals = Object.values(exp.dynamicDiscounts);
+              if (vals.length > 0) maxDiscount = Math.max(maxDiscount, ...vals);
+          }
+      });
 
-  const best = findBestDiscountExperience(experiences);
-  if (!best) {
-    bannerEl.textContent = "Discover hosts offering group discounts.";
-    return;
-  }
-
-  const { exp, discount } = best;
-  const city = (exp.city || "").trim();
-
-  if (discount > 0 && city) {
-    bannerEl.textContent = `Save up to ${discount}% on shared experiences in ${city}.`;
-  } else if (discount > 0) {
-    bannerEl.textContent = `Save up to ${discount}% on shared experiences with group bookings.`;
-  } else {
-    bannerEl.textContent = "Discover hosts offering group discounts.";
-  }
-
-  // Make the discount banner lead user into Explore with a focus on deals
-  if (discountCard) {
-    discountCard.addEventListener("click", () => {
-      // You can make this more specific later, e.g. ?sort=best_deals
-      window.location.href = "explore.html";
-    });
-  }
+      if (maxDiscount > 0) {
+        bannerEl.textContent = `Discover hosts offering up to ${maxDiscount}% off for groups this week.`;
+      }
+  } catch(e) { console.error("Banner error", e); }
 }
-
-// ---- Recommendations section ----
 
 async function loadHomeRecommendations() {
   const section = document.getElementById("home-recommend");
   const list = document.getElementById("home-recommend-list");
   if (!section || !list) return;
 
-  const token = typeof getToken === "function" ? getToken() : null;
-  let recs = [];
+  const token = getToken();
+  try {
+      // If logged in, get personalized. If not, get top rated.
+      const endpoint = token ? `${API_BASE}/api/recommendations` : `${API_BASE}/api/experiences?sort=rating_desc`;
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      
+      const res = await fetch(endpoint, { headers });
+      const data = await res.json();
+      
+      // Take top 4
+      const recs = data.slice(0, 4); 
 
-  // 1) Try personalized recommendations if logged in
-  if (token) {
-    try {
-      const res = await fetch(`${API_BASE}/api/recommendations`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          recs = data;
-        }
+      if (recs.length > 0) {
+          section.classList.remove("hidden");
+          list.innerHTML = recs.map(exp => renderCard(exp)).join("");
       }
-    } catch (err) {
-      console.error("Error loading personalized recommendations:", err);
-    }
-  }
-
-  // 2) Fallback: use top-rated experiences
-  if (recs.length === 0) {
-    const experiences = await getAllExperiences();
-    recs = pickTopRecommendations(experiences, 3);
-  }
-
-  if (!recs || recs.length === 0) {
-    // Nothing to show -> keep section hidden
-    section.classList.add("hidden");
-    return;
-  }
-
-  // Render
-  list.innerHTML = "";
-  recs.slice(0, 3).forEach(exp => renderRecommendationCard(list, exp));
-  section.classList.remove("hidden");
+  } catch (err) { console.error("Recs error", err); }
 }
 
-// ---- Init ----
+function renderCard(exp) {
+    // Shared image logic helper
+    let imgSrc = "https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=400&auto=format&fit=crop";
+    if (exp.imageUrl && exp.imageUrl.includes("cloudinary.com")) {
+        imgSrc = exp.imageUrl.replace('/upload/', '/upload/w_400,h_300,c_fill,q_auto/');
+    } else if (exp.imageUrl) {
+        imgSrc = exp.imageUrl;
+    }
 
+    const rating = exp.averageRating > 0 ? `★ ${exp.averageRating.toFixed(1)}` : "New";
+
+    return `
+    <div onclick="window.location.href='experience.html?id=${exp.id}'" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition cursor-pointer group">
+        <div class="h-48 bg-gray-200 relative overflow-hidden">
+            <img src="${imgSrc}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+            <div class="absolute top-3 right-3 bg-white/90 backdrop-blur rounded-full px-2 py-1 text-xs font-bold shadow-sm">
+                ${rating}
+            </div>
+        </div>
+        <div class="p-4">
+            <h3 class="font-bold text-gray-900 mb-1 truncate">${exp.title}</h3>
+            <p class="text-xs text-gray-500 mb-3">${exp.city} • ${exp.tags[0] || 'Experience'}</p>
+            <div class="flex justify-between items-center border-t border-gray-50 pt-3">
+                <span class="font-bold text-gray-900">$${exp.price}</span>
+                <span class="text-xs text-orange-600 font-bold uppercase tracking-wide group-hover:underline">View</span>
+            </div>
+        </div>
+    </div>`;
+}
+
+// --- INIT ---
 document.addEventListener("DOMContentLoaded", () => {
-  // Update banner + hook discount card
-  updateMaxDiscountBanner().catch(err =>
-    console.error("Error updating max discount banner:", err)
-  );
-
-  // Load recommendations
-  loadHomeRecommendations().catch(err =>
-    console.error("Error loading home recommendations:", err)
-  );
+  renderCollections();
+  updateMaxDiscountBanner();
+  loadHomeRecommendations();
 });

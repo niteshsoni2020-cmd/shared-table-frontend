@@ -30,8 +30,6 @@ function logout() {
 // --- GLOBAL MODAL (Replaces 'alert') ---
 function showModal(title, message, type = 'info') {
     let modal = document.getElementById('global-modal');
-    
-    // Inject modal HTML if it doesn't exist yet
     if (!modal) {
         const html = `
           <div id="global-modal" class="fixed inset-0 bg-black/50 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm transition-opacity">
@@ -45,8 +43,6 @@ function showModal(title, message, type = 'info') {
         document.body.insertAdjacentHTML('beforeend', html);
         modal = document.getElementById('global-modal');
     }
-
-    // Populate Content
     document.getElementById('modal-title').textContent = title;
     document.getElementById('modal-message').textContent = message;
     
@@ -61,7 +57,6 @@ function showModal(title, message, type = 'info') {
         icon.textContent = 'ℹ️'; 
         icon.className = 'h-16 w-16 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl'; 
     }
-
     modal.classList.remove('hidden');
 }
 
@@ -69,7 +64,6 @@ function showModal(title, message, type = 'info') {
 function updateNavAuth() {
   const container = document.getElementById("nav-auth");
   const mobileContainer = document.getElementById("mobile-auth");
-  
   const user = getCurrentUser();
 
   // 1. INJECT "DEALS" LINK (Desktop)
@@ -80,10 +74,7 @@ function updateNavAuth() {
   }
 
   if (user) {
-    // Admin Link Check
     const adminLink = user.role === 'Admin' ? `<a href="admin.html" class="block px-5 py-3 text-sm text-red-600 font-bold hover:bg-red-50 transition">⚡ Super Admin Panel</a>` : '';
-
-    // Notification Dot Logic (Simulated for now, real fetch later)
     const bellIcon = `<div class="relative cursor-pointer group">
         <span class="text-xl">🔔</span>
         <span id="notif-dot" class="absolute top-0 right-0 h-3 w-3 bg-red-500 rounded-full border-2 border-white hidden"></span>
@@ -95,7 +86,6 @@ function updateNavAuth() {
         </div>
     </div>`;
 
-    // 1. DESKTOP DROPDOWN
     if (container) {
         container.innerHTML = `
           <div class="flex items-center gap-6">
@@ -105,7 +95,6 @@ function updateNavAuth() {
                 <span>${user.name}</span>
                 <svg class="w-4 h-4 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                 </button>
-                
                 <div class="absolute right-0 top-full pt-4 w-64 hidden group-hover:block z-50">
                 <div class="bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden transform origin-top-right transition-all">
                     <div class="py-2">
@@ -121,11 +110,9 @@ function updateNavAuth() {
                 </div>
             </div>
           </div>`;
-          
-          fetchNotifications(); // Load bell data
+          fetchNotifications();
     }
 
-    // 2. MOBILE MENU LIST
     if (mobileContainer) {
         mobileContainer.innerHTML = `
             <div class="border-t border-gray-100 pt-4 mt-4">
@@ -142,21 +129,15 @@ function updateNavAuth() {
                 <button onclick="logout()" class="block w-full text-left py-3 text-red-500 font-bold">Log Out</button>
             </div>`;
     }
-
   } else {
-    // LOGGED OUT STATE
     const here = window.location.pathname + window.location.search;
     const redirectParam = encodeURIComponent(here);
     const loginBtn = `<a href="login.html?redirect=${redirectParam}" class="px-5 py-2.5 bg-orange-600 text-white rounded-full text-sm font-bold shadow-md hover:bg-orange-700 transition transform hover:scale-105">Log In</a>`;
-    
     if (container) container.innerHTML = loginBtn;
-    if (mobileContainer) mobileContainer.innerHTML = `
-        <a href="explore.html?sort=discount_desc" class="block py-3 text-red-600 font-bold border-b border-gray-50">🔥 Deals & Offers</a>
-        <div class="mt-6 border-t border-gray-100 pt-6">${loginBtn}</div>`;
+    if (mobileContainer) mobileContainer.innerHTML = `<a href="explore.html?sort=discount_desc" class="block py-3 text-red-600 font-bold border-b border-gray-50">🔥 Deals & Offers</a><div class="mt-6 border-t border-gray-100 pt-6">${loginBtn}</div>`;
   }
 }
 
-// --- NOTIFICATIONS ---
 async function fetchNotifications() {
     const token = getToken();
     if (!token) return;
@@ -174,21 +155,19 @@ async function fetchNotifications() {
     } catch(e) {}
 }
 
-// --- MOBILE MENU TOGGLE ---
 function toggleMobileMenu() {
     const menu = document.getElementById('mobile-menu');
     if (!menu) return;
-    
     if (menu.classList.contains('hidden')) {
         menu.classList.remove('hidden');
-        document.body.style.overflow = 'hidden'; // Lock scroll
+        document.body.style.overflow = 'hidden'; 
     } else {
         menu.classList.add('hidden');
-        document.body.style.overflow = ''; // Unlock scroll
+        document.body.style.overflow = ''; 
     }
 }
 
-// --- FOOTER INJECTION ---
+// --- FOOTER INJECTION (UPDATED) ---
 function injectFooter() {
     if (document.getElementById("app-footer")) return;
 
@@ -203,7 +182,9 @@ function injectFooter() {
                 <div class="h-8 w-8 bg-orange-600 rounded-full flex items-center justify-center font-bold text-sm">Q</div>
                 <span class="font-bold text-lg">Shared Table</span>
             </div>
-            <p class="text-xs leading-relaxed">Connecting people through authentic food, culture, and stories. Built for Australia.</p>
+            <p class="text-xs leading-relaxed text-gray-500">
+               Born from the idea that food tastes better when people connect. Every experience on this platform is a doorway into someone’s culture, memory, or home.
+            </p>
          </div>
          
          <div>
@@ -220,16 +201,18 @@ function injectFooter() {
             <ul class="space-y-2 text-sm">
                 <li><a href="host.html" class="hover:text-orange-500 transition">List an Experience</a></li>
                 <li><a href="my-bookings.html?view=hosting" class="hover:text-orange-500 transition">Host Dashboard</a></li>
-                <li><a href="terms.html?section=host" class="hover:text-orange-500 transition">Host Responsibilities</a></li>
+                <li><a href="terms.html?section=host" class="hover:text-orange-500 transition">Trust & Safety</a></li>
+                <li><a href="terms.html?section=host" class="hover:text-orange-500 transition">Host Guidelines</a></li>
             </ul>
          </div>
 
          <div>
             <h4 class="text-white font-bold mb-4">Support</h4>
             <ul class="space-y-2 text-sm">
-                <li><a href="terms.html?section=terms" class="hover:text-orange-500 transition">Terms of Service</a></li>
+                <li><a href="about.html" class="hover:text-orange-500 transition">Our Story</a></li>
+                <li><a href="terms.html?section=terms" class="hover:text-orange-500 transition">Terms & Cancellation</a></li>
                 <li><a href="terms.html?section=privacy" class="hover:text-orange-500 transition">Privacy Policy</a></li>
-                <li><a href="about.html" class="hover:text-orange-500 transition">About & Contact</a></li>
+                <li><a href="about.html" class="hover:text-orange-500 transition">Contact Us</a></li>
             </ul>
          </div>
       </div>
@@ -245,10 +228,8 @@ function injectFooter() {
     document.body.appendChild(footer);
 }
 
-// --- COOKIE BANNER (AUSTRALIAN LAW) ---
 function checkCookieConsent() {
     if (localStorage.getItem("cookie_consent")) return;
-    
     const banner = document.createElement("div");
     banner.className = "fixed bottom-0 left-0 right-0 bg-gray-900 text-white p-4 z-[200] flex flex-col md:flex-row justify-between items-center gap-4 shadow-2xl border-t border-gray-700";
     banner.innerHTML = `
@@ -261,14 +242,12 @@ function checkCookieConsent() {
         </button>
     `;
     document.body.appendChild(banner);
-
     document.getElementById("accept-cookies").addEventListener("click", () => {
         localStorage.setItem("cookie_consent", "true");
         banner.remove();
     });
 }
 
-// --- INIT ---
 document.addEventListener("DOMContentLoaded", () => {
     updateNavAuth();
     injectFooter();

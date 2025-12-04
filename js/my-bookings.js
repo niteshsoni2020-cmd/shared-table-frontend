@@ -1,7 +1,7 @@
 // js/my-bookings.js
 
-let currentReviewType = "guest_to_host"; // State to track review mode
-let currentTargetId = null; // State to track who is being reviewed
+let currentReviewType = "guest_to_host"; 
+let currentTargetId = null; 
 
 // --- HELPER: Image Optimization ---
 function getImageForExperience(exp) {
@@ -96,9 +96,10 @@ function createTripCard(booking, exp, isUpcoming) {
         </div>`;
     } 
     else {
+        // UPCOMING
         actionBtn = `
         <div class="mt-4 grid grid-cols-2 gap-2">
-            <button onclick="rescheduleBooking('${booking.id}', '${booking.experienceId}')" class="py-2 border border-blue-200 text-blue-600 hover:bg-blue-50 font-bold rounded-lg text-xs transition">Change Date</button>
+            <button onclick="openRescheduleModal('${booking.id}', '${booking.bookingDate}', '${booking.timeSlot}')" class="py-2 border border-blue-200 text-blue-600 hover:bg-blue-50 font-bold rounded-lg text-xs transition">Change Date</button>
             <button onclick="cancelBooking('${booking.id}')" class="py-2 border border-red-200 text-red-600 hover:bg-red-50 font-bold rounded-lg text-xs transition">Cancel</button>
         </div>`;
     }
@@ -122,27 +123,77 @@ function createTripCard(booking, exp, isUpcoming) {
     </div>`;
 }
 
-// --- FEATURES: RESCHEDULE & REPORT ---
-async function rescheduleBooking(bookingId, expId) {
-    const newDate = prompt("Enter new date (YYYY-MM-DD):");
-    if (!newDate) return;
-    const newSlot = prompt("Enter new time (e.g., 18:00-20:00):");
-    if (!newSlot) return;
+// --- NEW MODAL: RESCHEDULE ---
+function openRescheduleModal(bookingId, oldDate, oldSlot) {
+    let modal = document.getElementById('reschedule-modal');
+    if (!modal) {
+        const html = `
+        <div id="reschedule-modal" class="fixed inset-0 bg-black/60 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+            <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6">
+                <h3 class="text-xl font-bold mb-2">Change Date</h3>
+                <p class="text-sm text-gray-500 mb-4">Choose a new time for your experience.</p>
+                
+                <div class="space-y-3 mb-6">
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-gray-500 mb-1">New Date</label>
+                        <input id="reschedule-date" type="date" class="w-full p-2 border border-gray-200 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-gray-500 mb-1">New Time</label>
+                        <input id="reschedule-time" type="text" class="w-full p-2 border border-gray-200 rounded-lg" placeholder="e.g. 18:00">
+                    </div>
+                </div>
 
-    const token = getToken();
-    try {
-        const res = await fetch(`${API_BASE}/api/bookings/${bookingId}/reschedule`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-            body: JSON.stringify({ newDate, newSlot })
-        });
-        const data = await res.json();
-        if (res.ok) { showModal("Success", "Booking rescheduled!", "success"); loadTrips(); } 
-        else { showModal("Failed", data.message, "error"); }
-    } catch(e) { showModal("Error", "Network error.", "error"); }
+                <div class="flex gap-3">
+                    <button onclick="document.getElementById('reschedule-modal').classList.add('hidden')" class="flex-1 py-3 bg-gray-100 font-bold rounded-xl text-gray-700">Cancel</button>
+                    <button id="confirm-reschedule-btn" class="flex-1 py-3 bg-blue-600 font-bold rounded-xl text-white hover:bg-blue-700 transition">Confirm</button>
+                </div>
+            </div>
+        </div>`;
+        document.body.insertAdjacentHTML('beforeend', html);
+        modal = document.getElementById('reschedule-modal');
+    }
+
+    // Pre-fill
+    document.getElementById('reschedule-date').value = oldDate;
+    document.getElementById('reschedule-time').value = oldSlot;
+    modal.classList.remove('hidden');
+
+    // Attach Logic
+    const confirmBtn = document.getElementById('confirm-reschedule-btn');
+    const newBtn = confirmBtn.cloneNode(true); // Remove old listeners
+    confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
+
+    newBtn.addEventListener('click', async () => {
+        const newDate = document.getElementById('reschedule-date').value;
+        const newSlot = document.getElementById('reschedule-time').value;
+        if(!newDate || !newSlot) return showModal("Error", "Please fill all fields", "error");
+
+        newBtn.textContent = "Updating...";
+        const token = getToken();
+        try {
+            const res = await fetch(`${API_BASE}/api/bookings/${bookingId}/reschedule`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+                body: JSON.stringify({ newDate, newSlot })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                showModal("Success", "Booking rescheduled!", "success");
+                modal.classList.add('hidden');
+                loadTrips();
+            } else {
+                showModal("Unavailable", data.message, "error");
+            }
+        } catch(e) { showModal("Error", "Network error.", "error"); }
+        newBtn.textContent = "Confirm";
+    });
 }
 
+// --- REPORT ISSUE ---
 async function reportIssue(bookingId) {
+    // For MVP we stick to prompt, or upgrade to modal similar to above if desired. 
+    // Sticking to prompt for this specific one to save file size unless requested.
     const reason = prompt("Please describe the issue with this experience:");
     if (!reason) return;
     const token = getToken();
@@ -222,7 +273,6 @@ async function viewGuestList(expId, title) {
     const token = getToken();
     let modal = document.getElementById('guest-list-modal');
     if (!modal) {
-        // Modal with title
         const html = `<div id="guest-list-modal" class="fixed inset-0 bg-black/60 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm"><div class="bg-white rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden max-h-[80vh] flex flex-col"><div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50"><div><h2 class="text-xl font-bold text-gray-900" id="guest-modal-title"></h2><p class="text-xs text-gray-500">Upcoming guests for this experience</p></div><button onclick="document.getElementById('guest-list-modal').classList.add('hidden')" class="text-gray-400 hover:text-gray-900 text-2xl">&times;</button></div><div class="p-0 overflow-y-auto flex-1"><table class="w-full text-left text-sm"><thead class="bg-gray-50 text-gray-500 font-bold uppercase text-xs"><tr><th class="px-6 py-3">Guest</th><th class="px-6 py-3">Date</th><th class="px-6 py-3">Pax</th><th class="px-6 py-3">Actions</th></tr></thead><tbody id="guest-list-body" class="divide-y divide-gray-100"></tbody></table><div id="guest-list-empty" class="hidden p-8 text-center text-gray-400">No bookings yet.</div></div></div></div>`;
         document.body.insertAdjacentHTML('beforeend', html);
         modal = document.getElementById('guest-list-modal');
@@ -247,7 +297,6 @@ async function viewGuestList(expId, title) {
                 const guestId = b.guestId ? b.guestId._id : null;
                 const isPast = new Date(b.bookingDate) < now;
                 
-                // Show "Rate" button if trip is over
                 let action = `<a href="mailto:${b.guestEmail || ''}" class="text-blue-600 hover:underline">Contact</a>`;
                 if (isPast && guestId) {
                     action = `<button onclick="openReviewModal('${b.id}', '${expId}', 'host_to_guest', '${guestId}')" class="px-3 py-1 bg-orange-100 text-orange-700 font-bold text-xs rounded hover:bg-orange-200">⭐ Rate Guest</button>`;
@@ -259,54 +308,34 @@ async function viewGuestList(expId, title) {
     } catch(e) { tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-4 text-center text-red-500">Error loading guests.</td></tr>'; }
 }
 
-// --- SHARED REVIEW MODAL (SMART) ---
+// --- SHARED REVIEW MODAL ---
 function openReviewModal(bookingId, experienceId, type, targetId = null) {
   document.getElementById("review-booking-id").value = bookingId;
   document.getElementById("review-exp-id").value = experienceId;
-  
-  // Set Global Context
   currentReviewType = type;
   currentTargetId = targetId;
-
-  // Change UI Title based on type
   const title = document.querySelector("#review-modal h2");
-  if (type === "host_to_guest") {
-      title.textContent = "Review Guest";
-  } else {
-      title.textContent = "Write a Review";
-  }
-
+  if (type === "host_to_guest") { title.textContent = "Review Guest"; } else { title.textContent = "Write a Review"; }
   document.getElementById("review-modal").classList.remove("hidden");
 }
 
 document.getElementById("review-form").addEventListener("submit", async (e) => {
   e.preventDefault();
   const token = getToken();
-  
   const payload = {
       bookingId: document.getElementById("review-booking-id").value,
       experienceId: document.getElementById("review-exp-id").value,
       rating: document.getElementById("review-rating").value,
       comment: document.getElementById("review-comment").value,
-      type: currentReviewType, // "guest_to_host" or "host_to_guest"
-      targetId: currentTargetId  // Only used for host reviewing guest
+      type: currentReviewType,
+      targetId: currentTargetId
   };
-
   try {
     const res = await fetch(`${API_BASE}/api/reviews`, { 
-        method: "POST", 
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify(payload)
+        method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify(payload)
     });
-    
-    if (res.ok) { 
-        showModal("Thank you", "Review posted successfully!", "success"); 
-        document.getElementById("review-modal").classList.add("hidden"); 
-        e.target.reset();
-    } else {
-        const d = await res.json();
-        showModal("Error", d.message, "error");
-    }
+    if (res.ok) { showModal("Thank you", "Review posted successfully!", "success"); document.getElementById("review-modal").classList.add("hidden"); e.target.reset(); } 
+    else { const d = await res.json(); showModal("Error", d.message, "error"); }
   } catch (err) { showModal("Error", "Network error", "error"); }
 });
 

@@ -24,11 +24,6 @@
 
   <main class="max-w-7xl mx-auto px-4 py-10 space-y-10">
     
-    <div>
-        <h2 class="text-2xl font-bold text-white mb-1">Platform Overview</h2>
-        <p class="text-gray-400 text-sm">Real-time metrics for your marketplace.</p>
-    </div>
-
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 relative overflow-hidden group">
             <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition text-6xl text-green-500 font-black">$</div>
@@ -46,6 +41,31 @@
         <div class="bg-gray-800 p-6 rounded-xl border border-gray-700">
             <h3 class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Total Bookings</h3>
             <p class="text-4xl font-bold text-white" id="stat-bookings">0</p>
+        </div>
+    </div>
+
+    <div id="resolution-center" class="hidden bg-red-900/20 rounded-xl border border-red-900/50 overflow-hidden shadow-xl animate-pulse-slow">
+        <div class="p-6 border-b border-red-900/50 flex justify-between items-center bg-red-900/30">
+            <div class="flex items-center gap-2">
+                <span class="text-2xl">🚨</span>
+                <div>
+                    <h2 class="text-lg font-bold text-white">Resolution Center</h2>
+                    <p class="text-xs text-red-300">Active disputes requiring attention</p>
+                </div>
+            </div>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm text-gray-300">
+                <thead class="bg-red-900/40 text-xs uppercase font-bold text-red-200 tracking-wider">
+                    <tr>
+                        <th class="px-6 py-4">Booking ID</th>
+                        <th class="px-6 py-4">Issue Reported</th>
+                        <th class="px-6 py-4">Guest</th>
+                        <th class="px-6 py-4 text-right">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="disputes-table-body" class="divide-y divide-red-900/30"></tbody>
+            </table>
         </div>
     </div>
 
@@ -104,7 +124,6 @@
                 <tbody id="listings-table-body" class="divide-y divide-gray-700"></tbody>
             </table>
         </div>
-        
         <div id="no-results" class="hidden p-8 text-center text-gray-500 text-sm">No listings found.</div>
     </div>
 

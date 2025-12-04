@@ -120,21 +120,29 @@ function updateNavAuth() {
                     <div class="h-10 w-10 bg-orange-100 rounded-full flex items-center justify-center text-orange-600 font-bold">${user.name.charAt(0)}</div>
                     <div><div class="font-bold text-gray-900">${user.name}</div><div class="text-xs text-gray-500">${user.email}</div></div>
                 </div>
+                <a href="explore.html" class="block py-3 text-gray-600 font-medium border-b border-gray-50">Explore Experiences</a>
                 <a href="explore.html?sort=discount_desc" class="block py-3 text-red-600 font-bold border-b border-gray-50">🔥 Deals & Offers</a>
                 <a href="profile.html" class="block py-3 text-gray-600 font-medium border-b border-gray-50">Profile</a>
                 <a href="my-bookings.html?view=trips" class="block py-3 text-gray-600 font-medium border-b border-gray-50">My Bookings</a>
-                <a href="my-bookings.html?view=saved" class="block py-3 text-gray-600 font-medium border-b border-gray-50">My Saved</a>
                 <a href="my-bookings.html?view=hosting" class="block py-3 text-gray-600 font-medium border-b border-gray-50">Host Dashboard</a>
                 ${user.role === 'Admin' ? '<a href="admin.html" class="block py-3 text-red-600 font-bold border-b border-gray-50">Super Admin Panel</a>' : ''}
                 <button onclick="logout()" class="block w-full text-left py-3 text-red-500 font-bold">Log Out</button>
             </div>`;
     }
   } else {
+    // LOGGED OUT STATE
     const here = window.location.pathname + window.location.search;
     const redirectParam = encodeURIComponent(here);
     const loginBtn = `<a href="login.html?redirect=${redirectParam}" class="px-5 py-2.5 bg-orange-600 text-white rounded-full text-sm font-bold shadow-md hover:bg-orange-700 transition transform hover:scale-105">Log In</a>`;
+    
     if (container) container.innerHTML = loginBtn;
-    if (mobileContainer) mobileContainer.innerHTML = `<a href="explore.html?sort=discount_desc" class="block py-3 text-red-600 font-bold border-b border-gray-50">🔥 Deals & Offers</a><div class="mt-6 border-t border-gray-100 pt-6">${loginBtn}</div>`;
+    
+    // UPDATED: Added standard links here
+    if (mobileContainer) mobileContainer.innerHTML = `
+        <a href="explore.html" class="block py-3 text-gray-900 font-medium border-b border-gray-50">Explore Experiences</a>
+        <a href="host.html" class="block py-3 text-gray-900 font-medium border-b border-gray-50">Host an Experience</a>
+        <a href="explore.html?sort=discount_desc" class="block py-3 text-red-600 font-bold border-b border-gray-50">🔥 Deals & Offers</a>
+        <div class="mt-6 border-t border-gray-100 pt-6">${loginBtn}</div>`;
   }
 }
 
@@ -167,7 +175,7 @@ function toggleMobileMenu() {
     }
 }
 
-// --- FOOTER INJECTION (UPDATED) ---
+// --- FOOTER INJECTION ---
 function injectFooter() {
     if (document.getElementById("app-footer")) return;
 

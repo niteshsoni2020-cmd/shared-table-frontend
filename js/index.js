@@ -1,6 +1,6 @@
 // js/index.js
 
-// --- 1. DATA: CURATED COLLECTIONS (From GPT-5 Strategy) ---
+// --- 1. DATA: CURATED COLLECTIONS ---
 const collectionsData = [
   {
     id: "solo-traveller-friendly",
@@ -54,7 +54,7 @@ function renderCollections() {
     `).join("");
 }
 
-// --- 3. RECOMMENDATIONS & DEALS (Existing Logic) ---
+// --- 3. RECOMMENDATIONS & DEALS ---
 async function updateMaxDiscountBanner() {
   const bannerEl = document.getElementById("max-discount-banner");
   if (!bannerEl) return;
@@ -63,7 +63,6 @@ async function updateMaxDiscountBanner() {
       const res = await fetch(`${API_BASE}/api/experiences`);
       const experiences = await res.json();
       
-      // Find max discount
       let maxDiscount = 0;
       experiences.forEach(exp => {
           if (exp.dynamicDiscounts) {
@@ -85,14 +84,12 @@ async function loadHomeRecommendations() {
 
   const token = getToken();
   try {
-      // If logged in, get personalized. If not, get top rated.
       const endpoint = token ? `${API_BASE}/api/recommendations` : `${API_BASE}/api/experiences?sort=rating_desc`;
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
       
       const res = await fetch(endpoint, { headers });
       const data = await res.json();
       
-      // Take top 4
       const recs = data.slice(0, 4); 
 
       if (recs.length > 0) {
@@ -103,7 +100,6 @@ async function loadHomeRecommendations() {
 }
 
 function renderCard(exp) {
-    // Shared image logic helper
     let imgSrc = "https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=400&auto=format&fit=crop";
     if (exp.imageUrl && exp.imageUrl.includes("cloudinary.com")) {
         imgSrc = exp.imageUrl.replace('/upload/', '/upload/w_400,h_300,c_fill,q_auto/');
@@ -113,10 +109,11 @@ function renderCard(exp) {
 
     const rating = exp.averageRating > 0 ? `★ ${exp.averageRating.toFixed(1)}` : "New";
 
+    // ADDED: loading="lazy"
     return `
     <div onclick="window.location.href='experience.html?id=${exp.id}'" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition cursor-pointer group">
         <div class="h-48 bg-gray-200 relative overflow-hidden">
-            <img src="${imgSrc}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+            <img src="${imgSrc}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" loading="lazy">
             <div class="absolute top-3 right-3 bg-white/90 backdrop-blur rounded-full px-2 py-1 text-xs font-bold shadow-sm">
                 ${rating}
             </div>

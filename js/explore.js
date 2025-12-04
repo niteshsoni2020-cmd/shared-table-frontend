@@ -5,7 +5,7 @@ let myBookmarkedIds = new Set();
 let map = null;
 let markers = [];
 let isMapView = false;
-let currentResults = []; // Store results to plot on map
+let currentResults = [];
 
 // --- 1. SHARED HELPERS ---
 function getImageForExperience(exp) {
@@ -63,20 +63,16 @@ function toggleMapView() {
 }
 
 function initSearchMap() {
-    // Default center: Australia
     map = L.map('search-map').setView([-25.2744, 133.7751], 4);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
 }
 
 function updateMapMarkers() {
     if (!map) return;
-    
-    // Clear old markers
     markers.forEach(m => map.removeLayer(m));
     markers = [];
 
     if (currentResults.length === 0) return;
-
     const bounds = L.latLngBounds();
 
     currentResults.forEach(exp => {
@@ -120,15 +116,13 @@ async function searchExperiences() {
 
     if (currentCategory) experiences = experiences.filter(e => e.tags && e.tags.includes(currentCategory));
     
-    // Store for map
     currentResults = experiences;
 
-    // SMART FALLBACK
     if (experiences.length === 0) {
         const fallbackRes = await fetch(`${API_BASE}/api/experiences?sort=rating_desc`);
         const fallbackExps = await fallbackRes.json();
         renderExperiences(fallbackExps.slice(0, 4), "experience-list", true);
-        currentResults = fallbackExps.slice(0, 4); // Show fallback on map too
+        currentResults = fallbackExps.slice(0, 4);
     } else {
         renderExperiences(experiences, "experience-list");
     }
@@ -158,15 +152,15 @@ function renderExperiences(experiences, containerId, isFallback = false) {
     const ratingDisplay = exp.averageRating > 0 ? `★ ${exp.averageRating.toFixed(1)} <span class="text-gray-400 font-normal">(${exp.reviewCount})</span>` : `★ New`;
     const isBookmarked = myBookmarkedIds.has(exp.id);
     
-    // SVGs
     const filledHeart = `<svg class="w-6 h-6 text-red-500 fill-current drop-shadow-sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`;
     const emptyHeart = `<svg class="w-6 h-6 text-white stroke-2 drop-shadow-md" fill="rgba(0,0,0,0.3)" stroke="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>`;
 
     const card = document.createElement("div");
     card.className = "group cursor-pointer flex flex-col gap-3"; 
+    // ADDED: loading="lazy" to image tag
     card.innerHTML = `
       <div class="relative aspect-[4/3] overflow-hidden rounded-xl bg-gray-200">
-        <img src="${imgSrc}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+        <img src="${imgSrc}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" loading="lazy">
         ${maxDiscount > 0 ? `<div class="absolute top-3 left-3 px-2 py-1 bg-green-600 text-white text-[10px] font-bold uppercase tracking-wide rounded shadow-sm">Save ${maxDiscount}%</div>` : ''}
         <button onclick="toggleBookmark(event, '${exp.id}')" class="absolute top-3 right-3 p-2 hover:scale-110 transition z-10 focus:outline-none">${isBookmarked ? filledHeart : emptyHeart}</button>
       </div>

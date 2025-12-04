@@ -15,22 +15,12 @@
 
   <style> 
     body { font-family: 'Inter', sans-serif; } 
-    /* Delete Button Overlay */
     .img-delete-btn {
-        position: absolute;
-        top: 4px;
-        right: 4px;
-        background: rgba(0,0,0,0.6);
-        color: white;
-        border-radius: 50%;
-        width: 20px;
-        height: 20px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 10px;
-        cursor: pointer;
-        transition: background 0.2s;
+        position: absolute; top: 4px; right: 4px;
+        background: rgba(0,0,0,0.6); color: white;
+        border-radius: 50%; width: 20px; height: 20px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 10px; cursor: pointer; transition: background 0.2s;
     }
     .img-delete-btn:hover { background: red; }
   </style>
@@ -72,8 +62,8 @@
       
       <div class="md:col-span-2">
         <div class="mb-8">
-          <h1 class="text-3xl font-bold mb-3">Share your world</h1>
-          <p class="text-gray-500 text-lg">Create a listing for visitors to discover your unique cultural or dining experience.</p>
+          <h1 class="text-3xl font-bold mb-3 text-gray-900">Host meaningful moments</h1>
+          <p class="text-gray-500 text-lg">Turn your home into a destination and your stories into memories.</p>
         </div>
 
         <form id="host-form" onsubmit="handleCreateExperience(event)" class="space-y-8 bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
@@ -113,7 +103,6 @@
               <label class="block text-sm font-bold text-gray-700 mb-1">Gallery (Max 5 Images)</label>
               <input id="imageUpload" type="file" multiple accept="image/*" class="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 cursor-pointer" />
               <p class="text-xs text-gray-400 mt-1">First image will be the cover. Add more anytime.</p>
-              
               <div id="image-preview" class="flex flex-wrap gap-4 mt-4 min-h-[6rem]"></div>
             </div>
 
@@ -194,6 +183,21 @@
       </div>
 
       <aside class="hidden md:block col-span-1 space-y-6">
+         <div class="bg-gray-900 p-6 rounded-2xl shadow-xl text-white">
+            <h3 class="font-bold text-lg mb-4 text-orange-500">Why Hosting Matters</h3>
+            <p class="text-sm text-gray-300 mb-4 leading-relaxed">
+                Hosting isn’t about serving food. It’s about serving connection.
+            </p>
+            <ul class="space-y-3 text-xs text-gray-400">
+                <li class="flex gap-2"><span>✨</span> Share a piece of your culture</li>
+                <li class="flex gap-2"><span>✨</span> Create a safe, warm environment</li>
+                <li class="flex gap-2"><span>✨</span> Welcome guests like family</li>
+            </ul>
+            <p class="mt-4 text-xs italic text-gray-500 border-t border-gray-700 pt-4">
+                "A good experience fills the stomach. A great experience fills the heart."
+            </p>
+         </div>
+
          <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 sticky top-28">
             <h3 class="font-bold text-lg mb-4 text-gray-900">Hosting Tips</h3>
             <div class="space-y-4">

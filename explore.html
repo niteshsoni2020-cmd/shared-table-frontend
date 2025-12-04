@@ -3,9 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#ea580c">
-  <title>Explore Experiences | The Shared Table Story</title>
+  <title>Experience Details – The Shared Table Story</title>
   <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/3447/3447693.png">
 
   <script src="https://cdn.tailwindcss.com"></script>
@@ -14,19 +12,14 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-  <style>
-    body { font-family: 'Inter', sans-serif; }
-    .no-scrollbar::-webkit-scrollbar { display: none; }
-    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    input[type="date"]::-webkit-calendar-picker-indicator { cursor: pointer; opacity: 0.5; hover:opacity: 1; }
-  </style>
+  <style> body { font-family: 'Inter', sans-serif; } </style>
 </head>
-<body class="bg-gray-50 text-gray-900">
+<body class="bg-white text-gray-900">
 
   <nav class="sticky top-0 z-50 flex items-center justify-between px-6 py-6 bg-white/95 backdrop-blur shadow-sm border-b border-gray-100 transition-all">
     <a href="index.html" class="flex items-center gap-3 hover:opacity-90 transition group">
-      <div class="h-10 w-10 bg-orange-600 rounded-full flex items-center justify-center shadow-lg border-2 border-transparent group-hover:scale-105 transition">
-        <span class="font-bold text-white text-lg">Q</span>
+      <div class="h-10 w-10 bg-orange-600 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg border-2 border-transparent group-hover:scale-105 transition">
+        <span class="mb-0.5">Q</span>
       </div>
       <div>
         <h1 class="text-2xl font-bold tracking-tight leading-none text-gray-900">The Shared Table Story</h1>
@@ -34,7 +27,7 @@
       </div>
     </a>
     <div class="hidden md:flex items-center space-x-8 text-sm font-semibold tracking-wide text-gray-600">
-      <a href="explore.html" class="text-orange-600 font-bold">Explore</a>
+      <a href="explore.html" class="hover:text-orange-600 transition duration-300">Explore</a>
       <a href="host.html" class="hover:text-orange-600 transition duration-300">Host an Experience</a>
       <div id="nav-auth"></div>
     </div>
@@ -53,81 +46,157 @@
       <div id="mobile-auth"></div>
   </div>
 
-  <header class="bg-white border-b border-gray-200 sticky top-[88px] z-40 shadow-sm">
-    <div class="max-w-7xl mx-auto px-4 py-4 space-y-4">
-      
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-        <div class="relative group">
-            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <svg class="h-5 w-5 text-gray-400 group-focus-within:text-orange-500 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-            </div>
-            <input id="what-input" class="w-full pl-11 pr-4 py-3 bg-gray-100 rounded-xl text-sm outline-none focus:ring-2 focus:ring-orange-200 focus:bg-white transition" placeholder="What are you looking for?" />
-        </div>
-        
-        <div class="relative group">
-            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <svg class="h-5 w-5 text-gray-400 group-focus-within:text-orange-500 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-            </div>
-            <input id="location-input" class="w-full pl-11 pr-4 py-3 bg-gray-100 rounded-xl text-sm outline-none focus:ring-2 focus:ring-orange-200 focus:bg-white transition" placeholder="City (e.g. Melbourne)" />
-        </div>
-
-        <div class="relative group">
-             <input id="date-input" type="date" class="w-full px-4 py-3 bg-gray-100 rounded-xl text-sm outline-none focus:ring-2 focus:ring-orange-200 focus:bg-white transition text-gray-600" />
-        </div>
-
-        <div class="flex gap-2">
-           <select id="sort-select" class="flex-1 px-4 py-3 bg-gray-100 rounded-xl text-sm outline-none cursor-pointer hover:bg-gray-200 border-r-8 border-transparent">
-              <option value="relevance">Sort: Relevant</option>
-              <option value="price_asc">Price: Low to high</option>
-              <option value="rating_desc">Top Rated</option>
-              <option value="discount_desc">Biggest Deals</option>
-           </select>
-           <button onclick="searchExperiences()" class="px-6 py-3 bg-gray-900 text-white rounded-xl font-bold text-sm shadow hover:bg-black transition transform active:scale-95">Search</button>
-        </div>
-      </div>
-
-      <div class="flex justify-between items-center">
-          <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1 flex-1">
-            <button onclick="setCategory('')" class="chip active px-4 py-2 rounded-full border border-gray-200 bg-white text-xs font-bold whitespace-nowrap hover:border-black transition">All</button>
-            <button onclick="setCategory('Culture & Festivals')" class="chip px-4 py-2 rounded-full border border-gray-200 bg-white text-xs font-bold whitespace-nowrap hover:border-black transition">Culture & Festivals</button>
-            <button onclick="setCategory('Food & Dining')" class="chip px-4 py-2 rounded-full border border-gray-200 bg-white text-xs font-bold whitespace-nowrap hover:border-black transition">Food & Dining</button>
-            <button onclick="setCategory('Nature & Tours')" class="chip px-4 py-2 rounded-full border border-gray-200 bg-white text-xs font-bold whitespace-nowrap hover:border-black transition">Nature & Tours</button>
-          </div>
+  <div class="max-w-7xl mx-auto px-4 pt-8 pb-4">
+      <div class="flex justify-between items-start mb-4">
+          <h1 id="experience-title" class="text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">Loading...</h1>
           
-          <button id="map-toggle-btn" onclick="toggleMapView()" class="ml-4 flex items-center gap-2 px-4 py-2 bg-black text-white rounded-full text-xs font-bold shadow hover:bg-gray-800 transition">
-              <span>🗺️</span> <span id="map-toggle-text">Show Map</span>
-          </button>
-      </div>
-      
-    </div>
-  </header>
+          <div class="flex gap-3">
+             <button id="share-btn" class="p-2 bg-white border border-gray-200 rounded-full hover:bg-gray-50 transition flex items-center gap-2 px-4 font-bold text-sm text-gray-600 shadow-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+                Share
+             </button>
 
-  <main class="max-w-7xl mx-auto px-4 py-8 min-h-screen relative">
+             <button id="bookmark-btn-hero" class="p-2 bg-white border border-gray-200 rounded-full hover:bg-gray-50 transition flex items-center gap-2 px-4 font-bold text-sm text-gray-600 shadow-sm">
+                <span>♡</span> Save
+             </button>
+          </div>
+      </div>
+
+      <div class="flex items-center gap-2 text-sm text-gray-500 mb-6">
+          <svg class="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+          <span id="experience-city-top" class="font-medium underline decoration-dotted">Loading location...</span>
+          <span class="text-gray-300">|</span>
+          <span id="hero-category-badge" class="bg-gray-100 px-2 py-1 rounded text-xs font-bold text-gray-600">Category</span>
+      </div>
+
+      <div id="gallery-grid" class="grid grid-cols-1 md:grid-cols-4 gap-2 h-[300px] md:h-[450px] rounded-2xl overflow-hidden">
+          <div class="md:col-span-2 h-full bg-gray-100 relative group cursor-pointer">
+              <img id="img-1" class="w-full h-full object-cover transition duration-700 group-hover:scale-105" src="" onerror="this.style.display='none'">
+          </div>
+          <div class="hidden md:grid md:col-span-2 grid-rows-2 gap-2 h-full">
+              <div class="bg-gray-100 overflow-hidden relative group">
+                  <img id="img-2" class="w-full h-full object-cover transition duration-700 group-hover:scale-105" src="" onerror="this.style.display='none'">
+              </div>
+              <div class="bg-gray-100 overflow-hidden relative group">
+                  <img id="img-3" class="w-full h-full object-cover transition duration-700 group-hover:scale-105" src="" onerror="this.style.display='none'">
+              </div>
+          </div>
+      </div>
+  </div>
+
+  <main class="max-w-7xl mx-auto px-4 py-8 grid md:grid-cols-3 gap-12">
     
-    <section id="recommend-section" class="mb-12 hidden">
-      <div class="flex items-end justify-between mb-6">
-         <div>
-           <h2 class="text-2xl font-bold tracking-tight">Recommended for you</h2>
-           <p class="text-sm text-gray-500 mt-1">Curated based on your interests</p>
+    <section class="md:col-span-2 space-y-8">
+      
+      <div class="bg-gray-50 p-6 rounded-2xl border border-gray-100 flex flex-col sm:flex-row items-center sm:items-start gap-6 text-center sm:text-left">
+         <div id="host-avatar-container" class="h-20 w-20 bg-orange-100 rounded-full flex items-center justify-center text-3xl overflow-hidden shadow-sm flex-shrink-0 border-2 border-white ring-2 ring-gray-100">
+            👤
+         </div>
+         <div class="flex-1">
+             <h3 class="text-lg font-bold text-gray-900">Hosted by <span id="host-name">Local Host</span></h3>
+             <p class="text-sm text-gray-500 mb-3">Verified Host • Identity Checked</p>
+             <p id="host-bio-preview" class="text-sm text-gray-600 mb-4 line-clamp-2 italic">"I love sharing my culture through food..."</p>
+             <button id="contact-host-btn" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 text-xs font-bold rounded-lg hover:bg-gray-50 transition shadow-sm">
+                Contact Host
+             </button>
          </div>
       </div>
-      <div id="recommend-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"></div>
-    </section>
 
-    <section id="results-container">
-      <h2 class="text-xl font-bold mb-6 tracking-tight">All Experiences</h2>
+      <div class="py-2">
+          <h2 class="text-xl font-bold mb-3">About this experience</h2>
+          <p id="experience-description" class="text-gray-700 text-lg font-light leading-relaxed whitespace-pre-line">Loading...</p>
+      </div>
       
-      <div id="experience-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-10">
-         <p class="text-gray-500 col-span-full text-center py-20">Loading experiences...</p>
+      <div class="py-8 border-t border-gray-100">
+          <h2 class="text-xl font-bold mb-4 text-gray-900">Where you'll be</h2>
+          <div id="exp-map" class="h-80 w-full rounded-xl shadow-sm border border-gray-200 z-0"></div>
+          <p class="text-xs text-gray-400 mt-2">Exact location provided after booking.</p>
       </div>
 
-      <div id="search-map" class="hidden w-full h-[600px] rounded-xl shadow-lg border border-gray-200 z-0"></div>
+      <div class="py-8 border-t border-gray-100" id="reviews-container">
+          <div class="flex items-center justify-between mb-6">
+              <h2 class="text-xl font-bold">Reviews</h2>
+              <div id="experience-rating" class="flex items-center gap-1 font-bold text-gray-900 bg-gray-100 px-3 py-1 rounded-full text-sm">New</div>
+          </div>
+          <div id="reviews-list" class="space-y-6">
+              <p class="text-gray-500 italic">No reviews yet. Be the first!</p>
+          </div>
+      </div>
 
+      <div class="flex justify-end pt-8">
+          <button id="report-listing-btn" class="flex items-center gap-2 text-xs text-gray-400 hover:text-red-500 transition">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-8a2 2 0 012-2h10a2 2 0 012 2v6l-3-2-2 3-3-2-3 3"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M5 10V3"></path></svg>
+              Report this listing
+          </button>
+      </div>
     </section>
 
+    <aside class="md:col-span-1 relative">
+      <div class="sticky top-28 bg-white rounded-2xl shadow-xl border border-gray-200 p-6 space-y-5">
+        
+        <div class="flex justify-between items-end pb-4 border-b border-gray-100">
+            <div>
+                <p class="text-2xl font-bold text-gray-900" id="experience-price">$0</p>
+                <p class="text-sm text-gray-500">per person</p>
+            </div>
+        </div>
+
+        <div id="featured-review" class="hidden bg-orange-50 p-3 rounded-lg border border-orange-100 text-xs italic text-gray-700">
+            <span class="font-bold text-orange-600">"This was amazing!"</span> - <span id="feat-user">Sarah</span>
+        </div>
+
+        <form id="booking-form" class="space-y-4">
+          <div class="border border-gray-300 rounded-lg overflow-hidden">
+             <div class="p-3 border-b border-gray-300 bg-white">
+                 <label class="block text-[10px] uppercase font-bold text-gray-800 mb-1">Date</label>
+                 <input id="booking-date" type="date" class="w-full text-sm outline-none bg-transparent text-gray-600 cursor-pointer" required />
+             </div>
+             <div class="p-3 bg-white">
+                 <label class="block text-[10px] uppercase font-bold text-gray-800 mb-1">Time</label>
+                 <select id="booking-timeslot" class="w-full text-sm outline-none bg-transparent text-gray-600 cursor-pointer">
+                     <option value="">Select a date first</option>
+                 </select>
+             </div>
+          </div>
+          
+          <div class="border border-gray-300 rounded-lg p-3 bg-white">
+             <label class="block text-[10px] uppercase font-bold text-gray-800 mb-1">Guests</label>
+             <input id="guest-count" type="number" min="1" max="10" value="1" class="w-full text-sm outline-none bg-transparent" required />
+          </div>
+
+          <label class="flex items-center justify-between p-3 bg-gray-50 rounded-lg cursor-pointer border border-transparent hover:border-gray-200 transition">
+              <span class="text-sm font-medium text-gray-700">Private Event?</span>
+              <input id="private-toggle" type="checkbox" class="h-4 w-4 text-orange-600 rounded cursor-pointer" />
+          </label>
+
+          <div class="flex justify-between items-center pt-2 text-gray-700">
+              <span class="underline decoration-gray-300 decoration-dashed">Total Price</span>
+              <span id="price-preview" class="font-bold text-gray-900">$0.00</span>
+          </div>
+
+          <div class="space-y-2 pt-2">
+              <div class="flex items-center justify-center gap-2 text-[10px] text-gray-500">
+                  <svg class="w-3 h-3 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                  <span>No hidden platform fees</span>
+              </div>
+              <div class="flex items-center justify-center gap-2 text-[10px] text-gray-500">
+                  <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                  <span>100% Secure Payment</span>
+              </div>
+              <div class="text-[10px] text-gray-400 text-center pt-1 border-t border-gray-50 mt-2">
+                  Free cancellation up to 48h. <a href="terms.html?section=terms" target="_blank" class="underline hover:text-gray-600">Details</a>.
+              </div>
+          </div>
+
+          <button id="booking-submit" type="submit" class="w-full py-3.5 bg-gradient-to-r from-orange-600 to-red-500 text-white font-bold rounded-xl shadow-lg hover:from-orange-700 hover:to-red-600 transition transform active:scale-95">
+            Reserve
+          </button>
+        </form>
+      </div>
+    </aside>
   </main>
 
   <script src="js/common.js"></script>
-  <script src="js/explore.js"></script>
+  <script src="js/experience.js"></script>
 </body>
 </html>

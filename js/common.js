@@ -261,3 +261,14 @@ document.addEventListener("DOMContentLoaded", () => {
     injectFooter();
     checkCookieConsent();
 });
+
+// js/common.js - (Bottom of file)
+
+document.addEventListener("DOMContentLoaded", () => {
+    // 1. Force unlock scroll (Fixes "Can't Scroll" bug)
+    document.body.style.overflow = ''; 
+    
+    updateNavAuth();
+    injectFooter();
+    checkCookieConsent();
+});

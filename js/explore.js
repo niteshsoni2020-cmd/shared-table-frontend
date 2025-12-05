@@ -32,7 +32,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (params.get("sort") === "discount_desc") {
         if(sortSelect) sortSelect.value = "discount_desc";
     }
-    if (params.get("cat")) {
+    if (params.get("q")) {
+        // Handle Collections click (e.g. ?q=solo)
+        if(whatInput) whatInput.value = params.get("q");
+        searchExperiences();
+    } else if (params.get("cat")) {
         setCategory(params.get("cat"));
     } else {
         await loadBookmarks();
@@ -97,7 +101,12 @@ function updateMapMarkers() {
 // --- 4. SEARCH LOGIC ---
 async function searchExperiences() {
   const list = document.getElementById("experience-list");
-  if (list) list.innerHTML = '<p class="text-gray-500 col-span-full text-center py-20">Searching...</p>';
+  // Visual Loading State
+  if (list) list.innerHTML = `
+    <div class="col-span-full text-center py-20">
+        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mb-4"></div>
+        <p class="text-gray-500">Setting the table...</p>
+    </div>`;
 
   try {
     const what = document.getElementById("what-input")?.value.trim() || "";
@@ -112,6 +121,10 @@ async function searchExperiences() {
     if (sort) params.append("sort", sort);
     
     const res = await fetch(`${API_BASE}/api/experiences?${params.toString()}`);
+    
+    // ERROR HANDLING: If server fails
+    if (!res.ok) throw new Error("Server error");
+
     let experiences = await res.json();
 
     if (currentCategory) experiences = experiences.filter(e => e.tags && e.tags.includes(currentCategory));
@@ -121,15 +134,26 @@ async function searchExperiences() {
     if (experiences.length === 0) {
         const fallbackRes = await fetch(`${API_BASE}/api/experiences?sort=rating_desc`);
         const fallbackExps = await fallbackRes.json();
-        renderExperiences(fallbackExps.slice(0, 4), "experience-list", true);
-        currentResults = fallbackExps.slice(0, 4);
+        // Safe check if fallback exists
+        const safeFallback = Array.isArray(fallbackExps) ? fallbackExps.slice(0, 4) : [];
+        renderExperiences(safeFallback, "experience-list", true);
+        currentResults = safeFallback;
     } else {
         renderExperiences(experiences, "experience-list");
     }
 
     if (isMapView) updateMapMarkers();
 
-  } catch (err) { console.error(err); }
+  } catch (err) { 
+      console.error(err);
+      // SHOW ERROR TO USER
+      if (list) list.innerHTML = `
+        <div class="col-span-full text-center py-20">
+            <p class="text-red-500 font-bold mb-2">Oops! Something went wrong.</p>
+            <p class="text-gray-500 text-sm mb-4">We couldn't fetch the experiences. Please check your connection.</p>
+            <button onclick="searchExperiences()" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 text-sm font-bold">Try Again</button>
+        </div>`;
+  }
 }
 
 function renderExperiences(experiences, containerId, isFallback = false) {
@@ -137,7 +161,7 @@ function renderExperiences(experiences, containerId, isFallback = false) {
   if (!container) return;
   container.innerHTML = "";
 
-  if (experiences.length === 0) {
+  if (!experiences || experiences.length === 0) {
     container.innerHTML = '<div class="col-span-full text-center py-12 bg-gray-50 rounded-xl"><p class="text-gray-500">No experiences found matching your search.</p></div>';
     return;
   }
@@ -157,7 +181,6 @@ function renderExperiences(experiences, containerId, isFallback = false) {
 
     const card = document.createElement("div");
     card.className = "group cursor-pointer flex flex-col gap-3"; 
-    // ADDED: loading="lazy" to image tag
     card.innerHTML = `
       <div class="relative aspect-[4/3] overflow-hidden rounded-xl bg-gray-200">
         <img src="${imgSrc}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" loading="lazy">

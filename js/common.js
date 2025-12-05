@@ -256,17 +256,12 @@ function checkCookieConsent() {
     });
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-    updateNavAuth();
-    injectFooter();
-    checkCookieConsent();
-});
-
-// js/common.js - (Bottom of file)
+// js/common.js (Bottom of file)
 
 document.addEventListener("DOMContentLoaded", () => {
-    // 1. Force unlock scroll (Fixes "Can't Scroll" bug)
-    document.body.style.overflow = ''; 
+    // 1. FORCE UNLOCK SCROLL (Fixes the stuck menu bug)
+    document.body.style.overflow = 'auto'; 
+    document.documentElement.style.overflow = 'auto';
     
     updateNavAuth();
     injectFooter();

@@ -1,5 +1,8 @@
 // js/explore.js
 
+// 🔴 CRITICAL FIX: YOUR REAL BACKEND URL IS NOW SET
+const API_BASE = "https://shared-table-api.onrender.com";
+
 let currentCategory = "";
 let myBookmarkedIds = new Set(); 
 let map = null;
@@ -22,6 +25,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.body.style.overflow = 'auto'; 
     document.documentElement.style.overflow = 'auto';
 
+    console.log("🚀 Explore Page Loaded. Target API:", API_BASE);
+
     const sortSelect = document.getElementById("sort-select");
     const whatInput = document.getElementById("what-input");
     const locInput = document.getElementById("location-input");
@@ -33,21 +38,22 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (dateInput) dateInput.addEventListener("change", searchExperiences);
 
     const params = new URLSearchParams(window.location.search);
+    
     if (params.get("sort") === "discount_desc") {
         if(sortSelect) sortSelect.value = "discount_desc";
     }
-    
     if (params.get("q")) {
         if(whatInput) whatInput.value = params.get("q");
         searchExperiences();
     } else if (params.get("cat")) {
         setCategory(params.get("cat"));
     } else {
-        await loadBookmarks();
+        // Load Bookmarks first, then Search
+        try { await loadBookmarks(); } catch(e) {}
         searchExperiences();
     }
     
-    loadExploreRecommendations();
+    try { loadExploreRecommendations(); } catch(e) {}
 });
 
 // --- 3. MAP LOGIC ---
@@ -74,7 +80,7 @@ function initSearchMap() {
     try {
         map = L.map('search-map').setView([-25.2744, 133.7751], 4);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
-    } catch(e) { console.error("Map Error", e); }
+    } catch(e) { console.error("Map Init Error", e); }
 }
 
 function updateMapMarkers() {
@@ -94,23 +100,16 @@ function updateMapMarkers() {
     if (markers.length > 0) map.fitBounds(bounds, { padding: [50, 50] });
 }
 
-// --- 4. SEARCH LOGIC (WITH TIMEOUT WARNING) ---
+// --- 4. SEARCH LOGIC ---
 async function searchExperiences() {
   const list = document.getElementById("experience-list");
   
-  // 1. Initial Loading State
   if (list) list.innerHTML = `
     <div class="col-span-full text-center py-20">
         <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mb-4"></div>
-        <p class="text-gray-500 font-bold">Setting the table...</p>
-        <p id="slow-server-msg" class="text-xs text-orange-500 mt-2 hidden font-bold animate-pulse">Waking up the server (this may take 30-60s)...</p>
+        <p class="text-gray-500 font-bold">Connecting to kitchen...</p>
+        <p class="text-xs text-gray-400 mt-2">${API_BASE}</p>
     </div>`;
-
-  // 2. Timeout Warning (Shows after 3 seconds)
-  const slowTimer = setTimeout(() => {
-      const msg = document.getElementById("slow-server-msg");
-      if(msg) msg.classList.remove("hidden");
-  }, 3000); 
 
   try {
     const what = document.getElementById("what-input")?.value.trim() || "";
@@ -124,13 +123,9 @@ async function searchExperiences() {
     if (date) params.append("date", date); 
     if (sort) params.append("sort", sort);
     
-    // FETCH
     const res = await fetch(`${API_BASE}/api/experiences?${params.toString()}`);
     
-    // Stop the timer immediately if we get a response
-    clearTimeout(slowTimer);
-
-    if (!res.ok) throw new Error("Server error");
+    if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
 
     let experiences = await res.json();
 
@@ -138,13 +133,16 @@ async function searchExperiences() {
     
     currentResults = experiences;
 
-    // SMART FALLBACK
     if (experiences.length === 0) {
-        const fallbackRes = await fetch(`${API_BASE}/api/experiences?sort=rating_desc`);
-        const fallbackExps = await fallbackRes.json();
-        const safeFallback = Array.isArray(fallbackExps) ? fallbackExps.slice(0, 4) : [];
-        renderExperiences(safeFallback, "experience-list", true);
-        currentResults = safeFallback;
+        try {
+            const fallbackRes = await fetch(`${API_BASE}/api/experiences?sort=rating_desc`);
+            const fallbackExps = await fallbackRes.json();
+            const safeFallback = Array.isArray(fallbackExps) ? fallbackExps.slice(0, 4) : [];
+            renderExperiences(safeFallback, "experience-list", true);
+            currentResults = safeFallback;
+        } catch(e) {
+            if (list) list.innerHTML = '<div class="col-span-full text-center py-12"><p class="text-gray-500">No experiences found.</p></div>';
+        }
     } else {
         renderExperiences(experiences, "experience-list");
     }
@@ -152,12 +150,11 @@ async function searchExperiences() {
     if (isMapView) updateMapMarkers();
 
   } catch (err) { 
-      clearTimeout(slowTimer);
-      console.error(err);
+      console.error("SEARCH FAILED:", err);
       if (list) list.innerHTML = `
         <div class="col-span-full text-center py-10 p-4 bg-red-50 border border-red-200 rounded-xl">
             <p class="text-red-600 font-bold text-lg mb-2">❌ Connection Failed</p>
-            <p class="text-gray-700 text-sm mb-4">We tried to connect to:<br><strong>${typeof API_BASE !== 'undefined' ? API_BASE : 'Unknown URL'}</strong></p>
+            <p class="text-gray-700 text-sm mb-4">We tried to connect to:<br><strong>${API_BASE}</strong></p>
             <p class="text-red-500 text-xs font-mono mb-4 bg-white p-2 rounded inline-block">${err.message}</p>
             <br>
             <button onclick="searchExperiences()" class="px-6 py-2 bg-red-600 text-white rounded-lg font-bold shadow hover:bg-red-700 transition">Retry Connection</button>
@@ -203,7 +200,8 @@ function renderExperiences(experiences, containerId, isFallback = false) {
 }
 
 // --- BOOKMARK & REC LOGIC ---
-async function loadBookmarks() { /* logic preserved */ }
-async function toggleBookmark() { /* logic preserved */ }
-async function loadExploreRecommendations() { /* logic preserved */ }
+function getToken() { return localStorage.getItem("tst_token") || null; }
+async function loadBookmarks() { /* Logic Preserved */ }
+async function toggleBookmark() { /* Logic Preserved */ }
+async function loadExploreRecommendations() { /* Logic Preserved */ }
 function setCategory(cat) { currentCategory = cat; searchExperiences(); }

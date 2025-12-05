@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Experience Details – The Shared Table Story</title>
+  <title>Explore Experiences | The Shared Table Story</title>
   <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/3447/3447693.png">
 
   <script src="https://cdn.tailwindcss.com"></script>
@@ -12,7 +12,19 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-  <style> body { font-family: 'Inter', sans-serif; } </style>
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    input[type="date"]::-webkit-calendar-picker-indicator { cursor: pointer; opacity: 0.5; hover:opacity: 1; }
+    
+    /* 🔴 CRITICAL SCROLL FIX 🔴 */
+    html, body {
+        overflow-y: auto !important;
+        height: auto !important;
+        min-height: 100% !important;
+    }
+  </style>
 </head>
 <body class="bg-white text-gray-900">
 

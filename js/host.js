@@ -9,24 +9,26 @@ const uploadPreview = document.getElementById('upload-preview');
 const uploadPlaceholder = document.getElementById('upload-placeholder');
 const submitBtn = document.getElementById('submit-btn');
 
-// Cloudinary Config
+// Cloudinary Config (Unsigned)
 const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dkqf90k20/image/upload";
 const CLOUDINARY_UPLOAD_PRESET = "unsigned_preset";
 
 let isEditing = false;
 let editId = null;
 
+// ---------------------------------------------
+// INIT – CHECK AUTH + EDIT MODE
+// ---------------------------------------------
 document.addEventListener("DOMContentLoaded", () => {
-    // 1. Auth Check
     const token = localStorage.getItem('token');
     if (!token) {
         window.location.href = 'login.html';
         return;
     }
 
-    // 2. Check for Edit Mode (URL params)
     const params = new URLSearchParams(window.location.search);
     const id = params.get("edit");
+
     if (id) {
         isEditing = true;
         editId = id;
@@ -34,7 +36,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-// --- IMAGE PREVIEW LOGIC ---
+// ---------------------------------------------
+// IMAGE PREVIEW HANDLER
+// ---------------------------------------------
 if (imageInput) {
     imageInput.addEventListener('change', () => {
         if (imageInput.files.length > 0) {
@@ -44,14 +48,17 @@ if (imageInput) {
     });
 }
 
-// --- LOAD DATA (For Editing) ---
+// ---------------------------------------------
+// LOAD EXPERIENCE WHEN EDITING
+// ---------------------------------------------
 async function loadExperienceForEdit(id) {
     submitBtn.textContent = "Loading...";
+
     try {
         const res = await fetch(`${API_BASE}/experiences/${id}`);
         const exp = await res.json();
 
-        // Populate basic fields
+        // Populate fields
         document.getElementById("title").value = exp.title;
         document.getElementById("city").value = exp.city;
         document.getElementById("description").value = exp.description;
@@ -61,8 +68,7 @@ async function loadExperienceForEdit(id) {
         document.getElementById("startDate").value = exp.startDate;
         document.getElementById("endDate").value = exp.endDate;
 
-        // 🔴 POPULATE 3 PILLARS (Permutations)
-        // We loop through the saved tags and check the matching boxes
+        // Apply tags (CULTURE / FOOD / NATURE)
         if (exp.tags && Array.isArray(exp.tags)) {
             exp.tags.forEach(tag => {
                 const checkbox = document.querySelector(`input[name="tags"][value="${tag}"]`);
@@ -70,7 +76,7 @@ async function loadExperienceForEdit(id) {
             });
         }
 
-        // Show image preview if exists
+        // Show preview
         if (exp.imageUrl) {
             uploadPreview.classList.remove('hidden');
             uploadPlaceholder.classList.add('hidden');
@@ -83,11 +89,13 @@ async function loadExperienceForEdit(id) {
     }
 }
 
-// --- FORM SUBMISSION ---
+// ---------------------------------------------
+// FORM SUBMISSION – CREATE OR UPDATE
+// ---------------------------------------------
 if (form) {
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
-        
+
         const token = localStorage.getItem('token');
         if (!token) {
             window.location.href = 'login.html';
@@ -98,35 +106,41 @@ if (form) {
         submitBtn.disabled = true;
 
         try {
-            // 1. Handle Image Upload (Only if new file selected)
+            // 1. IMAGE UPLOAD (only when new file chosen)
             let imageUrl = null;
+
             if (imageInput.files.length > 0) {
                 const file = imageInput.files[0];
                 const formData = new FormData();
+
                 formData.append("file", file);
                 formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
 
-                const uploadRes = await fetch(CLOUDINARY_URL, { method: "POST", body: formData });
+                const uploadRes = await fetch(CLOUDINARY_URL, {
+                    method: "POST",
+                    body: formData
+                });
+
                 const uploadData = await uploadRes.json();
                 imageUrl = uploadData.secure_url;
             }
 
-            // 🔴 2. COLLECT 3 PILLARS (Permutations Logic)
-            // This grabs ALL checked boxes, allowing for "Food" AND "Culture"
+            // 2. COLLECT TAGS (MULTI-CATEGORY)
             const selectedTags = [];
             const checkboxes = document.querySelectorAll('input[name="tags"]:checked');
+
             checkboxes.forEach((checkbox) => {
-                selectedTags.push(checkbox.value);
+                selectedTags.push(checkbox.value); // "Culture" | "Food" | "Nature"
             });
 
-            if (selectedTags.length === 0) {
+            if (!selectedTags.length) {
                 throw new Error("Please select at least one Category (Culture, Food, or Nature).");
             }
 
-            // 3. Build Payload
+            // 3. BUILD PAYLOAD
             const experienceData = {
                 title: document.getElementById('title').value,
-                tags: selectedTags, // Send the array of tags
+                tags: selectedTags, // <-- critical: sends ["Culture", "Food"]
                 city: document.getElementById('city').value,
                 description: document.getElementById('description').value,
                 price: Number(document.getElementById('price').value),
@@ -136,14 +150,16 @@ if (form) {
                 endDate: document.getElementById('endDate').value,
             };
 
-            // Only update image if a new one was uploaded
             if (imageUrl) {
                 experienceData.images = [imageUrl];
                 experienceData.imageUrl = imageUrl;
             }
 
-            // 4. Send to API
-            const url = isEditing ? `${API_BASE}/experiences/${editId}` : `${API_BASE}/experiences`;
+            // 4. API REQUEST – CREATE OR UPDATE
+            const url = isEditing
+                ? `${API_BASE}/experiences/${editId}`
+                : `${API_BASE}/experiences`;
+
             const method = isEditing ? 'PUT' : 'POST';
 
             const res = await fetch(url, {
@@ -155,13 +171,13 @@ if (form) {
                 body: JSON.stringify(experienceData)
             });
 
-            if (res.ok) {
-                alert(isEditing ? "Experience Updated!" : "Experience Published!");
-                window.location.href = 'explore.html';
-            } else {
+            if (!res.ok) {
                 const errData = await res.json();
                 throw new Error(errData.message || "Failed to save experience");
             }
+
+            alert(isEditing ? "Experience Updated!" : "Experience Published!");
+            window.location.href = 'explore.html';
 
         } catch (err) {
             console.error(err);

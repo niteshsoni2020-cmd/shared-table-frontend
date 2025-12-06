@@ -82,7 +82,7 @@ async function loadExperience() {
     }
 }
 
-// 3. RENDER DATA TO SCREEN
+// 3. RENDER DATA TO SCREEN (Updated for Public Profile Links)
 function renderExperience(exp) {
     document.title = `${exp.title} - The Shared Table Story`;
     
@@ -95,8 +95,17 @@ function renderExperience(exp) {
         mainImage.src = exp.imageUrl || (exp.images && exp.images[0]) || 'https://via.placeholder.com/1200x800';
     }
 
-    if(hostName) hostName.textContent = exp.hostName || 'Local Host';
-    if(hostPic && exp.hostPic) hostPic.src = exp.hostPic;
+    // 🔴 LINK HOST NAME TO PUBLIC PROFILE
+    if(hostName) {
+        hostName.innerHTML = `<a href="public-profile.html?id=${exp.hostId}" class="hover:text-orange-600 transition underline decoration-orange-200">${exp.hostName || 'Local Host'}</a>`;
+    }
+    
+    // 🔴 LINK HOST PIC TO PUBLIC PROFILE
+    if(hostPic && exp.hostPic) {
+        hostPic.src = exp.hostPic;
+        hostPic.style.cursor = "pointer";
+        hostPic.onclick = () => window.location.href = `public-profile.html?id=${exp.hostId}`;
+    }
 }
 
 // 4. CHECK OWNER (Prevent Self-Booking)

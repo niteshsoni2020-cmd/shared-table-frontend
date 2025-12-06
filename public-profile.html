@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Host Profile - The Shared Table Story</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        h1, h2, h3 { font-family: 'Playfair Display', serif; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900 flex flex-col min-h-screen">
+
+    <nav id="navbar-placeholder"></nav>
+
+    <div class="flex-grow container mx-auto px-4 py-12">
+        
+        <div id="loading" class="text-center py-20">
+            <i class="fas fa-spinner fa-spin text-4xl text-orange-600"></i>
+        </div>
+
+        <div id="error" class="hidden text-center py-20">
+            <h2 class="text-2xl font-bold text-gray-700">Host not found</h2>
+            <a href="explore.html" class="text-orange-600 hover:underline mt-4 inline-block">Back to Explore</a>
+        </div>
+
+        <div id="profile-content" class="hidden max-w-5xl mx-auto">
+            
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 mb-12 flex flex-col md:flex-row gap-8 items-start">
+                <div class="flex-shrink-0 relative">
+                    <img id="host-pic" src="https://via.placeholder.com/150" class="w-32 h-32 md:w-40 md:h-40 rounded-full object-cover border-4 border-white shadow-lg">
+                    <div id="host-badge" class="absolute bottom-2 right-2 bg-orange-100 text-orange-700 p-1.5 rounded-full border border-white shadow-sm hidden">
+                        <i class="fas fa-check-circle text-lg"></i>
+                    </div>
+                </div>
+                
+                <div class="flex-grow">
+                    <h1 id="host-name" class="text-3xl md:text-4xl font-bold text-gray-900 mb-2"></h1>
+                    <div class="flex items-center gap-4 text-sm text-gray-500 mb-6">
+                        <span id="host-location"><i class="fas fa-map-marker-alt mr-1"></i> Global</span>
+                        <span><i class="fas fa-star text-yellow-500 mr-1"></i> <span id="host-rating">New</span></span>
+                    </div>
+                    
+                    <h3 class="text-lg font-bold mb-2">About me</h3>
+                    <p id="host-bio" class="text-gray-600 leading-relaxed max-w-2xl">
+                        This host hasn't written a bio yet.
+                    </p>
+                </div>
+            </div>
+
+            <div>
+                <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+                    <i class="fas fa-utensils text-orange-600"></i> Active Experiences
+                </h2>
+                
+                <div id="experiences-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    </div>
+
+                <div id="no-experiences" class="hidden text-center py-12 bg-gray-50 rounded-xl border border-dashed border-gray-300">
+                    <p class="text-gray-500">This host has no active listings at the moment.</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <footer id="footer-placeholder"></footer>
+    <script src="js/common.js"></script>
+    <script src="js/public-profile.js"></script>
+</body>
+</html>

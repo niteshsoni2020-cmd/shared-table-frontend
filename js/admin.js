@@ -88,11 +88,17 @@ async function fetchAdminStats() {
   }
 
   const data = await res.json();
-  // Expecting: { totalUsers, totalHosts, totalBookings, totalRevenue }
-  totalUsersEl.textContent = data.totalUsers ?? "0";
-  totalHostsEl.textContent = data.totalHosts ?? "0";
-  totalBookingsEl.textContent = data.totalBookings ?? "0";
-  totalRevenueEl.textContent = formatCurrency(data.totalRevenue ?? 0);
+  // Backend currently returns: { userCount, expCount, bookingCount, totalRevenue }
+  // Be tolerant to both schemas (future-proof).
+  const totalUsers = data.totalUsers ?? data.userCount ?? 0;
+  const totalBookings = data.totalBookings ?? data.bookingCount ?? 0;
+  const totalRevenue = data.totalRevenue ?? 0;
+
+  totalUsersEl.textContent = totalUsers;
+  // totalHosts not provided by API yet – leave as "—" or use a future field if added
+  totalHostsEl.textContent = data.totalHosts ?? "—";
+  totalBookingsEl.textContent = totalBookings;
+  totalRevenueEl.textContent = formatCurrency(totalRevenue);
 }
 
 // --------------------
@@ -168,6 +174,7 @@ function createBookingRow(booking) {
   const amount =
     booking.amount ||
     booking.totalPrice ||
+    (booking.pricing && booking.pricing.totalPrice) ||
     booking.price ||
     0;
 

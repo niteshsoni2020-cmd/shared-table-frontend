@@ -1,7 +1,7 @@
 // Frontend/js/experience.js
 
 // 🔴 CONFIGURATION
-const API_BASE = 'https://shared-table-api.onrender.com/api'; // Keeping your live URL
+const API_BASE = 'https://shared-table-api.onrender.com/api'; 
 
 // URL Params
 const urlParams = new URLSearchParams(window.location.search);
@@ -11,7 +11,7 @@ const experienceId = urlParams.get('id');
 let currentExperience = null;
 let currentUser = null;
 
-// DOM Elements (Aligned with the new HTML Design)
+// DOM Elements
 const expTitle = document.getElementById('exp-title');
 const expCity = document.getElementById('exp-city');
 const expDesc = document.getElementById('exp-description');
@@ -25,19 +25,17 @@ const menuSection = document.getElementById('menu-section');
 // Booking Form Elements
 const bookingForm = document.getElementById('booking-form');
 const dateInput = document.getElementById('booking-date');
-const guestsInput = document.getElementById('guest-count'); // Updated ID to match new HTML
+const guestsInput = document.getElementById('guest-count');
 const submitBtn = document.getElementById('book-btn');
 
-// Review Element
+// Review & Similar Elements
 const reviewContainer = document.getElementById('featured-review-container');
+const similarSection = document.getElementById('similar-section');
+const similarGrid = document.getElementById('similar-grid');
 
 // INITIALIZATION
 document.addEventListener('DOMContentLoaded', async () => {
-    if (!experienceId) {
-        // Optional: Redirect if ID is missing
-        // window.location.href = 'explore.html';
-        return;
-    }
+    if (!experienceId) return;
 
     // Set Date Input Min to Tomorrow
     if (dateInput) {
@@ -46,25 +44,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         dateInput.min = tomorrow.toISOString().split('T')[0];
     }
 
-    // Load Data
+    // Load Data Sequence
     await fetchUser();
     await loadExperience();
     await loadFeaturedReview();
+    await loadSimilarExperiences(); // <--- NEW (Item #55)
 });
 
 // 1. GET CURRENT USER
 async function fetchUser() {
     const token = localStorage.getItem('token');
     if (!token) return;
-
     try {
         const res = await fetch(`${API_BASE}/auth/me`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         if (res.ok) currentUser = await res.json();
-    } catch (e) {
-        console.error("Auth check failed", e);
-    }
+    } catch (e) { console.error("Auth check failed", e); }
 }
 
 // 2. LOAD EXPERIENCE DETAILS
@@ -76,7 +72,7 @@ async function loadExperience() {
         currentExperience = await res.json();
         renderExperience(currentExperience);
         
-        // Initialize Pricing Logic (The New Feature)
+        // Initialize Pricing Logic
         setupPricingLogic(currentExperience.price);
 
         // Check if I am the host
@@ -95,25 +91,21 @@ function renderExperience(exp) {
     if(expTitle) expTitle.textContent = exp.title;
     if(expCity) expCity.textContent = exp.city;
     if(expDesc) expDesc.textContent = exp.description;
-    if(expPrice) expPrice.textContent = `${exp.price}`; // Just the number
+    if(expPrice) expPrice.textContent = `${exp.price}`;
     
-    // Handle Image
     if(mainImage) {
         mainImage.src = exp.imageUrl || (exp.images && exp.images[0]) || 'https://via.placeholder.com/1200x800';
     }
 
-    // Handle Menu
     if(exp.menu && menuSection && expMenu) {
         menuSection.classList.remove('hidden');
         expMenu.textContent = exp.menu;
     }
 
-    // Link Host Name
     if(hostName) {
         hostName.innerHTML = `<a href="public-profile.html?id=${exp.hostId}" class="hover:text-orange-600 transition underline decoration-orange-200">${exp.hostName || 'Local Host'}</a>`;
     }
     
-    // Link Host Pic
     if(hostPic) {
         hostPic.src = exp.hostPic || 'https://via.placeholder.com/150';
         hostPic.style.cursor = "pointer";
@@ -121,7 +113,7 @@ function renderExperience(exp) {
     }
 }
 
-// 4. PRICING LOGIC (Item #62 & #54 - Zero Blind Spots)
+// 4. PRICING LOGIC
 function setupPricingLogic(basePrice) {
     if(!guestsInput) return;
 
@@ -138,7 +130,6 @@ function setupPricingLogic(basePrice) {
         const subtotal = basePrice * guests;
         let discount = 0;
 
-        // RULE: 10% OFF for 3+ Guests
         if (guests >= 3) {
             discount = subtotal * 0.10;
             if(elDiscountRow) elDiscountRow.classList.remove('hidden');
@@ -150,7 +141,6 @@ function setupPricingLogic(basePrice) {
 
         const total = subtotal - discount;
 
-        // Update DOM
         if(breakdownBox) breakdownBox.classList.remove('hidden');
         if(elMathBase) elMathBase.textContent = `$${basePrice} x ${guests}`;
         if(elMathSubtotal) elMathSubtotal.textContent = `$${subtotal.toFixed(2)}`;
@@ -159,18 +149,15 @@ function setupPricingLogic(basePrice) {
     }
 
     guestsInput.addEventListener('change', calculate);
-    calculate(); // Run immediately
+    calculate();
 }
 
-// 5. CHECK OWNER (Prevent Self-Booking)
+// 5. CHECK OWNER
 function checkOwnerStatus() {
     if (!currentUser || !currentExperience || !submitBtn) return;
-
     if (String(currentUser._id) === String(currentExperience.hostId)) {
         if(dateInput) dateInput.disabled = true;
         if(guestsInput) guestsInput.disabled = true;
-
-        // Replace Button
         submitBtn.outerHTML = `
             <a href="host.html" class="mt-2 w-full inline-flex items-center justify-center rounded-xl bg-gray-100 px-4 py-3 text-sm font-bold text-gray-700 hover:bg-gray-200 transition border border-gray-300">
                 <i class="fas fa-edit mr-2"></i> Manage My Listing
@@ -182,7 +169,6 @@ function checkOwnerStatus() {
 // 6. LOAD SOCIAL PROOF
 async function loadFeaturedReview() {
     if (!reviewContainer) return;
-
     try {
         const res = await fetch(`${API_BASE}/experiences/${experienceId}/reviews`);
         const reviews = await res.json();
@@ -204,11 +190,51 @@ async function loadFeaturedReview() {
     }
 }
 
-// 7. HANDLE BOOKING SUBMISSION
+// 7. LOAD RECOMMENDATIONS (Item #55)
+async function loadSimilarExperiences() {
+    if (!similarSection || !similarGrid) return;
+
+    try {
+        const res = await fetch(`${API_BASE}/experiences/${experienceId}/similar`);
+        if (!res.ok) return;
+
+        const similarExps = await res.json();
+
+        if (similarExps && similarExps.length > 0) {
+            similarSection.classList.remove('hidden');
+            similarGrid.innerHTML = similarExps.map(exp => {
+                const img = exp.imageUrl || (exp.images && exp.images[0]) || "https://via.placeholder.com/400x300";
+                return `
+                <a href="experience.html?id=${exp._id}" class="group block bg-white rounded-xl shadow-sm hover:shadow-md transition overflow-hidden border border-gray-100">
+                    <div class="h-40 bg-gray-200 relative overflow-hidden">
+                        <img src="${img}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                        <div class="absolute bottom-2 right-2 bg-white/90 px-2 py-1 rounded text-xs font-bold">$${exp.price}</div>
+                    </div>
+                    <div class="p-4">
+                        <h4 class="font-bold text-gray-900 truncate mb-1 group-hover:text-orange-600 transition">${exp.title}</h4>
+                        <p class="text-xs text-gray-500 flex items-center gap-1">
+                            <i class="fas fa-map-marker-alt"></i> ${exp.city}
+                        </p>
+                    </div>
+                </a>`;
+            }).join('');
+        }
+    } catch (err) {
+        console.error("Failed to load similar items", err);
+    }
+}
+
+// 8. HANDLE BOOKING
 if (bookingForm) {
     bookingForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
+        const termsBox = document.getElementById('booking-terms');
+        if (termsBox && !termsBox.checked) {
+            alert("Please agree to the Cancellation Policy to continue.");
+            return;
+        }
+
         const token = localStorage.getItem('token');
         if (!token) {
             const returnUrl = encodeURIComponent(window.location.href);
@@ -240,7 +266,7 @@ if (bookingForm) {
                 body: JSON.stringify({
                     numGuests: guests,
                     bookingDate: date,
-                    timeSlot: "19:00", // MVP Default
+                    timeSlot: "19:00", 
                     guestNotes: ""     
                 })
             });

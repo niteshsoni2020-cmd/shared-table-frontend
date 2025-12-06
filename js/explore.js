@@ -7,15 +7,15 @@ const ENDPOINT = '/experiences';
 document.addEventListener("DOMContentLoaded", () => {
     // === DOM ELEMENTS ===
     const elSearch = document.getElementById("search-input");
-    const elLocation = document.getElementById("location-input"); // New
+    const elLocation = document.getElementById("location-input");
     const elDate = document.getElementById("date-input");
-    const elGuests = document.getElementById("guests-input"); // New
+    const elGuests = document.getElementById("guests-input");
     
     const elFilterBtn = document.getElementById("filter-btn");
     const elFilterPanel = document.getElementById("filter-panel");
-    const elClearFilters = document.getElementById("clear-filters-btn"); // New
+    const elClearFilters = document.getElementById("clear-filters-btn");
     const elApplyFilters = document.getElementById("apply-filters");
-    const elSort = document.getElementById("sort-select"); // New
+    const elSort = document.getElementById("sort-select");
 
     const elPriceSlider = document.getElementById("price-slider");
     const elPriceMinLabel = document.getElementById("price-min-label");
@@ -39,6 +39,28 @@ document.addEventListener("DOMContentLoaded", () => {
         minPrice: 0,
         maxPrice: 300
     };
+
+    // === NEW: URL PARAM HANDLER (The Fix) ===
+    // This reads ?category=Food from the URL and updates state immediately
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlCategory = urlParams.get('category');
+    
+    if (urlCategory) {
+        filterState.category = urlCategory;
+
+        // Visual Update: Highlight the correct chip
+        categoryChips.forEach(c => {
+            // Reset all chips
+            c.classList.remove("active", "bg-gray-900", "text-white", "border-transparent");
+            c.classList.add("bg-white", "border-gray-200", "text-gray-600");
+            
+            // Highlight matching chip
+            if (c.getAttribute("data-category") === urlCategory) {
+                c.classList.add("active", "bg-gray-900", "text-white", "border-transparent");
+                c.classList.remove("bg-white", "border-gray-200", "text-gray-600");
+            }
+        });
+    }
 
     // === INITIALIZE SLIDER ===
     if (elPriceSlider && typeof noUiSlider !== 'undefined') {
@@ -65,18 +87,16 @@ document.addEventListener("DOMContentLoaded", () => {
         // UI Loading
         experiencesGrid.innerHTML = `<div class="col-span-full text-center py-12"><i class="fas fa-spinner fa-spin text-3xl text-orange-500"></i></div>`;
         noResultsEl.classList.add("hidden");
-        updateActiveChips(); // Update visual chips
+        updateActiveChips(); 
 
         const params = new URLSearchParams();
         if (filterState.search) params.set("q", filterState.search);
-        if (filterState.location) params.set("city", filterState.location); // Map Location -> City
+        if (filterState.location) params.set("city", filterState.location);
         if (filterState.date) params.set("date", filterState.date);
         if (filterState.category !== "all") params.set("category", filterState.category);
         if (filterState.sort) params.set("sort", filterState.sort);
         if (filterState.minPrice > 0) params.set("minPrice", filterState.minPrice);
         if (filterState.maxPrice < 300) params.set("maxPrice", filterState.maxPrice);
-        
-        // Note: Backend might ignore 'guests' for now, but we send it for future compat
         if (filterState.guests) params.set("guests", filterState.guests);
 
         try {
@@ -92,7 +112,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const debouncedFetch = debounce(fetchExperiences, 500);
 
-    // 2. Apply Filters (Reads DOM -> State -> Fetch)
+    // 2. Apply Filters
     const applyFilters = () => {
         if (elSearch) filterState.search = elSearch.value.trim();
         if (elLocation) filterState.location = elLocation.value.trim();
@@ -100,9 +120,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (elGuests) filterState.guests = elGuests.value;
         if (elSort) filterState.sort = elSort.value;
         
-        // Price is updated live by slider events
         fetchExperiences();
-        // Optional: Hide panel on apply
         if (!elFilterPanel.classList.contains("hidden")) elFilterPanel.classList.add("hidden");
     };
 
@@ -125,7 +143,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (elGuests) elGuests.value = "";
         if (elSort) elSort.value = "";
         
-        // Reset Slider
         if (elPriceSlider && elPriceSlider.noUiSlider) elPriceSlider.noUiSlider.set([0, 300]);
 
         // Reset Category Chips
@@ -137,6 +154,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 c.classList.remove("bg-white", "border-gray-200", "text-gray-600");
             }
         });
+        
+        // Remove URL params cleanly
+        window.history.replaceState({}, document.title, window.location.pathname);
 
         fetchExperiences();
     };
@@ -189,7 +209,7 @@ document.addEventListener("DOMContentLoaded", () => {
         
         const addChip = (label) => {
             const span = document.createElement("span");
-            span.className = "px-2 py-1 bg-orange-50 text-orange-700 rounded-full border border-orange-100";
+            span.className = "px-2 py-1 bg-orange-50 text-orange-700 rounded-full border border-orange-100 text-xs font-bold";
             span.innerText = label;
             activeFiltersBar.appendChild(span);
         };
@@ -197,6 +217,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (filterState.location) addChip(`📍 ${filterState.location}`);
         if (filterState.date) addChip(`📅 ${filterState.date}`);
         if (filterState.guests) addChip(`👥 ${filterState.guests} Guests`);
+        if (filterState.category !== 'all') addChip(`🏷️ ${filterState.category}`);
         if (filterState.minPrice > 0 || filterState.maxPrice < 300) addChip(`💰 $${filterState.minPrice} - $${filterState.maxPrice}`);
     };
 
@@ -205,7 +226,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (elApplyFilters) elApplyFilters.addEventListener("click", applyFilters);
     if (elClearFilters) elClearFilters.addEventListener("click", clearFilters);
     
-    // Live Search on Enter or Debounce
     if (elSearch) {
         elSearch.addEventListener("input", () => {
             filterState.search = elSearch.value.trim();
@@ -213,7 +233,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
     
-    // Live Location/Date Updates
     if (elLocation) elLocation.addEventListener("change", applyFilters);
     if (elDate) elDate.addEventListener("change", applyFilters);
 
@@ -232,7 +251,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // Utility
     function debounce(fn, delay) {
         let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), delay); };
     }

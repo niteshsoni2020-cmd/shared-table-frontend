@@ -54,9 +54,10 @@
   <nav id="navbar-placeholder"></nav>
 
   <main class="min-h-screen">
-    <div id="loading" class="text-center py-20">
-        <i class="fas fa-spinner fa-spin text-4xl text-tsts-clay"></i>
-        <p class="mt-4 text-slate-600">Setting the table...</p>
+ <div id="similar-section" class="hidden mt-16 pt-12 border-t border-slate-200">
+        <h3 class="heading-serif text-2xl font-bold text-tsts-ink mb-6">You Might Also Like</h3>
+        <div id="similar-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            </div>
     </div>
 
     <div id="experience-content" class="hidden max-w-6xl mx-auto px-4 sm:px-6 lg:px-0 py-8 sm:py-10 lg:py-12">
@@ -194,10 +195,17 @@
                     </div>
                 </div>
 
+                <div class="flex items-start gap-3 p-3 bg-slate-50 rounded-lg border border-slate-100">
+                    <input id="booking-terms" type="checkbox" required class="mt-1 h-4 w-4 text-orange-600 rounded border-gray-300 cursor-pointer focus:ring-orange-500" />
+                    <label for="booking-terms" class="text-xs text-slate-600 cursor-pointer select-none">
+                        I agree to the <a href="terms.html" target="_blank" class="underline hover:text-orange-600">Cancellation Policy</a>. I understand that cancellations within 24 hours are non-refundable.
+                    </label>
+                </div>
+
                 <button
                   id="book-btn"
                   type="submit"
-                  class="mt-2 w-full inline-flex items-center justify-center rounded-xl bg-tsts-ink px-4 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-tsts-ink transition"
+                  class="mt-2 w-full inline-flex items-center justify-center rounded-xl bg-tsts-ink px-4 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-tsts-ink transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Reserve your seat
                 </button>

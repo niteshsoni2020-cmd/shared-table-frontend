@@ -3,24 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin Dashboard — The Shared Table Story</title>
-
-  <!-- Tailwind CDN -->
+  <title>Admin God Mode — The Shared Table Story</title>
   <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- Fonts -->
-  <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap"
-    rel="stylesheet"
-  />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
 
   <style>
-    body {
-      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
-    .heading-serif {
-      font-family: 'Playfair Display', Georgia, "Times New Roman", serif;
-    }
+    body { font-family: 'Inter', sans-serif; }
+    .heading-serif { font-family: 'Playfair Display', serif; }
   </style>
 
   <script>
@@ -28,19 +18,10 @@
       theme: {
         extend: {
           colors: {
-            'tsts-cream': '#F5EDE6',
-            'tsts-soft': '#FDF9F5',
             'tsts-ink': '#1F2933',
-            'tsts-clay': '#C28D6B',
-            'tsts-green': '#16A34A',
-            'tsts-red': '#DC2626'
+            'tsts-clay': '#C28D6B'
           },
-          boxShadow: {
-            'soft-card': '0 18px 35px rgba(15, 23, 42, 0.10)'
-          },
-          borderRadius: {
-            '3xl': '1.5rem'
-          }
+          borderRadius: { '3xl': '1.5rem' }
         }
       }
     }
@@ -48,135 +29,107 @@
 </head>
 
 <body class="bg-slate-50 text-slate-900">
-  <!-- Shared Navbar Placeholder -->
   <nav id="navbar-placeholder"></nav>
 
   <main class="min-h-screen">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-0 py-8 sm:py-10 lg:py-12">
-      <!-- Page Header -->
+    <div class="max-w-7xl mx-auto px-4 py-10">
+      
       <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-8">
         <div>
-          <p class="text-xs uppercase tracking-[0.22em] text-slate-500 mb-1">
-            Admin Control Panel
-          </p>
-          <h1 class="heading-serif text-2xl sm:text-3xl font-semibold text-tsts-ink">
-            Dashboard
-          </h1>
-          <p class="mt-1 text-sm text-slate-600">
-            Monitor bookings, hosts, and revenue across The Shared Table Story.
-          </p>
+          <p class="text-xs uppercase tracking-[0.2em] text-slate-500 mb-1">Admin Control Panel</p>
+          <h1 class="heading-serif text-3xl font-bold text-tsts-ink">God Mode Dashboard</h1>
         </div>
-        <div class="flex items-center gap-3 text-xs sm:text-sm text-slate-500">
-          <span class="inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
-          <span>Admin access verified</span>
+        <div class="flex items-center gap-2 text-sm bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full font-bold">
+          <i class="fas fa-check-circle"></i> Super Admin Verified
         </div>
       </header>
 
-      <!-- Stats Cards -->
-      <section class="grid gap-4 sm:gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mb-10">
-        <!-- Total Users -->
-        <article class="bg-white rounded-3xl border border-slate-100 shadow-soft-card px-5 py-4 flex flex-col justify-between">
-          <div class="flex items-center justify-between mb-3">
-            <span class="text-xs uppercase tracking-[0.16em] text-slate-500">Total users</span>
-            <span class="inline-flex items-center justify-center h-7 w-7 rounded-full bg-slate-100 text-slate-500 text-xs">
-              U
-            </span>
-          </div>
-          <p id="stats-total-users" class="text-2xl font-semibold text-tsts-ink">—</p>
-        </article>
+      <div class="border-b border-gray-200 mb-8">
+        <nav class="flex space-x-8">
+            <button onclick="switchTab('dashboard')" id="tab-dashboard" class="border-tsts-clay text-tsts-clay border-b-2 py-4 px-1 font-bold text-sm">
+                Dashboard
+            </button>
+            <button onclick="switchTab('listings')" id="tab-listings" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 border-b-2 py-4 px-1 font-medium text-sm">
+                Manage Listings
+            </button>
+            <button onclick="switchTab('users')" id="tab-users" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 border-b-2 py-4 px-1 font-medium text-sm">
+                Manage Users
+            </button>
+        </nav>
+      </div>
 
-        <!-- Total Hosts -->
-        <article class="bg-white rounded-3xl border border-slate-100 shadow-soft-card px-5 py-4 flex flex-col justify-between">
-          <div class="flex items-center justify-between mb-3">
-            <span class="text-xs uppercase tracking-[0.16em] text-slate-500">Total hosts</span>
-            <span class="inline-flex items-center justify-center h-7 w-7 rounded-full bg-slate-100 text-slate-500 text-xs">
-              H
-            </span>
-          </div>
-          <p id="stats-total-hosts" class="text-2xl font-semibold text-tsts-ink">—</p>
-        </article>
+      <div id="view-dashboard" class="space-y-8">
+          <section class="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+            <article class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+              <span class="text-xs uppercase tracking-widest text-slate-500">Total Users</span>
+              <p id="stats-total-users" class="text-3xl font-bold text-tsts-ink mt-2">—</p>
+            </article>
+            <article class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+              <span class="text-xs uppercase tracking-widest text-slate-500">Total Hosts</span>
+              <p id="stats-total-hosts" class="text-3xl font-bold text-tsts-ink mt-2">—</p>
+            </article>
+            <article class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+              <span class="text-xs uppercase tracking-widest text-slate-500">Bookings</span>
+              <p id="stats-total-bookings" class="text-3xl font-bold text-tsts-ink mt-2">—</p>
+            </article>
+            <article class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+              <span class="text-xs uppercase tracking-widest text-slate-500">Revenue</span>
+              <p id="stats-total-revenue" class="text-3xl font-bold text-emerald-600 mt-2">—</p>
+            </article>
+          </section>
 
-        <!-- Total Bookings -->
-        <article class="bg-white rounded-3xl border border-slate-100 shadow-soft-card px-5 py-4 flex flex-col justify-between">
-          <div class="flex items-center justify-between mb-3">
-            <span class="text-xs uppercase tracking-[0.16em] text-slate-500">Total bookings</span>
-            <span class="inline-flex items-center justify-center h-7 w-7 rounded-full bg-slate-100 text-slate-500 text-xs">
-              B
-            </span>
-          </div>
-          <p id="stats-total-bookings" class="text-2xl font-semibold text-tsts-ink">—</p>
-        </article>
+          <section class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 font-bold text-lg">Latest Bookings</div>
+            <div class="overflow-x-auto">
+              <table class="min-w-full text-left text-sm">
+                <thead class="bg-slate-50 text-slate-500 uppercase text-xs font-bold">
+                  <tr><th class="px-6 py-3">Date</th><th class="px-6 py-3">Guest</th><th class="px-6 py-3">Experience</th><th class="px-6 py-3">Amount</th><th class="px-6 py-3">Status</th><th class="px-6 py-3">Action</th></tr>
+                </thead>
+                <tbody id="bookings-table-body" class="divide-y divide-slate-100"></tbody>
+              </table>
+            </div>
+            <div id="bookings-loading" class="p-6 text-center text-slate-400">Loading...</div>
+          </section>
+      </div>
 
-        <!-- Total Revenue -->
-        <article class="bg-white rounded-3xl border border-slate-100 shadow-soft-card px-5 py-4 flex flex-col justify-between">
-          <div class="flex items-center justify-between mb-3">
-            <span class="text-xs uppercase tracking-[0.16em] text-slate-500">Total revenue</span>
-            <span class="inline-flex items-center justify-center h-7 w-7 rounded-full bg-emerald-50 text-emerald-600 text-xs">
-              $
-            </span>
-          </div>
-          <p id="stats-total-revenue" class="text-2xl font-semibold text-tsts-ink">—</p>
-        </article>
-      </section>
+      <div id="view-listings" class="hidden space-y-8">
+          <section class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+                <div class="font-bold text-lg">All Listings</div>
+                <button onclick="loadListings()" class="text-sm text-orange-600 font-bold hover:underline">Refresh</button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="min-w-full text-left text-sm">
+                <thead class="bg-slate-50 text-slate-500 uppercase text-xs font-bold">
+                  <tr><th class="px-6 py-3">Image</th><th class="px-6 py-3">Title</th><th class="px-6 py-3">Host</th><th class="px-6 py-3">Price</th><th class="px-6 py-3">Status</th><th class="px-6 py-3">Actions</th></tr>
+                </thead>
+                <tbody id="listings-table-body" class="divide-y divide-slate-100"></tbody>
+              </table>
+            </div>
+          </section>
+      </div>
 
-      <!-- Bookings Table Card -->
-      <section class="bg-white rounded-3xl border border-slate-100 shadow-soft-card overflow-hidden">
-        <div class="px-5 sm:px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-          <div>
-            <h2 class="text-sm sm:text-base font-semibold text-tsts-ink">
-              Master Bookings
-            </h2>
-            <p class="text-xs text-slate-500 mt-0.5">
-              All experiences booked across the platform.
-            </p>
-          </div>
-          <div class="text-xs text-slate-400">
-            Auto-refresh not enabled. Reload page for latest.
-          </div>
-        </div>
+      <div id="view-users" class="hidden space-y-8">
+          <section class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+                <div class="font-bold text-lg">All Users</div>
+                <button onclick="loadUsers()" class="text-sm text-orange-600 font-bold hover:underline">Refresh</button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="min-w-full text-left text-sm">
+                <thead class="bg-slate-50 text-slate-500 uppercase text-xs font-bold">
+                  <tr><th class="px-6 py-3">User</th><th class="px-6 py-3">Email</th><th class="px-6 py-3">Role</th><th class="px-6 py-3">Joined</th><th class="px-6 py-3">Actions</th></tr>
+                </thead>
+                <tbody id="users-table-body" class="divide-y divide-slate-100"></tbody>
+              </table>
+            </div>
+          </section>
+      </div>
 
-        <!-- Table Wrapper -->
-        <div class="overflow-x-auto">
-          <table class="min-w-full text-left text-sm text-slate-700">
-            <thead class="bg-slate-50 border-b border-slate-100">
-              <tr>
-                <th class="px-4 sm:px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-[0.14em]">Date</th>
-                <th class="px-4 sm:px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-[0.14em]">Guest</th>
-                <th class="px-4 sm:px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-[0.14em]">Experience</th>
-                <th class="px-4 sm:px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-[0.14em]">Amount</th>
-                <th class="px-4 sm:px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-[0.14em]">Status</th>
-                <th class="px-4 sm:px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-[0.14em]">Actions</th>
-              </tr>
-            </thead>
-            <tbody id="bookings-table-body" class="divide-y divide-slate-100">
-              <!-- Rows injected by JS -->
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Loading & Empty States -->
-        <div id="bookings-loading" class="px-5 sm:px-6 py-4 text-sm text-slate-500 flex items-center gap-2">
-          <div class="h-4 w-4 border-2 border-slate-300 border-t-transparent rounded-full animate-spin"></div>
-          <span>Loading bookings…</span>
-        </div>
-
-        <div id="bookings-empty" class="hidden px-5 sm:px-6 py-4 text-sm text-slate-500">
-          No bookings found yet.
-        </div>
-
-        <div id="bookings-error" class="hidden px-5 sm:px-6 py-4 text-sm text-red-600">
-          Unable to load bookings. Please refresh the page.
-        </div>
-      </section>
     </div>
   </main>
 
-  <!-- Shared Footer Placeholder -->
-  <footer id="footer-placeholder"></footer>
-
-  <!-- Common layout (navbar/footer injection) -->
   <script src="js/common.js"></script>
-  <!-- Page logic -->
   <script src="js/admin.js"></script>
 </body>
 </html>

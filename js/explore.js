@@ -1,24 +1,26 @@
 // Frontend/js/explore.js
 
-// 🔴 SAFETY: Define API_BASE here to ensure it works immediately
-const API_BASE = 'https://shared-table-api.onrender.com';
+// 🔴 IMPORTANT: DO NOT redeclare API_BASE here.
+// It is already defined in common.js. Redeclaring causes a crash.
+// const API_BASE = 'https://shared-table-api.onrender.com';
 
-// Assumes helper functions (showModal, etc.) might come from common.js, 
-// but we define core variables here to be safe.
+// Assumes helper functions (showModal, etc.) come from common.js.
 const searchInput = document.getElementById("search-input");
 const dateInput = document.getElementById("date-input");
 const experiencesGrid = document.getElementById("experiences-grid");
 // Handles both ID variations just in case
 const noResultsMessage = document.getElementById("no-results-message") || document.getElementById("no-results");
 
-// Filter UI elements (The Fix)
+// Filter UI elements
 const filterBtn = document.getElementById("filter-btn");
 const filterPanel = document.getElementById("filter-panel");
 const minPriceInput = document.getElementById("min-price");
 const maxPriceInput = document.getElementById("max-price");
 const applyFiltersBtn = document.getElementById("apply-filters");
 
-const categoryButtons = document.querySelectorAll(".filter-chip"); // Updated selector to match your HTML class
+// In your HTML, chips have class="filter-chip ..." and data-category="..."
+const categoryButtons = document.querySelectorAll(".filter-chip");
+
 let allExperiences = [];
 let currentCategory = "";
 let isLoading = false;
@@ -78,7 +80,10 @@ function renderExperiences(list, { isFallback = false } = {}) {
 
   experiencesGrid.innerHTML = list
     .map(exp => {
-      const img = exp.imageUrl || (exp.images && exp.images[0]) || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=800&auto=format&fit=crop";
+      const img =
+        exp.imageUrl ||
+        (exp.images && exp.images[0]) ||
+        "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=800&auto=format&fit=crop";
       const price = exp.price ? `$${exp.price}` : "Price on request";
       const rating = exp.averageRating || 0;
       const reviews = exp.reviewCount || 0;
@@ -164,34 +169,26 @@ function handleCategoryClick(e) {
 
   // Toggle active style
   categoryButtons.forEach(b => {
-      b.classList.remove("bg-gray-900", "text-white");
-      b.classList.add("bg-white", "text-gray-600", "border");
+    b.classList.remove("bg-gray-900", "text-white");
+    b.classList.add("bg-white", "text-gray-600", "border");
   });
   
-  if (category !== "all") {
-    btn.classList.remove("bg-white", "text-gray-600", "border");
-    btn.classList.add("bg-gray-900", "text-white");
-  } else {
-      // Add active state to "All" or selected
-      btn.classList.remove("bg-white", "text-gray-600", "border");
-      btn.classList.add("bg-gray-900", "text-white");
-  }
+  btn.classList.remove("bg-white", "text-gray-600", "border");
+  btn.classList.add("bg-gray-900", "text-white");
   
   fetchExperiences();
 }
 
-// THIS IS THE KEY FIX: Explicitly initializing the Filter UI
+// Initialize Filter UI
 function initFilterUI() {
   if (filterBtn && filterPanel) {
     filterBtn.addEventListener("click", () => {
-      console.log("Filter button clicked"); // Debug
       filterPanel.classList.toggle("hidden");
     });
   }
 
   if (applyFiltersBtn) {
     applyFiltersBtn.addEventListener("click", () => {
-      console.log("Apply filters clicked"); // Debug
       fetchExperiences();
     });
   }
@@ -220,8 +217,6 @@ function initExplorePage() {
   }
 
   categoryButtons.forEach(btn => btn.addEventListener("click", handleCategoryClick));
-  
-  // Call the filter init
   initFilterUI();
 }
 

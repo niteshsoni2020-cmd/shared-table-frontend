@@ -1,24 +1,24 @@
-// js/explore.js
+// Frontend/js/explore.js
 
-// 🔴 THE CORRECT BACKEND URL
-const API_URL = 'https://shared-table-api.onrender.com/api'; 
-// NOTE: GPT used 'API_BASE', we stick to 'API_URL' to match common.js usage if needed, 
-// or define API_BASE if you prefer. Let's use the explicit URL to be safe.
+// 🔴 SAFETY: Define API_BASE here to ensure it works immediately
 const API_BASE = 'https://shared-table-api.onrender.com';
 
+// Assumes helper functions (showModal, etc.) might come from common.js, 
+// but we define core variables here to be safe.
 const searchInput = document.getElementById("search-input");
 const dateInput = document.getElementById("date-input");
 const experiencesGrid = document.getElementById("experiences-grid");
-const noResultsMessage = document.getElementById("no-results"); // Changed ID to match your HTML
-const categoryButtons = document.querySelectorAll(".filter-chip"); // Changed selector to match your HTML class
+// Handles both ID variations just in case
+const noResultsMessage = document.getElementById("no-results-message") || document.getElementById("no-results");
 
-// Filter Panel Elements
-const filterBtn = document.getElementById('filter-btn');
-const filterPanel = document.getElementById('filter-panel');
-const minPriceInput = document.getElementById('min-price');
-const maxPriceInput = document.getElementById('max-price');
-const applyFiltersBtn = document.getElementById('apply-filters');
+// Filter UI elements (The Fix)
+const filterBtn = document.getElementById("filter-btn");
+const filterPanel = document.getElementById("filter-panel");
+const minPriceInput = document.getElementById("min-price");
+const maxPriceInput = document.getElementById("max-price");
+const applyFiltersBtn = document.getElementById("apply-filters");
 
+const categoryButtons = document.querySelectorAll(".filter-chip"); // Updated selector to match your HTML class
 let allExperiences = [];
 let currentCategory = "";
 let isLoading = false;
@@ -50,7 +50,7 @@ function buildQueryParams() {
   if (category && category !== "all") params.set("category", category);
   if (minPrice) params.set("minPrice", minPrice);
   if (maxPrice) params.set("maxPrice", maxPrice);
-  
+
   return params.toString();
 }
 
@@ -61,8 +61,15 @@ function renderExperiences(list, { isFallback = false } = {}) {
     experiencesGrid.innerHTML = "";
     if (noResultsMessage) {
       noResultsMessage.classList.remove("hidden");
-      // If it's a fallback situation, we might want to append recommendations below this message
-      // But for now, just showing the message is safer than complex logic
+      noResultsMessage.innerHTML = `
+        <div class="text-center">
+          <p class="text-gray-800 font-medium mb-2">No experiences found.</p>
+          <p class="text-gray-500 text-sm mb-4">
+            Try adjusting your dates or filters.
+            ${isFallback ? "" : " We’ll also show you some recommendations below if available."}
+          </p>
+        </div>
+      `;
     }
     return;
   }
@@ -114,9 +121,6 @@ async function fetchExperiences({ initial = false } = {}) {
     const qs = buildQueryParams();
     const url = qs ? `${API_BASE}/api/experiences?${qs}` : `${API_BASE}/api/experiences`;
     const res = await fetch(url);
-    
-    if(!res.ok) throw new Error("Server error");
-    
     const data = await res.json();
 
     if (!Array.isArray(data)) {
@@ -130,21 +134,11 @@ async function fetchExperiences({ initial = false } = {}) {
     }
 
     if (data.length === 0 && !initial && allExperiences.length > 0) {
-      // Smart fallback: no matches → show top-rated from allExperiences
-      const sorted = [...allExperiences].sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0));
-      // We render these but let the user know they are recommendations
-      renderExperiences(sorted.slice(0, 4), { isFallback: true });
-      // Explicitly show a "No exact matches" toast or message if desired
-      if(noResultsMessage) {
-           noResultsMessage.classList.remove("hidden");
-           noResultsMessage.innerHTML = `
-             <div class="col-span-full text-center py-8">
-                <p class="text-xl">🍂 No exact matches found.</p>
-                <p class="text-gray-500">But check out these popular experiences!</p>
-             </div>
-           `;
-           // Then append the grid manually or handle via UI - for now, simplest is just showing the fallback grid
-      }
+      // Smart fallback
+      const sorted = [...allExperiences].sort(
+        (a, b) => (b.averageRating || 0) - (a.averageRating || 0)
+      );
+      renderExperiences(sorted.slice(0, 6), { isFallback: true });
     } else {
       renderExperiences(data);
     }
@@ -154,7 +148,7 @@ async function fetchExperiences({ initial = false } = {}) {
       noResultsMessage.classList.remove("hidden");
       noResultsMessage.innerHTML = `
         <div class="text-center text-red-500 text-sm">
-          Something went wrong loading experiences. Is the backend running?
+          Something went wrong loading experiences. Please try again.
         </div>
       `;
     }
@@ -178,12 +172,29 @@ function handleCategoryClick(e) {
     btn.classList.remove("bg-white", "text-gray-600", "border");
     btn.classList.add("bg-gray-900", "text-white");
   } else {
-    // "All" button style
-    btn.classList.remove("bg-white", "text-gray-600", "border");
-    btn.classList.add("bg-gray-900", "text-white");
+      // Add active state to "All" or selected
+      btn.classList.remove("bg-white", "text-gray-600", "border");
+      btn.classList.add("bg-gray-900", "text-white");
   }
   
   fetchExperiences();
+}
+
+// THIS IS THE KEY FIX: Explicitly initializing the Filter UI
+function initFilterUI() {
+  if (filterBtn && filterPanel) {
+    filterBtn.addEventListener("click", () => {
+      console.log("Filter button clicked"); // Debug
+      filterPanel.classList.toggle("hidden");
+    });
+  }
+
+  if (applyFiltersBtn) {
+    applyFiltersBtn.addEventListener("click", () => {
+      console.log("Apply filters clicked"); // Debug
+      fetchExperiences();
+    });
+  }
 }
 
 function initExplorePage() {
@@ -192,14 +203,13 @@ function initExplorePage() {
   // Initial load
   fetchExperiences({ initial: true });
 
-  // Listeners
   if (searchInput) {
     let searchTimeout;
     searchInput.addEventListener("input", () => {
       clearTimeout(searchTimeout);
       searchTimeout = setTimeout(() => {
         fetchExperiences();
-      }, 500);
+      }, 400);
     });
   }
 
@@ -208,21 +218,11 @@ function initExplorePage() {
       fetchExperiences();
     });
   }
-  
-  // Filter Panel Toggles
-  if (filterBtn && filterPanel) {
-      filterBtn.addEventListener('click', () => {
-          filterPanel.classList.toggle('hidden');
-      });
-  }
-  
-  if (applyFiltersBtn) {
-      applyFiltersBtn.addEventListener('click', () => {
-          fetchExperiences();
-      });
-  }
 
   categoryButtons.forEach(btn => btn.addEventListener("click", handleCategoryClick));
+  
+  // Call the filter init
+  initFilterUI();
 }
 
 // Initialize on DOM ready

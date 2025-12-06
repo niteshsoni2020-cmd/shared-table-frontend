@@ -5,185 +5,91 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Explore - The Shared Table Story</title>
 
-    <!-- Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- Icons & Font -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- noUiSlider for price range slider -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nouislider@15.7.0/dist/nouislider.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/nouislider@15.7.0/dist/nouislider.min.js"></script>
 
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
 
-        /* Slider styling to match your UI */
-        .noUi-target {
-            border-radius: 9999px;
-            border: 1px solid #e5e7eb;
-            box-shadow: none;
-            background: #f9fafb;
-        }
-        .noUi-connect {
-            background: #f97316; /* orange-500 */
-        }
-        .noUi-handle {
-            border-radius: 9999px;
-            border: 1px solid #f97316;
-            width: 18px;
-            height: 18px;
-            top: -7px;
-            box-shadow: none;
-            background: #ffffff;
-        }
-        .noUi-handle::before,
-        .noUi-handle::after {
-            display: none;
-        }
-
-        /* Optional: hide scrollbar for chips row */
-        .scrollbar-hide::-webkit-scrollbar {
-            display: none;
-        }
-        .scrollbar-hide {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
+        /* Slider styling */
+        .noUi-target { border-radius: 9999px; border: 1px solid #e5e7eb; box-shadow: none; background: #f9fafb; }
+        .noUi-connect { background: #f97316; }
+        .noUi-handle { border-radius: 9999px; border: 1px solid #f97316; width: 18px; height: 18px; top: -7px; box-shadow: none; background: #ffffff; }
+        .noUi-handle::before, .noUi-handle::after { display: none; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-900 flex flex-col min-h-screen">
 
-    <!-- Navbar injected from common.js -->
     <nav id="navbar-placeholder"></nav>
 
-    <!-- Filters bar (sticky) -->
     <div class="bg-white shadow-sm border-b border-gray-100 sticky top-[72px] z-40">
-        <div class="container mx-auto px-4 py-4">
+        <div class="container mx-auto px-4 py-4 space-y-3">
             <div class="flex flex-col md:flex-row gap-4">
                 <div class="flex-grow flex flex-col md:flex-row gap-2">
                     <div class="relative flex-grow">
                         <i class="fas fa-search absolute left-4 top-3.5 text-gray-400"></i>
-                        <input 
-                            type="text" 
-                            id="search-input" 
-                            placeholder="Search by city, host, or dish..." 
-                            class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none">
+                        <input type="text" id="search-input" placeholder="Search by city, host, or dish..." class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none">
                     </div>
-                    
-                    <div class="relative w-full md:w-48">
+                    <div class="relative w-full md:w-44">
                         <i class="far fa-calendar absolute left-4 top-3.5 text-gray-400"></i>
-                        <input 
-                            type="date" 
-                            id="date-input" 
-                            class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none text-gray-600">
+                        <input type="date" id="date-input" class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none text-gray-600">
                     </div>
                 </div>
 
-                <button 
-                    id="filter-btn" 
-                    class="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition flex items-center justify-center gap-2">
+                <button id="filter-btn" class="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition flex items-center justify-center gap-2">
                     <i class="fas fa-sliders-h"></i> Filters
                 </button>
             </div>
 
-            <!-- FILTER PANEL (price slider upgraded) -->
-            <div id="filter-panel" class="hidden mt-4 p-4 bg-gray-50 rounded-xl border border-gray-200 transition-all duration-300">
-                <div class="flex flex-col md:flex-row gap-6 items-center">
-                    
-                    <!-- Price range with slider -->
-                    <div class="w-full md:w-auto">
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">
-                            Price Range
-                        </label>
-
-                        <div class="w-full md:w-72">
-                            <!-- Slider -->
-                            <div id="price-slider" class="mt-1"></div>
-
-                            <!-- Labels under slider -->
-                            <div class="flex items-center justify-between text-xs text-gray-500 mt-2">
-                                <span id="price-min-label">$0</span>
-                                <span id="price-max-label">$250+</span>
-                            </div>
-
-                            <!-- Summary + smart hint -->
-                            <p id="price-summary" class="text-xs text-gray-500 mt-1">
-                                Any price
-                            </p>
-                            <p id="price-hint" class="text-xs text-gray-400 mt-0.5">
-                                Smart filter will auto-tune as you explore experiences.
-                            </p>
+            <div id="filter-panel" class="hidden mt-1 p-4 bg-gray-50 rounded-xl border border-gray-200 transition-all duration-300">
+                <div class="flex flex-col md:flex-row gap-6 items-start md:items-center">
+                    <div class="w-full md:w-80">
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Price Range (per guest)</label>
+                        <div id="price-slider" class="mt-4 mb-2"></div>
+                        <div class="flex items-center justify-between text-xs text-gray-500 mt-2">
+                            <span id="price-min-label">$0</span>
+                            <span id="price-max-label">$300+</span>
                         </div>
-
-                        <!-- Hidden fields kept for compatibility / debugging if needed -->
-                        <input type="hidden" id="min-price">
-                        <input type="hidden" id="max-price">
+                        <input type="hidden" id="min-price" />
+                        <input type="hidden" id="max-price" />
                     </div>
 
-                    <!-- Apply button -->
                     <div class="w-full md:w-auto flex items-end pt-5">
-                        <button 
-                            id="apply-filters" 
-                            class="bg-gray-900 text-white px-6 py-2 rounded-lg font-medium hover:bg-gray-800 transition shadow-sm">
+                        <button id="apply-filters" class="bg-gray-900 text-white px-6 py-2 rounded-lg font-medium hover:bg-gray-800 transition shadow-sm w-full md:w-auto">
                             Apply Filters
                         </button>
                     </div>
                 </div>
             </div>
 
-            <!-- Category chips -->
             <div class="flex gap-2 mt-4 overflow-x-auto pb-2 scrollbar-hide" id="category-chips">
-                <button 
-                    class="filter-chip active px-4 py-2 bg-gray-900 text-white rounded-full text-sm font-medium whitespace-nowrap transition border border-transparent" 
-                    data-category="all">
-                    All
-                </button>
-                <button 
-                    class="filter-chip px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-full text-sm font-medium whitespace-nowrap hover:border-orange-500 transition" 
-                    data-category="Dinner">
-                    Dinner
-                </button>
-                <button 
-                    class="filter-chip px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-full text-sm font-medium whitespace-nowrap hover:border-orange-500 transition" 
-                    data-category="Lunch">
-                    Lunch
-                </button>
-                <button 
-                    class="filter-chip px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-full text-sm font-medium whitespace-nowrap hover:border-orange-500 transition" 
-                    data-category="Cooking Class">
-                    Cooking Class
-                </button>
-                <button 
-                    class="filter-chip px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-full text-sm font-medium whitespace-nowrap hover:border-orange-500 transition" 
-                    data-category="Culture">
-                    Culture
-                </button>
+                <button class="filter-chip active px-4 py-2 bg-gray-900 text-white rounded-full text-sm font-medium whitespace-nowrap transition border border-transparent" data-category="all">All</button>
+                <button class="filter-chip px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-full text-sm font-medium whitespace-nowrap hover:border-orange-500 transition" data-category="Dinner">Dinner</button>
+                <button class="filter-chip px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-full text-sm font-medium whitespace-nowrap hover:border-orange-500 transition" data-category="Lunch">Lunch</button>
+                <button class="filter-chip px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-full text-sm font-medium whitespace-nowrap hover:border-orange-500 transition" data-category="Cooking Class">Cooking Class</button>
+                <button class="filter-chip px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-full text-sm font-medium whitespace-nowrap hover:border-orange-500 transition" data-category="Culture">Culture</button>
             </div>
         </div>
     </div>
 
-    <!-- MAIN CONTENT -->
     <div class="container mx-auto px-4 py-8 flex-grow">
-        
-        <div 
-            id="experiences-grid" 
-            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            <div class="col-span-full text-center py-12">
-                <i class="fas fa-spinner fa-spin text-3xl text-orange-500"></i>
-            </div>
+        <div id="experiences-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div class="col-span-full text-center py-12"><i class="fas fa-spinner fa-spin text-3xl text-orange-500"></i></div>
         </div>
-
         <div id="no-results" class="hidden text-center py-12">
             <div class="text-6xl mb-4">🍂</div>
             <h3 class="text-xl font-bold text-gray-900 mb-2">No experiences found</h3>
             <p class="text-gray-500 mb-8">Try adjusting your filters or date.</p>
         </div>
-
     </div>
 
-    <!-- Footer injected from common.js -->
     <footer id="footer-placeholder"></footer>
 
     <script src="js/common.js"></script>

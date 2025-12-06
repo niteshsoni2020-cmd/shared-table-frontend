@@ -1,7 +1,8 @@
-// js/explore.js
+// Frontend/js/explore.js
 
-// 🔧 Change to match your backend search route if needed
-const API_URL = "/api/search";
+// 🔴 1. CORRECT BACKEND URL
+const API_BASE = 'https://shared-table-api.onrender.com/api';
+const ENDPOINT = '/experiences'; 
 
 document.addEventListener("DOMContentLoaded", () => {
   // ===== ELEMENTS =====
@@ -11,27 +12,44 @@ document.addEventListener("DOMContentLoaded", () => {
   const filterPanel     = document.getElementById("filter-panel");
   const applyFiltersBtn = document.getElementById("apply-filters");
 
+  // Inputs controlled by slider
   const minPriceInput   = document.getElementById("min-price");
   const maxPriceInput   = document.getElementById("max-price");
+  
+  // Slider UI
+  const priceSlider     = document.getElementById('price-slider');
+  const priceMinLabel   = document.getElementById('price-min-label');
+  const priceMaxLabel   = document.getElementById('price-max-label');
 
   const categoryChips   = document.querySelectorAll(".filter-chip");
-
   const experiencesGrid = document.getElementById("experiences-grid");
   const noResultsEl     = document.getElementById("no-results");
 
   if (!experiencesGrid) return;
 
-  // ===== STATE =====
   let activeCategory = "all";
 
-  // ===== UTILS =====
-  const sanitizeInt = (raw) => {
-    if (raw === null || raw === undefined || raw === "") return null;
-    const num = Number(raw);
-    if (Number.isNaN(num)) return null;
-    if (num < 0) return 0; // clamp negatives to 0
-    return Math.floor(num);
-  };
+  // ===== 2. INITIALIZE SLIDER =====
+  if (priceSlider && typeof noUiSlider !== 'undefined') {
+      noUiSlider.create(priceSlider, {
+          start: [0, 300], 
+          connect: true,
+          range: { 'min': 0, 'max': 300 },
+          step: 10,
+          tooltips: false
+      });
+
+      priceSlider.noUiSlider.on('update', function (values) {
+          const min = Math.round(values[0]);
+          const max = Math.round(values[1]);
+          
+          if (priceMinLabel) priceMinLabel.innerText = `$${min}`;
+          if (priceMaxLabel) priceMaxLabel.innerText = `$${max}+`;
+
+          if (minPriceInput) minPriceInput.value = min;
+          if (maxPriceInput) maxPriceInput.value = max;
+      });
+  }
 
   const formatPrice = (value) => "$" + Number(value).toFixed(0);
 
@@ -43,220 +61,92 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   };
 
-  // ===== PRICE RANGE CLEANUP (THIS IS THE MAIN FIX) =====
-  const getValidatedPriceRange = () => {
-    let minVal = sanitizeInt(minPriceInput?.value);
-    let maxVal = sanitizeInt(maxPriceInput?.value);
-
-    // If both provided and min > max, auto-swap so they’re valid
-    if (minVal !== null && maxVal !== null && minVal > maxVal) {
-      const tmp = minVal;
-      minVal = maxVal;
-      maxVal = tmp;
-    }
-
-    // Push cleaned values back into the inputs so user sees what’s actually used
-    if (minPriceInput) minPriceInput.value = minVal === null ? "" : String(minVal);
-    if (maxPriceInput) maxPriceInput.value = maxVal === null ? "" : String(maxVal);
-
-    return { minVal, maxVal };
-  };
-
-  // ===== FILTER PANEL TOGGLE =====
+  // ===== TOGGLE FILTER PANEL =====
   if (filterBtn && filterPanel) {
     filterBtn.addEventListener("click", () => {
       filterPanel.classList.toggle("hidden");
     });
   }
 
-  // ===== CATEGORY CHIPS =====
+  // ===== CATEGORY LOGIC =====
   const initCategoryChips = () => {
     categoryChips.forEach((chip) => {
       chip.addEventListener("click", () => {
-        // reset all chips
         categoryChips.forEach((c) => {
           c.classList.remove("active");
           c.classList.remove("bg-gray-900", "text-white", "border-transparent");
           c.classList.add("bg-white", "border-gray-200", "text-gray-600");
         });
 
-        // activate this one
         chip.classList.add("active");
         chip.classList.add("bg-gray-900", "text-white");
         chip.classList.remove("bg-white", "border-gray-200", "text-gray-600");
 
         activeCategory = chip.getAttribute("data-category") || "all";
-        debouncedFetch();
+        fetchExperiences(); 
       });
     });
   };
 
-  // ===== RENDER EXPERIENCES =====
+  // ===== RENDER LOGIC =====
   const renderExperiences = (experiences) => {
     experiencesGrid.innerHTML = "";
 
     if (!experiences || !experiences.length) {
       experiencesGrid.classList.add("hidden");
-      noResultsEl.classList.remove("hidden");
+      if(noResultsEl) noResultsEl.classList.remove("hidden");
       return;
     }
 
     experiencesGrid.classList.remove("hidden");
-    noResultsEl.classList.add("hidden");
+    if(noResultsEl) noResultsEl.classList.add("hidden");
 
     experiences.forEach((exp) => {
-      const {
-        _id,
-        id,
-        title,
-        city,
-        suburb,
-        country,
-        cuisine,
-        hostName,
-        date,
-        time,
-        tags,
-        pricePerGuest,
-        price,
-        maxGuests,
-        rating,
-        numReviews,
-        mainImageUrl,
-        imageUrl
-      } = exp;
+      const cardId   = exp._id || exp.id || "";
+      const title    = exp.title || "Untitled Experience";
+      const img      = exp.imageUrl || (exp.images && exp.images[0]) || "https://via.placeholder.com/400x300";
+      const price    = exp.price || 0;
+      const city     = exp.city || "Australia";
+      const hostName = exp.hostName || "Local Host";
+      const hostPic  = exp.hostPic || "https://via.placeholder.com/50";
+      const rating   = exp.averageRating || 0;
+      const reviews  = exp.reviewCount || 0;
+      const isPaused = exp.isPaused || false;
 
-      const cardId   = _id || id || "";
-      const img      =
-        mainImageUrl ||
-        imageUrl ||
-        "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=800&auto=format&fit=crop";
-
-      const displayPrice = pricePerGuest || price;
-      const locationText = [suburb, city, country].filter(Boolean).join(", ");
-      const hostText     = hostName ? `Hosted by ${hostName}` : "";
-      const dateText     = [date, time].filter(Boolean).join(" • ");
-      const chipTags     = (tags || []).slice(0, 3);
-
-      const card = document.createElement("div");
-      card.className =
-        "bg-white rounded-xl shadow-sm hover:shadow-md transition overflow-hidden border border-gray-100 flex flex-col";
+      const card = document.createElement("a");
+      card.href = `experience.html?id=${cardId}`;
+      card.className = "group block bg-white rounded-xl shadow-sm hover:shadow-md transition overflow-hidden border border-gray-100 flex flex-col";
 
       card.innerHTML = `
-        <div class="relative h-44 w-full overflow-hidden">
-          <img
-            src="${img}"
-            alt="${title || "Shared table"}"
-            class="w-full h-full object-cover transform group-hover:scale-105 transition duration-300"
-          />
-          ${
-            displayPrice
-              ? `<div class="absolute bottom-3 left-3 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-sm font-semibold text-gray-900 shadow-sm">
-                  ${formatPrice(displayPrice)} <span class="text-xs font-normal text-gray-500">/ guest</span>
-                </div>`
-              : ""
-          }
+        <div class="relative h-48 w-full overflow-hidden bg-gray-100">
+          <img src="${img}" alt="${title}" class="w-full h-full object-cover transform group-hover:scale-105 transition duration-500" onerror="this.src='https://via.placeholder.com/400?text=No+Image'"/>
+          <div class="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md text-xs font-bold shadow-sm">${formatPrice(price)}</div>
+          ${isPaused ? '<div class="absolute inset-0 bg-black/50 flex items-center justify-center text-white font-bold">Currently Paused</div>' : ''}
         </div>
-
         <div class="p-4 flex flex-col gap-2 flex-grow">
-          <div class="flex items-start justify-between gap-2">
-            <h3 class="text-sm font-semibold text-gray-900 line-clamp-2">
-              ${title || "Shared table experience"}
-            </h3>
-            ${
-              rating
-                ? `<div class="flex items-center text-xs text-gray-700 gap-1">
-                    <i class="fas fa-star text-amber-400"></i>
-                    <span>${Number(rating).toFixed(1)}</span>
-                    ${numReviews ? `<span class="text-gray-400">(${numReviews})</span>` : ""}
-                  </div>`
-                : ""
-            }
+          <div class="flex items-center gap-2 mb-1">
+             <img src="${hostPic}" class="w-6 h-6 rounded-full border border-gray-100" alt="${hostName}">
+             <span class="text-xs text-gray-500 truncate">Hosted by ${hostName}</span>
           </div>
-
-          ${
-            locationText
-              ? `<p class="text-xs text-gray-500 flex items-center gap-1">
-                    <i class="fas fa-map-marker-alt text-gray-400"></i>
-                    <span class="line-clamp-1">${locationText}</span>
-                 </p>`
-              : ""
-          }
-
-          ${
-            hostText
-              ? `<p class="text-xs text-gray-500 flex items-center gap-1">
-                    <i class="fas fa-user text-gray-400"></i>
-                    <span class="line-clamp-1">${hostText}</span>
-                 </p>`
-              : ""
-          }
-
-          ${
-            dateText
-              ? `<p class="text-xs text-gray-500 flex items-center gap-1">
-                    <i class="far fa-clock text-gray-400"></i>
-                    <span>${dateText}</span>
-                 </p>`
-              : ""
-          }
-
-          ${
-            cuisine
-              ? `<p class="text-xs text-gray-500 flex items-center gap-1">
-                    <i class="fas fa-utensils text-gray-400"></i>
-                    <span>${cuisine}</span>
-                 </p>`
-              : ""
-          }
-
-          ${
-            chipTags.length
-              ? `<div class="flex flex-wrap gap-1 mt-1">
-                    ${chipTags
-                      .map(
-                        (tag) =>
-                          `<span class="px-2 py-0.5 text-[11px] bg-gray-100 text-gray-700 rounded-full">
-                             ${tag}
-                           </span>`
-                      )
-                      .join("")}
-                 </div>`
-              : ""
-          }
-
-          <div class="mt-3 flex items-center justify-between text-xs text-gray-500">
-            <span>${maxGuests ? `Up to ${maxGuests} guests` : "Shared table experience"}</span>
-            ${
-              cardId
-                ? `<a
-                      href="experience.html?id=${cardId}"
-                      class="inline-flex items-center gap-1 text-orange-600 font-semibold hover:text-orange-700">
-                      View
-                      <i class="fas fa-arrow-right text-[10px]"></i>
-                   </a>`
-                : ""
-            }
+          <h3 class="font-bold text-gray-900 mb-1 truncate">${title}</h3>
+          <p class="text-xs text-gray-500 flex items-center gap-1 mb-3"><i class="fas fa-map-marker-alt text-orange-500"></i> <span class="line-clamp-1">${city}</span></p>
+          <div class="mt-auto pt-3 border-t border-gray-50 flex justify-between items-center">
+             <div class="flex items-center text-xs text-yellow-500 gap-1"><i class="fas fa-star"></i> <span class="font-bold text-gray-700">${rating > 0 ? rating.toFixed(1) : 'New'}</span> <span class="text-gray-400">(${reviews})</span></div>
+             <span class="text-xs text-orange-600 font-semibold group-hover:underline">View Details &rarr;</span>
           </div>
         </div>
       `;
-
       experiencesGrid.appendChild(card);
     });
   };
 
   // ===== FETCH LOGIC =====
   const fetchExperiences = async () => {
-    // loading state
-    experiencesGrid.innerHTML = `
-      <div class="col-span-full text-center py-12">
-        <i class="fas fa-spinner fa-spin text-3xl text-orange-500"></i>
-      </div>
-    `;
-    noResultsEl.classList.add("hidden");
+    experiencesGrid.innerHTML = `<div class="col-span-full text-center py-12"><i class="fas fa-spinner fa-spin text-3xl text-orange-500"></i></div>`;
+    if(noResultsEl) noResultsEl.classList.add("hidden");
 
     const params = new URLSearchParams();
-
+    
     const searchTerm = (searchInput?.value || "").trim();
     if (searchTerm) params.set("q", searchTerm);
 
@@ -266,65 +156,30 @@ document.addEventListener("DOMContentLoaded", () => {
       params.set("category", activeCategory);
     }
 
-    const { minVal, maxVal } = getValidatedPriceRange();
-    if (minVal !== null) params.set("minPrice", String(minVal));
-    if (maxVal !== null) params.set("maxPrice", String(maxVal));
+    const minVal = minPriceInput ? minPriceInput.value : null;
+    const maxVal = maxPriceInput ? maxPriceInput.value : null;
+    
+    if (minVal) params.set("minPrice", minVal);
+    if (maxVal) params.set("maxPrice", maxVal);
 
     try {
-      const res = await fetch(`${API_URL}?${params.toString()}`);
+      const res = await fetch(`${API_BASE}${ENDPOINT}?${params.toString()}`);
       if (!res.ok) throw new Error("Failed to fetch experiences");
-
       const data = await res.json();
       renderExperiences(data);
     } catch (err) {
       console.error(err);
-      experiencesGrid.innerHTML = `
-        <div class="col-span-full text-center py-12">
-          <p class="text-gray-500 mb-2">We hit a small snag.</p>
-          <p class="text-gray-400 text-sm">Please refresh or try again in a moment.</p>
-        </div>
-      `;
+      experiencesGrid.innerHTML = `<div class="col-span-full text-center py-12"><p class="text-red-500 mb-2 font-bold">Failed to load experiences.</p><p class="text-gray-400 text-sm">Please check if the Backend is running.</p></div>`;
     }
   };
 
-  const debouncedFetch = debounce(fetchExperiences, 400);
+  const debouncedFetch = debounce(fetchExperiences, 500);
 
-  // ===== EVENT WIRING =====
+  // ===== EVENTS =====
+  if (searchInput) searchInput.addEventListener("input", debouncedFetch);
+  if (dateInput) dateInput.addEventListener("change", fetchExperiences);
+  if (applyFiltersBtn) applyFiltersBtn.addEventListener("click", fetchExperiences);
 
-  // Search
-  if (searchInput) {
-    searchInput.addEventListener("input", () => debouncedFetch());
-    searchInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        fetchExperiences();
-      }
-    });
-  }
-
-  // Date
-  if (dateInput) {
-    dateInput.addEventListener("change", () => debouncedFetch());
-  }
-
-  // Min/Max price (live update)
-  if (minPriceInput) {
-    minPriceInput.addEventListener("input", () => debouncedFetch());
-  }
-  if (maxPriceInput) {
-    maxPriceInput.addEventListener("input", () => debouncedFetch());
-  }
-
-  // Apply button (explicit apply)
-  if (applyFiltersBtn) {
-    applyFiltersBtn.addEventListener("click", () => {
-      fetchExperiences();
-    });
-  }
-
-  // Category chips
   initCategoryChips();
-
-  // Initial load
-  fetchExperiences();
+  fetchExperiences(); // Initial Load
 });

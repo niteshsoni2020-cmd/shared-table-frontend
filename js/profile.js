@@ -1,203 +1,185 @@
-// js/profile.js
+// public/js/profile.js
 
-document.addEventListener("DOMContentLoaded", async () => {
-    const token = getToken();
-    if (!token) { window.location.href = "login.html?redirect=profile.html"; return; }
-    updateNavAuth();
+// 1. Check Auth immediately
+const token = localStorage.getItem('token');
+if (!token) {
+    window.location.href = 'login.html';
+}
 
-    // --- LOAD DATA ---
+const API_URL = 'https://the-shared-table.onrender.com/api'; // Or 'http://localhost:5000/api' for local
+
+// DOM Elements
+const form = document.getElementById('profile-form');
+const nameInput = document.getElementById('name');
+const emailInput = document.getElementById('email');
+const bioInput = document.getElementById('bio');
+const profilePicPreview = document.getElementById('profile-pic-preview');
+const fileInput = document.getElementById('file-upload');
+const uploadBtn = document.getElementById('upload-btn');
+const uploadStatus = document.getElementById('upload-status');
+const uploadSpinner = document.getElementById('upload-spinner');
+const hostPaymentSection = document.getElementById('host-payment-section');
+const bsbInput = document.getElementById('bsb');
+const accountInput = document.getElementById('account-number');
+
+// Cloudinary Configuration
+const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dkqf90k20/image/upload";
+const CLOUDINARY_UPLOAD_PRESET = "unsigned_preset";
+
+// 2. Load Profile Data on Page Load
+document.addEventListener('DOMContentLoaded', async () => {
     try {
-        const res = await fetch(`${API_BASE}/api/me`, {
-            headers: { "Authorization": `Bearer ${token}` }
+        const res = await fetch(`${API_URL}/auth/me`, {
+            headers: { 'Authorization': `Bearer ${token}` }
         });
-        
-        if (!res.ok) { logout(); return; }
+
+        if (!res.ok) throw new Error('Failed to load profile');
 
         const user = await res.json();
 
-        // Fill Form
-        document.getElementById("display-name").value = user.name || "";
-        document.getElementById("display-email").value = user.email || "";
-        document.getElementById("bio").value = user.bio || "";
-        document.getElementById("mobile").value = user.mobile || "";
-        document.getElementById("location").value = user.location || "";
+        // Populate Form
+        nameInput.value = user.name || '';
+        emailInput.value = user.email || '';
+        bioInput.value = user.bio || '';
         
-        // Header Info
-        document.getElementById("profile-name-display").textContent = user.name || "User";
-        document.getElementById("profile-email-display").textContent = user.email || "";
-
-        // Avatar Handling
-        const avatarContainer = document.getElementById("profile-initial").parentElement;
+        // Handle Profile Picture
         if (user.profilePic) {
-            avatarContainer.innerHTML = `<img src="${user.profilePic}" class="w-full h-full object-cover rounded-full" />`;
-            document.getElementById("profile-pic-url").value = user.profilePic;
-        } else {
-            const initial = (user.name || "U").charAt(0).toUpperCase();
-            document.getElementById("profile-initial").textContent = initial;
+            profilePicPreview.src = user.profilePic;
         }
 
-        // Checkboxes
-        const userPrefs = user.preferences || [];
-        document.querySelectorAll("input[name='prefs']").forEach(cb => {
-            if (userPrefs.includes(cb.value)) cb.checked = true;
-        });
-
-        // Host Status Card & Vacation Mode
-        const hostCard = document.getElementById("host-status-card");
-        hostCard.classList.remove("hidden");
-        
+        // Handle Host Payment Details
         if (user.isHost) {
-            const isVacation = user.vacationMode || false;
-            
-            // VERIFIED HOST VIEW + VACATION TOGGLE
-            hostCard.innerHTML = `
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-green-200 flex flex-col md:flex-row items-center justify-between gap-4">
-                    <div class="flex items-center gap-4">
-                        <div class="h-12 w-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-2xl">✅</div>
-                        <div>
-                            <h2 class="text-lg font-bold text-gray-900">Verified Host Account</h2>
-                            <p class="text-sm text-gray-500">Your payout details are active.</p>
-                        </div>
-                    </div>
-                    
-                    <div class="flex items-center gap-4">
-                        <div class="flex items-center gap-3 bg-gray-50 px-4 py-2 rounded-lg border border-gray-200">
-                            <span class="text-sm font-bold text-gray-700">Vacation Mode</span>
-                            <div class="relative inline-block w-10 h-6 align-middle select-none transition duration-200 ease-in">
-                                <input type="checkbox" id="vacation-toggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300" ${isVacation ? 'checked' : ''}/>
-                                <label for="vacation-toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
-                            </div>
-                        </div>
-                        <a href="my-bookings.html?view=hosting" class="px-5 py-2 bg-gray-900 text-white font-bold rounded-lg hover:bg-black transition text-sm">Go to Dashboard</a>
-                    </div>
-                </div>
-                ${isVacation ? '<div class="mt-2 text-center text-xs font-bold text-orange-600 bg-orange-50 p-2 rounded">⚠️ Your listings are currently hidden from search results.</div>' : ''}
-                `;
-
-            // Attach Listener
-            document.getElementById("vacation-toggle").addEventListener("change", handleVacationToggle);
-
-        } else {
-            // GUEST VIEW (Upsell)
-            hostCard.innerHTML = `
-                <div class="bg-gradient-to-br from-orange-50 to-white p-8 rounded-2xl shadow-sm border border-orange-100 flex flex-col md:flex-row items-center justify-between gap-6">
-                    <div>
-                        <h2 class="text-xl font-bold mb-2 text-gray-900">Become a Host</h2>
-                        <p class="text-gray-600 text-sm max-w-md">Earn money by sharing your culture. You just need to set up your Australian bank details.</p>
-                    </div>
-                    <a href="my-bookings.html?view=hosting" class="px-6 py-3 bg-orange-600 text-white font-bold rounded-xl shadow-lg hover:bg-orange-700 transition transform hover:scale-105 whitespace-nowrap">
-                        Set up Host Account
-                    </a>
-                </div>`;
+            hostPaymentSection.classList.remove('hidden');
+            if (user.payoutDetails) {
+                bsbInput.value = user.payoutDetails.bsb || '';
+                // Mask account number for display if it exists
+                if (user.payoutDetails.accountNumber) {
+                    accountInput.value = user.payoutDetails.accountNumber; 
+                }
+            }
         }
 
-    } catch (err) { console.error(err); }
+    } catch (err) {
+        console.error(err);
+        alert('Could not load profile. Please login again.');
+        localStorage.removeItem('token');
+        window.location.href = 'login.html';
+    }
 });
 
-// --- VACATION TOGGLE HANDLER ---
-async function handleVacationToggle(e) {
-    const isPaused = e.target.checked;
-    const token = getToken();
-    
-    try {
-        const res = await fetch(`${API_BASE}/api/me`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-            body: JSON.stringify({ vacationMode: isPaused })
-        });
+// 3. Handle File Selection
+fileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+        // Show local preview immediately
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            profilePicPreview.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
         
-        if (res.ok) {
-            showModal("Updated", isPaused ? "Vacation Mode ON. Your listings are hidden." : "Welcome back! Your listings are visible.", "info");
-            // Reload to update UI text
-            setTimeout(() => window.location.reload(), 1500);
-        } else {
-            showModal("Error", "Could not update status.", "error");
-            e.target.checked = !isPaused; // Revert
+        // Show Upload Button
+        uploadBtn.classList.remove('hidden');
+        uploadStatus.textContent = "Click 'Upload & Save' to confirm.";
+    }
+});
+
+// 4. Handle Image Upload to Cloudinary
+uploadBtn.addEventListener('click', async () => {
+    const file = fileInput.files[0];
+    if (!file) return;
+
+    // Show loading state
+    uploadSpinner.classList.remove('hidden');
+    uploadBtn.disabled = true;
+    uploadStatus.textContent = "Uploading to secure cloud...";
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+
+    try {
+        const res = await fetch(CLOUDINARY_URL, {
+            method: "POST",
+            body: formData
+        });
+
+        if (!res.ok) throw new Error("Cloudinary upload failed");
+
+        const data = await res.json();
+        const imageUrl = data.secure_url;
+
+        // Auto-save the profile with the new image URL immediately
+        await saveProfile(imageUrl);
+
+        uploadStatus.textContent = "Profile picture updated!";
+        uploadStatus.className = "text-xs text-green-600 mt-1 font-bold";
+        uploadBtn.classList.add('hidden'); // Hide button after success
+
+    } catch (err) {
+        console.error(err);
+        uploadStatus.textContent = "Upload failed. Try again.";
+        uploadStatus.className = "text-xs text-red-600 mt-1";
+    } finally {
+        uploadSpinner.classList.add('hidden');
+        uploadBtn.disabled = false;
+    }
+});
+
+// 5. Save Profile Function (Called by Form Submit OR Image Upload)
+async function saveProfile(newProfilePicUrl = null) {
+    const updateData = {
+        name: nameInput.value,
+        bio: bioInput.value,
+        payoutDetails: {
+            bsb: bsbInput.value,
+            accountNumber: accountInput.value
         }
-    } catch(err) {
-        showModal("Error", "Network error.", "error");
-        e.target.checked = !isPaused;
+    };
+
+    // If this was called by the image uploader, include the new URL
+    if (newProfilePicUrl) {
+        updateData.profilePic = newProfilePicUrl;
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/auth/update`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(updateData)
+        });
+
+        if (!res.ok) throw new Error('Update failed');
+
+        const updatedUser = await res.json();
+        
+        // Update local storage user info if needed or just notify
+        // (Optional: Update the navbar avatar immediately if we had one)
+        
+        return updatedUser;
+
+    } catch (err) {
+        throw err;
     }
 }
 
-// --- IMAGE UPLOAD LOGIC ---
-document.getElementById("upload-btn").addEventListener("click", () => {
-    document.getElementById("file-input").click();
-});
-
-document.getElementById("file-input").addEventListener("change", async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const btn = document.getElementById("upload-btn");
-    const originalText = btn.textContent;
-    btn.textContent = "Uploading...";
-    btn.disabled = true;
-
-    const formData = new FormData();
-    formData.append("photos", file);
-
-    try {
-        const res = await fetch(`${API_BASE}/api/upload`, { method: "POST", body: formData });
-        const data = await res.json();
-        
-        if (res.ok && data.images.length > 0) {
-            const url = data.images[0];
-            const avatarContainer = document.getElementById("profile-initial").parentElement;
-            avatarContainer.innerHTML = `<img src="${url}" class="w-full h-full object-cover rounded-full" />`;
-            document.getElementById("profile-pic-url").value = url;
-            showModal("Success", "Photo uploaded! Click 'Save Changes' to make it permanent.", "success");
-        } else {
-            showModal("Error", "Upload failed.", "error");
-        }
-    } catch (err) {
-        showModal("Error", "Network error.", "error");
-    } finally {
-        btn.textContent = originalText;
-        btn.disabled = false;
-    }
-});
-
-// --- SAVE LOGIC ---
-document.getElementById("profile-form").addEventListener("submit", async (e) => {
+// 6. Handle General Form Submit
+form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const token = getToken();
-    const btn = e.target.querySelector("button[type='submit']");
+    const btn = form.querySelector('button[type="submit"]');
     const originalText = btn.textContent;
-    
-    btn.textContent = "Saving..."; 
+    btn.textContent = 'Saving...';
     btn.disabled = true;
 
-    const prefs = Array.from(document.querySelectorAll("input[name='prefs']:checked")).map(cb => cb.value);
-
-    const body = {
-        name: document.getElementById("display-name").value,
-        bio: document.getElementById("bio").value,
-        mobile: document.getElementById("mobile").value,
-        location: document.getElementById("location").value,
-        profilePic: document.getElementById("profile-pic-url").value,
-        preferences: prefs
-    };
-
     try {
-        const res = await fetch(`${API_BASE}/api/me`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-            body: JSON.stringify(body)
-        });
-
-        if (res.ok) {
-            const user = await res.json();
-            setAuth(token, user); 
-            updateNavAuth();
-            const msg = document.getElementById("save-msg");
-            msg.classList.remove("hidden");
-            setTimeout(() => msg.classList.add("hidden"), 3000);
-        } else {
-            showModal("Error", "Failed to update profile.", "error");
-        }
+        await saveProfile();
+        alert('Profile saved successfully!');
     } catch (err) {
-        showModal("Network Error", "Please check your connection.", "error");
+        console.error(err);
+        alert('Failed to save profile.');
     } finally {
         btn.textContent = originalText;
         btn.disabled = false;

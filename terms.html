@@ -1,124 +1,50 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Legal & Privacy – The Shared Table Story</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-  <style> body { font-family: 'Inter', sans-serif; } </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terms of Service - The Shared Table Story</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
 </head>
 <body class="bg-gray-50 text-gray-900 flex flex-col min-h-screen">
 
-  <nav class="sticky top-0 z-50 flex items-center justify-between px-6 py-6 bg-white/95 backdrop-blur shadow-sm border-b border-gray-100 transition-all">
-    <a href="index.html" class="flex items-center gap-3 hover:opacity-90 transition group">
-      <div class="h-10 w-10 bg-orange-600 rounded-full flex items-center justify-center shadow-lg border-2 border-transparent group-hover:scale-105 transition">
-        <span class="font-bold text-white text-lg">Q</span>
-      </div>
-      <div>
-        <h1 class="text-2xl font-bold tracking-tight leading-none text-gray-900">The Shared Table Story</h1>
-        <p class="text-[10px] tracking-[0.2em] uppercase text-orange-600 font-bold mt-0.5">Legal Center</p>
-      </div>
-    </a>
-    <div class="hidden md:flex items-center space-x-8 text-sm font-semibold tracking-wide text-gray-600">
-      <a href="explore.html" class="hover:text-orange-600 transition duration-300">Explore</a>
-      <a href="host.html" class="hover:text-orange-600 transition duration-300">Host an Experience</a>
-      <div id="nav-auth"></div>
+    <nav id="navbar-placeholder"></nav>
+
+    <div class="max-w-3xl mx-auto px-6 py-12 flex-grow">
+        <h1 class="text-3xl font-bold mb-2">Terms of Service</h1>
+        <p class="text-gray-500 mb-8 text-sm">Last Updated: December 2025</p>
+
+        <div class="space-y-8 text-gray-700 text-sm leading-relaxed">
+            <section>
+                <h2 class="text-xl font-bold text-gray-900 mb-3">1. The Platform Role</h2>
+                <p>The Shared Table Story ("The Platform") acts solely as a connector between Hosts (locals) and Guests (travellers). We do not own, operate, or control the experiences offered. We are not a restaurant, catering service, or tour operator.</p>
+            </section>
+
+            <section>
+                <h2 class="text-xl font-bold text-gray-900 mb-3">2. Host Autonomy & Responsibility</h2>
+                <p>Hosts are independent individuals. They set their own prices, schedules, and menus. Hosts are solely responsible for ensuring their home environment is safe and that food is prepared with care. The Platform does not inspect private kitchens.</p>
+            </section>
+
+            <section>
+                <h2 class="text-xl font-bold text-gray-900 mb-3">3. Guest Acknowledgement</h2>
+                <p>By booking an experience, you acknowledge that you are entering a private home. You agree to respect the Host’s property and culture. You are responsible for disclosing any allergies prior to booking.</p>
+            </section>
+
+            <section>
+                <h2 class="text-xl font-bold text-gray-900 mb-3">4. Cancellations & Refunds</h2>
+                <p>Hosts define their availability. Standard policy: Cancellations made 48 hours before the event are eligible for a full refund. Cancellations within 48 hours are non-refundable to protect the Host's preparation costs.</p>
+            </section>
+
+            <section>
+                <h2 class="text-xl font-bold text-gray-900 mb-3">5. Limitation of Liability</h2>
+                <p>To the maximum extent permitted by law, The Shared Table Story is not liable for any illness, injury, or dispute arising from an experience. Users engage with one another at their own risk.</p>
+            </section>
+        </div>
     </div>
-    <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 focus:outline-none hover:text-orange-600 transition">
-        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
-    </button>
-  </nav>
 
-  <div id="mobile-menu" class="hidden fixed inset-0 z-[100] bg-white text-gray-900 p-6 animate-fade-in overflow-y-auto">
-      <div class="flex justify-between items-center mb-8">
-          <h2 class="text-2xl font-bold">Menu</h2>
-          <button onclick="toggleMobileMenu()" class="text-gray-500 hover:text-black p-2 rounded-full hover:bg-gray-100 transition">
-              <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-          </button>
-      </div>
-      <div id="mobile-auth"></div>
-  </div>
-
-  <main class="max-w-4xl mx-auto px-4 py-12 flex-grow">
-    <h1 class="text-4xl font-bold mb-8">Legal Center</h1>
-
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-      
-      <div class="flex border-b border-gray-100 bg-gray-50 overflow-x-auto no-scrollbar">
-        <button onclick="showTab('terms')" id="btn-terms" class="px-8 py-4 font-bold text-orange-600 border-b-2 border-orange-600 bg-white whitespace-nowrap transition-colors">Terms of Service</button>
-        <button onclick="showTab('privacy')" id="btn-privacy" class="px-8 py-4 font-medium text-gray-500 hover:text-gray-900 whitespace-nowrap transition-colors">Privacy Policy</button>
-        <button onclick="showTab('host')" id="btn-host" class="px-8 py-4 font-medium text-gray-500 hover:text-gray-900 whitespace-nowrap transition-colors">Host Indemnity</button>
-      </div>
-
-      <div class="p-8 text-sm leading-relaxed text-gray-700 space-y-6 min-h-[400px]">
-        
-        <div id="tab-terms">
-            <h2 class="text-xl font-bold text-gray-900 mb-4">1. Definitions</h2>
-            <p><strong>"The Shared Table Story", "We", "Us":</strong> The operator of www.thesharedtablestory.com.<br><strong>"Host":</strong> Anyone offering an experience.<br><strong>"Guest":</strong> Anyone booking an experience.<br><strong>"We are only a facilitator":</strong> All agreements, safety obligations, and interactions occur strictly between Hosts and Guests. We do NOT verify identities or safety standards.</p>
-
-            <h2 class="text-xl font-bold text-gray-900 mb-4 pt-4">2. General Disclaimer</h2>
-            <p>We are not a restaurant, event organiser, or travel agent. We do not own or manage any Experience. Guests participate at their own voluntary risk.</p>
-
-            <h2 class="text-xl font-bold text-gray-900 mb-4 pt-4">3. Intermediary / Facilitator Role</h2>
-            <p>The Shared Table Story does not control pricing, verify host credentials (including food safety or insurance), inspect venues, or guarantee truthfulness. All responsibility rests solely with Host and Guest.</p>
-
-            <h2 class="text-xl font-bold text-gray-900 mb-4 pt-4">4. Assumption of Risk</h2>
-            <p>Users accept all risks, including food allergies, cross-contamination, behaviour of others, and injury. Participation is voluntary.</p>
-
-            <h2 class="text-xl font-bold text-gray-900 mb-4 pt-4">5. No Guarantee</h2>
-            <p>We provide no warranty of safety, fitness for purpose, or quality. Experiences are executed by independent Hosts.</p>
-
-            <h2 class="text-xl font-bold text-gray-900 mb-4 pt-4">8. Payment & Refund</h2>
-            <p>All payments occur directly between Host and Guest via Stripe. We do not hold funds or issue refunds directly. Financial disagreements are between Host and Guest.</p>
-
-            <h2 class="text-xl font-bold text-gray-900 mb-4 pt-4">9. Indemnity</h2>
-            <p>To the fullest extent permitted by law, Users agree to indemnify and hold harmless The Shared Table Story from any claims (injury, illness, property damage, legal disputes) arising from their use of the platform.</p>
-
-            <h2 class="text-xl font-bold text-gray-900 mb-4 pt-4">10. Limitation of Liability</h2>
-            <p>Our total liability is limited to AUD $0. We exclude all implied warranties to the extent permitted by law.</p>
-        </div>
-
-        <div id="tab-privacy" class="hidden">
-            <h2 class="text-xl font-bold text-gray-900 mb-4">13. Privacy Statement</h2>
-            <p>We comply with the <strong>Australia Privacy Act 1988 (APPs)</strong> and future global equivalents.</p>
-            
-            <h2 class="text-xl font-bold text-gray-900 mb-4 pt-4">Data Collection</h2>
-            <p>We collect basic account details, email, and messages. We do NOT collect financial data (handled by Stripe) or government IDs unless voluntarily provided.</p>
-            
-            <h2 class="text-xl font-bold text-gray-900 mb-4 pt-4">14. Security</h2>
-            <p>Data is stored securely in cloud systems. We use standard encryption. We never sell data.</p>
-        </div>
-
-        <div id="tab-host" class="hidden">
-            <h2 class="text-xl font-bold text-gray-900 mb-4">6. Host Responsibility Clause</h2>
-            <div class="bg-orange-50 p-4 border border-orange-100 rounded-lg mb-4">
-                <p class="font-bold text-orange-900">Important for all Hosts</p>
-            </div>
-            <p>Hosts acknowledge they are fully responsible for the safety, legality, hygiene, and operation of their Experience. They must comply with all local laws (food handling, alcohol licensing, council regulations). They are solely responsible for insurance and permits.</p>
-            
-            <h2 class="text-xl font-bold text-gray-900 mb-4 pt-4">Compliance</h2>
-            <p>The Shared Table Story is not responsible for Host compliance. Failure to comply may result in account termination.</p>
-        </div>
-
-      </div>
-    </div>
-  </main>
-
-  <script src="js/common.js"></script>
-  <script>
-    function showTab(name) {
-        ['terms', 'privacy', 'host'].forEach(t => {
-            document.getElementById(`tab-${t}`).classList.add('hidden');
-            document.getElementById(`btn-${t}`).className = "px-8 py-4 font-medium text-gray-500 hover:text-gray-900 whitespace-nowrap transition-colors";
-        });
-        document.getElementById(`tab-${name}`).classList.remove('hidden');
-        document.getElementById(`btn-${name}`).className = "px-8 py-4 font-bold text-orange-600 border-b-2 border-orange-600 bg-white whitespace-nowrap transition-colors";
-    }
-    
-    // Auto-select tab from URL ?section=privacy
-    const params = new URLSearchParams(window.location.search);
-    if(params.get('section')) showTab(params.get('section'));
-  </script>
+    <footer id="footer-placeholder"></footer>
+    <script src="js/common.js"></script>
 </body>
 </html>

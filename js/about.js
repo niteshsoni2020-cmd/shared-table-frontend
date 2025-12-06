@@ -1,42 +1,271 @@
-// js/about.js
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>About — The Shared Table Story</title>
 
-document.addEventListener("DOMContentLoaded", () => {
-    updateNavAuth(); // Ensure navbar is active
-});
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
 
-document.getElementById("contact-form").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    
-    const btn = e.target.querySelector("button");
-    const originalText = btn.textContent;
-    btn.textContent = "Sending...";
-    btn.disabled = true;
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet" />
 
-    const body = {
-        name: document.getElementById("contact-name").value,
-        email: document.getElementById("contact-email").value,
-        subject: document.getElementById("contact-subject").value,
-        message: document.getElementById("contact-message").value
-    };
-
-    try {
-        const res = await fetch(`${API_BASE}/api/contact`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(body)
-        });
-
-        if (res.ok) {
-            showModal("Message Sent! 📬", "Thank you for reaching out. We will get back to you shortly.", "success");
-            e.target.reset();
-        } else {
-            showModal("Error", "Could not send message. Please try again.", "error");
-        }
-    } catch (err) {
-        console.error(err);
-        showModal("Network Error", "Please check your connection.", "error");
-    } finally {
-        btn.textContent = originalText;
-        btn.disabled = false;
+  <style>
+    body {
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
-});
+    .heading-serif {
+      font-family: 'Playfair Display', Georgia, "Times New Roman", serif;
+    }
+  </style>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'tsts-cream': '#F5EDE6',
+            'tsts-sand': '#E3D4C5',
+            'tsts-clay': '#C28D6B',
+            'tsts-ink': '#1F2933',
+            'tsts-soft': '#FDF9F5'
+          },
+          boxShadow: {
+            'soft-card': '0 18px 35px rgba(15, 23, 42, 0.10)'
+          },
+          borderRadius: {
+            '3xl': '1.5rem'
+          }
+        }
+      }
+    }
+  </script>
+</head>
+
+<body class="bg-tsts-cream text-slate-900">
+
+  <!-- Shared Navbar Placeholder -->
+  <nav id="navbar-placeholder"></nav>
+
+  <main class="min-h-screen">
+    <!-- Wrapper -->
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-0 py-12 sm:py-16 lg:py-20 space-y-16">
+
+      <!-- Section 1: The Mission (Hero) -->
+      <section class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-tsts-soft via-tsts-cream to-tsts-sand border border-white/60 shadow-soft-card">
+        <div class="absolute -top-20 -right-10 h-48 w-48 rounded-full bg-white/30 blur-3xl pointer-events-none"></div>
+        <div class="absolute -bottom-24 -left-16 h-56 w-56 rounded-full bg-tsts-clay/10 blur-3xl pointer-events-none"></div>
+
+        <div class="relative px-6 sm:px-10 lg:px-14 py-10 sm:py-14 lg:py-16">
+          <p class="uppercase tracking-[0.22em] text-xs sm:text-[0.7rem] text-slate-500 mb-4">
+            About The Shared Table Story
+          </p>
+
+          <h1 class="heading-serif text-3xl sm:text-4xl lg:text-5xl font-semibold text-tsts-ink leading-tight mb-4">
+            We exist to make travel human again.
+          </h1>
+
+          <p class="text-base sm:text-lg text-slate-700 max-w-2xl mb-8">
+            To reconnect the world — one shared meal, one story, one experience at a time.
+          </p>
+
+          <div class="grid gap-4 sm:grid-cols-3 mt-2">
+            <div class="rounded-2xl bg-white/70 backdrop-blur-sm border border-white/80 px-4 py-4">
+              <p class="text-xs uppercase tracking-[0.18em] text-slate-500 mb-2">For Travellers</p>
+              <p class="text-sm text-slate-800">
+                Feel less like a tourist, and more like you belong — wherever you land.
+              </p>
+            </div>
+            <div class="rounded-2xl bg-white/70 backdrop-blur-sm border border-white/80 px-4 py-4">
+              <p class="text-xs uppercase tracking-[0.18em] text-slate-500 mb-2">For Hosts</p>
+              <p class="text-sm text-slate-800">
+                Share your table, your culture, your stories — not just your space.
+              </p>
+            </div>
+            <div class="rounded-2xl bg-white/70 backdrop-blur-sm border border-white/80 px-4 py-4">
+              <p class="text-xs uppercase tracking-[0.18em] text-slate-500 mb-2">For the World</p>
+              <p class="text-sm text-slate-800">
+                Build a slower, kinder way to travel — one connection at a time.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 2: The Founder's Story -->
+      <section class="grid gap-10 lg:grid-cols-[1.4fr,1fr] items-start">
+        <div class="bg-white/80 border border-white/90 rounded-3xl shadow-soft-card px-6 sm:px-8 py-8 sm:py-10">
+          <h2 class="heading-serif text-2xl sm:text-3xl font-semibold text-tsts-ink mb-4">
+            Why I Started The Shared Table Story
+          </h2>
+
+          <div class="space-y-4 text-sm sm:text-base leading-relaxed text-slate-800">
+            <p>
+              There’s a moment that changed how I understood travel. It wasn’t a monument, or a tour, or a museum.
+              It was a dinner table.
+            </p>
+            <p>
+              I was travelling, alone, tired, and unsure of what I would find. A stranger invited me for a simple
+              home-cooked meal. For two hours, we shared stories, memories, laughter, and silence. I walked away
+              feeling less like a tourist — and more like I belonged.
+            </p>
+            <p>
+              That moment stayed with me. I realised something: Food brings people together faster than anything else.
+            </p>
+            <p>
+              So I built The Shared Table Story for one purpose: To help travellers meet locals not through attractions —
+              but through human connection.
+            </p>
+            <p>
+              Some platforms show you places. This one shows you people.
+            </p>
+          </div>
+
+          <div class="mt-8 pt-6 border-t border-slate-200/80">
+            <p class="heading-serif text-base sm:text-lg text-tsts-ink">
+              — Abhishek, <span class="font-semibold">Founder &amp; Story Collector</span>
+            </p>
+          </div>
+        </div>
+
+        <div class="space-y-5">
+          <div class="rounded-3xl bg-gradient-to-b from-white/90 to-tsts-soft border border-white/90 px-6 py-6 shadow-soft-card">
+            <p class="text-xs uppercase tracking-[0.2em] text-slate-500 mb-2">
+              What this space is for
+            </p>
+            <p class="text-sm text-slate-800">
+              This isn’t another booking site. It’s a meeting point for humans who love stories, food, and cultures
+              that feel lived-in — not staged.
+            </p>
+          </div>
+
+          <div class="rounded-3xl bg-tsts-ink text-slate-50 px-6 py-6 shadow-soft-card">
+            <p class="text-xs uppercase tracking-[0.22em] text-slate-300 mb-3">
+              A quieter kind of revolution
+            </p>
+            <p class="text-sm leading-relaxed">
+              Every shared table is a small rebellion against lonely hotel rooms, rushed check-ins, and checklist
+              sightseeing. It says: <span class="italic">I’m here to meet you, not just your skyline.</span>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 3: The Manifesto -->
+      <section>
+        <div class="mb-6 sm:mb-8">
+          <p class="text-xs uppercase tracking-[0.2em] text-slate-500 mb-2">
+            What we stand for
+          </p>
+          <h2 class="heading-serif text-2xl sm:text-3xl font-semibold text-tsts-ink">
+            Our Manifesto
+          </h2>
+          <p class="mt-3 text-sm sm:text-base text-slate-700 max-w-2xl">
+            These aren’t just principles. They’re promises — to travellers, to hosts, and to every story that begins
+            at a shared table.
+          </p>
+        </div>
+
+        <div class="grid gap-4 sm:gap-5 md:grid-cols-2">
+          <!-- Manifesto Item 1 -->
+          <article class="flex items-start gap-3 rounded-2xl bg-white/80 border border-white/90 px-4 py-4 shadow-soft-card">
+            <div class="mt-1 flex h-7 w-7 items-center justify-center rounded-full bg-tsts-clay/15 border border-tsts-clay/50">
+              <span class="text-xs font-semibold text-tsts-clay">1</span>
+            </div>
+            <div>
+              <h3 class="text-sm font-semibold text-tsts-ink mb-1">
+                We believe in people, not products.
+              </h3>
+              <p class="text-xs sm:text-sm text-slate-700">
+                Our focus is the person across the table — not just the listing on the screen.
+              </p>
+            </div>
+          </article>
+
+          <!-- Manifesto Item 2 -->
+          <article class="flex items-start gap-3 rounded-2xl bg-white/80 border border-white/90 px-4 py-4 shadow-soft-card">
+            <div class="mt-1 flex h-7 w-7 items-center justify-center rounded-full bg-tsts-clay/15 border border-tsts-clay/50">
+              <span class="text-xs font-semibold text-tsts-clay">2</span>
+            </div>
+            <div>
+              <h3 class="text-sm font-semibold text-tsts-ink mb-1">
+                We believe food is a universal language.
+              </h3>
+              <p class="text-xs sm:text-sm text-slate-700">
+                Even when words fall short, a shared meal can say: you are welcome here.
+              </p>
+            </div>
+          </article>
+
+          <!-- Manifesto Item 3 -->
+          <article class="flex items-start gap-3 rounded-2xl bg-white/80 border border-white/90 px-4 py-4 shadow-soft-card">
+            <div class="mt-1 flex h-7 w-7 items-center justify-center rounded-full bg-tsts-clay/15 border border-tsts-clay/50">
+              <span class="text-xs font-semibold text-tsts-clay">3</span>
+            </div>
+            <div>
+              <h3 class="text-sm font-semibold text-tsts-ink mb-1">
+                We believe strangers can become family.
+              </h3>
+              <p class="text-xs sm:text-sm text-slate-700">
+                A few hours at a table can turn “someone I met” into “someone I’ll never forget.”
+              </p>
+            </div>
+          </article>
+
+          <!-- Manifesto Item 4 -->
+          <article class="flex items-start gap-3 rounded-2xl bg-white/80 border border-white/90 px-4 py-4 shadow-soft-card">
+            <div class="mt-1 flex h-7 w-7 items-center justify-center rounded-full bg-tsts-clay/15 border border-tsts-clay/50">
+              <span class="text-xs font-semibold text-tsts-clay">4</span>
+            </div>
+            <div>
+              <h3 class="text-sm font-semibold text-tsts-ink mb-1">
+                We believe travel should be lived, not observed.
+              </h3>
+              <p class="text-xs sm:text-sm text-slate-700">
+                Not just ticking off sights, but feeling the heartbeat of the place through its homes and kitchens.
+              </p>
+            </div>
+          </article>
+
+          <!-- Manifesto Item 5 -->
+          <article class="flex items-start gap-3 rounded-2xl bg-white/80 border border-white/90 px-4 py-4 shadow-soft-card">
+            <div class="mt-1 flex h-7 w-7 items-center justify-center rounded-full bg-tsts-clay/15 border border-tsts-clay/50">
+              <span class="text-xs font-semibold text-tsts-clay">5</span>
+            </div>
+            <div>
+              <h3 class="text-sm font-semibold text-tsts-ink mb-1">
+                We believe stories connect hearts.
+              </h3>
+              <p class="text-xs sm:text-sm text-slate-700">
+                A story told across a table can cross oceans, cultures, and generations.
+              </p>
+            </div>
+          </article>
+
+          <!-- Manifesto Item 6 -->
+          <article class="flex items-start gap-3 rounded-2xl bg-white/80 border border-white/90 px-4 py-4 shadow-soft-card">
+            <div class="mt-1 flex h-7 w-7 items-center justify-center rounded-full bg-tsts-clay/15 border border-tsts-clay/50">
+              <span class="text-xs font-semibold text-tsts-clay">6</span>
+            </div>
+            <div>
+              <h3 class="text-sm font-semibold text-tsts-ink mb-1">
+                We believe every table holds a memory.
+              </h3>
+              <p class="text-xs sm:text-sm text-slate-700">
+                Every seat has a story, every meal a moment that might stay with someone forever.
+              </p>
+            </div>
+          </article>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Shared Footer Placeholder -->
+  <footer id="footer-placeholder"></footer>
+
+  <!-- Common layout script (navbar + footer injection) -->
+  <script src="js/common.js"></script>
+</body>
+</html>

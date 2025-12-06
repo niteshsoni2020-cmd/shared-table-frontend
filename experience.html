@@ -1,111 +1,240 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Experience Details - The Shared Table Story</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
-        h1, h2, h3 { font-family: 'Playfair Display', serif; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Experience — The Shared Table Story</title>
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Icons (for trust badges) -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+  />
+
+  <style>
+    body {
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    .heading-serif {
+      font-family: 'Playfair Display', Georgia, "Times New Roman", serif;
+    }
+  </style>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'tsts-cream': '#F5EDE6',
+            'tsts-soft': '#FDF9F5',
+            'tsts-ink': '#1F2933',
+            'tsts-clay': '#C28D6B'
+          },
+          boxShadow: {
+            'soft-card': '0 18px 35px rgba(15, 23, 42, 0.10)'
+          },
+          borderRadius: {
+            '3xl': '1.5rem'
+          }
+        }
+      }
+    }
+  </script>
 </head>
-<body class="bg-gray-50 text-gray-900 flex flex-col min-h-screen">
 
-    <nav id="navbar-placeholder"></nav>
+<body class="bg-tsts-cream text-slate-900">
 
-    <div class="container mx-auto px-4 py-8 flex-grow">
-        <div id="loading" class="text-center py-12">
-            <i class="fas fa-spinner fa-spin text-3xl text-gray-300"></i>
-        </div>
+  <!-- Shared Navbar Placeholder -->
+  <nav id="navbar-placeholder"></nav>
 
-        <div id="experience-content" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-8">
-            
-            <div class="lg:col-span-2 space-y-8">
-                
+  <main class="min-h-screen">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-0 py-8 sm:py-10 lg:py-12">
+      <!-- Breadcrumb / back link (optional) -->
+      <div class="mb-6 text-sm text-slate-600">
+        <a href="explore.html" class="inline-flex items-center gap-2 hover:text-tsts-ink">
+          <i class="fa-solid fa-arrow-left text-xs"></i>
+          <span>Back to all experiences</span>
+        </a>
+      </div>
+
+      <!-- Main Layout: Left (content) + Right (booking + review) -->
+      <div class="lg:flex lg:items-start lg:gap-10">
+        <!-- LEFT COLUMN -->
+        <section class="lg:w-2/3 space-y-8">
+          <!-- Title + City -->
+          <header class="space-y-2">
+            <h1 id="exp-title" class="heading-serif text-2xl sm:text-3xl lg:text-4xl font-semibold text-tsts-ink">
+              Shared Home-Cooked Dinner in Melbourne
+            </h1>
+            <p id="exp-city" class="text-sm sm:text-base text-slate-600">
+              Melbourne, Australia
+            </p>
+          </header>
+
+          <!-- Main Image -->
+          <div class="overflow-hidden rounded-3xl shadow-soft-card bg-slate-200">
+            <img
+              id="main-image"
+              src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1200&q=80"
+              alt="Experience main image"
+              class="w-full h-64 sm:h-80 lg:h-96 object-cover"
+            />
+          </div>
+
+          <!-- Description -->
+          <section class="bg-white/90 rounded-3xl shadow-soft-card border border-white px-5 sm:px-7 py-6 sm:py-7">
+            <h2 class="heading-serif text-xl sm:text-2xl font-semibold text-tsts-ink mb-3">
+              About this experience
+            </h2>
+            <p id="exp-description" class="text-sm sm:text-base leading-relaxed text-slate-800">
+              Join a cosy home-cooked dinner where travellers and locals gather around the same table.
+              Expect slow conversations, shared stories, and dishes that feel like they belong to a family
+              kitchen rather than a restaurant menu.
+            </p>
+          </section>
+
+          <!-- Host Section -->
+          <section class="bg-tsts-soft rounded-3xl border border-white shadow-soft-card px-5 sm:px-7 py-6 sm:py-7 flex items-start gap-4 sm:gap-5">
+            <div class="flex-shrink-0">
+              <img
+                id="host-pic"
+                src="https://images.unsplash.com/photo-1544723795-3fb6469f5b39?auto=format&fit=crop&w=300&q=80"
+                alt="Host profile picture"
+                class="h-16 w-16 sm:h-20 sm:w-20 rounded-full object-cover border-2 border-white shadow-md"
+              />
+            </div>
+            <div>
+              <p class="text-xs uppercase tracking-[0.16em] text-slate-500 mb-1">
+                Hosted by
+              </p>
+              <p id="host-name" class="text-base sm:text-lg font-semibold text-tsts-ink mb-2">
+                Abhishek
+              </p>
+              <p class="text-sm text-slate-700">
+                A storyteller, home cook, and traveller at heart — welcoming you into a space where every seat
+                has a story and every dish has a memory attached to it.
+              </p>
+            </div>
+          </section>
+        </section>
+
+        <!-- RIGHT COLUMN -->
+        <aside class="lg:w-1/3 mt-8 lg:mt-0 space-y-4">
+          <!-- Featured Review Card -->
+          <div
+            id="featured-review-container"
+            class="bg-white/95 border border-white shadow-soft-card rounded-3xl px-5 py-5"
+          >
+            <p class="text-xs uppercase tracking-[0.18em] text-slate-500 mb-2">
+              Featured Review
+            </p>
+            <p class="text-sm sm:text-base italic text-slate-800 mb-3">
+              "The most authentic dinner I've had in years."
+            </p>
+            <p class="text-xs sm:text-sm text-slate-600">
+              — Sarah, Melbourne <span class="text-amber-500 font-semibold">(5.0 ★)</span>
+            </p>
+          </div>
+
+          <!-- Sticky Booking Card -->
+          <div class="lg:sticky lg:top-24">
+            <div class="bg-white/95 border border-white shadow-soft-card rounded-3xl px-5 py-5 sm:px-6 sm:py-6">
+              <!-- Price & basic info (JS may override) -->
+              <div class="flex items-baseline justify-between mb-4">
                 <div>
-                    <h1 id="exp-title" class="text-3xl md:text-4xl font-bold text-gray-900 mb-2"></h1>
-                    <div class="flex items-center text-gray-500 gap-4 text-sm">
-                        <span id="exp-city" class="flex items-center gap-1"><i class="fas fa-map-marker-alt text-orange-500"></i> Loading...</span>
-                        <span id="exp-rating" class="flex items-center gap-1"><i class="fas fa-star text-yellow-400"></i> New</span>
-                    </div>
+                  <span class="text-xl sm:text-2xl font-semibold text-tsts-ink">
+                    <span id="exp-price">$65</span>
+                  </span>
+                  <span class="text-sm text-slate-600">&nbsp;per guest</span>
+                </div>
+                <div class="text-xs text-slate-500 text-right">
+                  <span class="block">Small-group dinner</span>
+                  <span class="block">Hosted in a local home</span>
+                </div>
+              </div>
+
+              <!-- Booking Form -->
+              <form id="booking-form" class="space-y-4">
+                <!-- Date -->
+                <div class="space-y-1.5">
+                  <label for="booking-date" class="text-xs font-medium text-slate-700">
+                    Date
+                  </label>
+                  <input
+                    type="date"
+                    id="booking-date"
+                    class="w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-tsts-clay/60 focus:border-transparent"
+                  />
                 </div>
 
-                <div class="rounded-2xl overflow-hidden shadow-sm h-96 bg-gray-200 relative">
-                    <img id="main-image" src="" class="w-full h-full object-cover">
-                    <div class="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-lg shadow-sm font-bold">
-                        $<span id="exp-price-display">0</span> / person
-                    </div>
+                <!-- Guests -->
+                <div class="space-y-1.5">
+                  <label for="booking-guests" class="text-xs font-medium text-slate-700">
+                    Guests
+                  </label>
+                  <select
+                    id="booking-guests"
+                    class="w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-tsts-clay/60 focus:border-transparent"
+                  >
+                    <option value="1">1 guest</option>
+                    <option value="2">2 guests</option>
+                    <option value="3">3 guests</option>
+                    <option value="4">4 guests</option>
+                    <option value="5">5 guests</option>
+                    <option value="6">6 guests</option>
+                  </select>
                 </div>
 
-                <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex items-start gap-4">
-                    <img id="host-pic" src="https://via.placeholder.com/100" class="w-16 h-16 rounded-full object-cover border-2 border-orange-100">
-                    <div>
-                        <h3 class="font-bold text-lg mb-1">Hosted by <span id="host-name">Host</span></h3>
-                        <p class="text-gray-600 text-sm mb-3">"I love sharing my culture through food. Join me for an unforgettable evening."</p>
-                        <button id="contact-host-btn" class="text-orange-600 text-sm font-bold hover:underline">
-                            <i class="far fa-envelope mr-1"></i> Contact Host
-                        </button>
-                    </div>
+                <!-- Reserve Button -->
+                <button
+                  type="submit"
+                  class="mt-2 w-full inline-flex items-center justify-center rounded-xl bg-tsts-ink px-4 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-tsts-ink transition"
+                >
+                  Reserve your seat
+                </button>
+
+                <!-- Trust Badges Row -->
+                <div class="mt-4 flex flex-col gap-2 text-[0.7rem] sm:text-xs text-slate-600">
+                  <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-shield-check text-emerald-500 text-sm"></i>
+                    <span>Secure payment</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-user-check text-blue-500 text-sm"></i>
+                    <span>Verified host</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-arrow-rotate-left text-amber-500 text-sm"></i>
+                    <span>Free cancellation (within policy)</span>
+                  </div>
                 </div>
 
-                <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-                    <h2 class="text-xl font-bold mb-4">About this experience</h2>
-                    <p id="exp-description" class="text-gray-600 leading-relaxed whitespace-pre-line"></p>
-                </div>
+                <!-- Small Footnote -->
+                <p class="mt-3 text-[0.65rem] text-slate-500 leading-relaxed">
+                  Exact address and host details are shared after your booking is confirmed. You’ll receive
+                  all information via email and your booking dashboard.
+                </p>
+              </form>
             </div>
-
-            <div class="lg:col-span-1">
-                <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-lg sticky top-24">
-                    <div class="flex justify-between items-end mb-6">
-                        <div>
-                            <span class="text-2xl font-bold text-gray-900">$<span id="sidebar-price">0</span></span>
-                            <span class="text-gray-500 text-sm">/ guest</span>
-                        </div>
-                        <div class="text-sm text-gray-500">
-                            Maximum <span id="sidebar-max-guests">0</span> guests
-                        </div>
-                    </div>
-
-                    <form id="booking-form" class="space-y-4">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Date</label>
-                            <input type="date" id="booking-date" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500 outline-none" required>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Guests</label>
-                            <input type="number" id="booking-guests" min="1" value="1" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500 outline-none" required>
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Dietary Notes (Optional)</label>
-                            <textarea id="guest-notes" rows="2" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500 outline-none" placeholder="Allergies, preferences..."></textarea>
-                        </div>
-
-                        <div id="booking-action-area">
-                            <button type="submit" id="book-btn" class="w-full bg-orange-600 text-white py-3 rounded-lg font-bold hover:bg-orange-700 transition shadow-md">
-                                Reserve my spot
-                            </button>
-                            <p class="text-xs text-center text-gray-400 mt-2">You won't be charged yet</p>
-                        </div>
-                        
-                        <div class="pt-4 border-t border-gray-100 mt-4">
-                            <p class="text-xs text-gray-500 flex items-center gap-2">
-                                <i class="fas fa-shield-alt text-green-500"></i> Free cancellation 48h before event.
-                            </p>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-        </div>
+          </div>
+        </aside>
+      </div>
     </div>
+  </main>
 
-    <footer id="footer-placeholder"></footer>
-    <script src="js/common.js"></script>
-    <script src="js/experience.js"></script>
+  <!-- Shared Footer Placeholder -->
+  <footer id="footer-placeholder"></footer>
+
+  <!-- Common layout script (navbar + footer injection, etc.) -->
+  <script src="js/common.js"></script>
 </body>
 </html>

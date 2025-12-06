@@ -22,6 +22,7 @@
                         <input type="text" id="search-input" placeholder="Search by city, host, or dish..." 
                             class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none">
                     </div>
+                    
                     <div class="relative w-full md:w-48">
                         <i class="far fa-calendar absolute left-4 top-3.5 text-gray-400"></i>
                         <input type="date" id="date-input" 
@@ -34,26 +35,26 @@
                 </button>
             </div>
 
-            <div id="filter-panel" class="hidden mt-4 p-4 bg-gray-50 rounded-xl border border-gray-200">
+            <div id="filter-panel" class="hidden mt-4 p-4 bg-gray-50 rounded-xl border border-gray-200 transition-all duration-300">
                 <div class="flex flex-col md:flex-row gap-6 items-center">
                     <div class="w-full md:w-auto">
                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Price Range</label>
                         <div class="flex items-center gap-2">
-                            <input type="number" id="min-price" placeholder="Min" class="w-24 px-3 py-2 rounded border border-gray-300">
+                            <input type="number" id="min-price" placeholder="Min" class="w-24 px-3 py-2 rounded border border-gray-300 focus:outline-none focus:border-orange-500">
                             <span class="text-gray-400">-</span>
-                            <input type="number" id="max-price" placeholder="Max" class="w-24 px-3 py-2 rounded border border-gray-300">
+                            <input type="number" id="max-price" placeholder="Max" class="w-24 px-3 py-2 rounded border border-gray-300 focus:outline-none focus:border-orange-500">
                         </div>
                     </div>
                     <div class="w-full md:w-auto flex items-end pt-5">
-                        <button id="apply-filters" class="bg-gray-900 text-white px-6 py-2 rounded-lg font-medium hover:bg-gray-800 transition">
-                            Apply
+                        <button id="apply-filters" class="bg-gray-900 text-white px-6 py-2 rounded-lg font-medium hover:bg-gray-800 transition shadow-sm">
+                            Apply Filters
                         </button>
                     </div>
                 </div>
             </div>
 
             <div class="flex gap-2 mt-4 overflow-x-auto pb-2 scrollbar-hide" id="category-chips">
-                <button class="filter-chip active px-4 py-2 bg-gray-900 text-white rounded-full text-sm font-medium whitespace-nowrap transition" data-category="all">All</button>
+                <button class="filter-chip active px-4 py-2 bg-gray-900 text-white rounded-full text-sm font-medium whitespace-nowrap transition border border-transparent" data-category="all">All</button>
                 <button class="filter-chip px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-full text-sm font-medium whitespace-nowrap hover:border-orange-500 transition" data-category="Dinner">Dinner</button>
                 <button class="filter-chip px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-full text-sm font-medium whitespace-nowrap hover:border-orange-500 transition" data-category="Lunch">Lunch</button>
                 <button class="filter-chip px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-full text-sm font-medium whitespace-nowrap hover:border-orange-500 transition" data-category="Cooking Class">Cooking Class</button>
@@ -63,16 +64,23 @@
     </div>
 
     <div class="container mx-auto px-4 py-8 flex-grow">
-        <div id="experiences-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
         
+        <div id="experiences-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div class="col-span-full text-center py-12">
+                <i class="fas fa-spinner fa-spin text-3xl text-gray-300"></i>
+            </div>
+        </div>
+
         <div id="no-results" class="hidden text-center py-12">
             <div class="text-6xl mb-4">🍂</div>
             <h3 class="text-xl font-bold text-gray-900 mb-2">No experiences found</h3>
-            <p class="text-gray-500 mb-8">Try adjusting your filters.</p>
+            <p class="text-gray-500 mb-8">Try adjusting your filters or date.</p>
         </div>
+
     </div>
 
     <footer id="footer-placeholder"></footer>
+
     <script src="js/common.js"></script>
     <script src="js/explore.js"></script>
 </body>

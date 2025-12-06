@@ -1,15 +1,18 @@
-// Frontend/js/explore.js
+// public/js/explore.js
 
-// 🔴 IMPORTANT: DO NOT redeclare API_BASE here.
-// It is already defined in common.js. Redeclaring causes a crash.
+// IMPORTANT: Do NOT redeclare API_BASE here.
+// It is already defined in common.js.
 // const API_BASE = 'https://shared-table-api.onrender.com';
 
-// Assumes helper functions (showModal, etc.) come from common.js.
+// Core DOM elements
 const searchInput = document.getElementById("search-input");
 const dateInput = document.getElementById("date-input");
 const experiencesGrid = document.getElementById("experiences-grid");
+
 // Handles both ID variations just in case
-const noResultsMessage = document.getElementById("no-results-message") || document.getElementById("no-results");
+const noResultsMessage =
+  document.getElementById("no-results-message") ||
+  document.getElementById("no-results");
 
 // Filter UI elements
 const filterBtn = document.getElementById("filter-btn");
@@ -18,12 +21,39 @@ const minPriceInput = document.getElementById("min-price");
 const maxPriceInput = document.getElementById("max-price");
 const applyFiltersBtn = document.getElementById("apply-filters");
 
-// In your HTML, chips have class="filter-chip ..." and data-category="..."
+// Category filter chips
 const categoryButtons = document.querySelectorAll(".filter-chip");
 
 let allExperiences = [];
 let currentCategory = "";
 let isLoading = false;
+
+function clampPriceInput(el) {
+  if (!el) return;
+  const raw = el.value;
+  if (raw === "") return;
+  let n = Number(raw);
+  if (Number.isNaN(n) || n < 0) n = 0;
+  el.value = n;
+}
+
+function normalisePriceRange() {
+  if (!minPriceInput || !maxPriceInput) return { min: null, max: null };
+
+  clampPriceInput(minPriceInput);
+  clampPriceInput(maxPriceInput);
+
+  const min = minPriceInput.value === "" ? null : Number(minPriceInput.value);
+  const max = maxPriceInput.value === "" ? null : Number(maxPriceInput.value);
+
+  if (min !== null && max !== null && max < min) {
+    // Swap to keep them sane instead of letting user break it
+    maxPriceInput.value = String(min);
+    return { min, max: min };
+  }
+
+  return { min, max };
+}
 
 function setLoading(state) {
   isLoading = state;
@@ -44,14 +74,14 @@ function buildQueryParams() {
   const q = (searchInput?.value || "").trim();
   const date = dateInput?.value || "";
   const category = currentCategory || "";
-  const minPrice = minPriceInput?.value || "";
-  const maxPrice = maxPriceInput?.value || "";
+
+  const { min, max } = normalisePriceRange();
 
   if (q) params.set("q", q);
   if (date) params.set("date", date);
   if (category && category !== "all") params.set("category", category);
-  if (minPrice) params.set("minPrice", minPrice);
-  if (maxPrice) params.set("maxPrice", maxPrice);
+  if (min !== null) params.set("minPrice", String(min));
+  if (max !== null) params.set("maxPrice", String(max));
 
   return params.toString();
 }
@@ -84,6 +114,7 @@ function renderExperiences(list, { isFallback = false } = {}) {
         exp.imageUrl ||
         (exp.images && exp.images[0]) ||
         "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=800&auto=format&fit=crop";
+
       const price = exp.price ? `$${exp.price}` : "Price on request";
       const rating = exp.averageRating || 0;
       const reviews = exp.reviewCount || 0;
@@ -91,7 +122,7 @@ function renderExperiences(list, { isFallback = false } = {}) {
       return `
       <a href="experience.html?id=${exp._id}" class="group block bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition">
         <div class="relative h-48 overflow-hidden bg-gray-200">
-          <img src="${img}" alt="${exp.title}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" 
+          <img src="${img}" alt="${exp.title}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500"
                onerror="this.src='https://via.placeholder.com/400?text=No+Image'">
           <div class="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md text-xs font-bold shadow-sm">
             ${price}
@@ -108,11 +139,11 @@ function renderExperiences(list, { isFallback = false } = {}) {
             <i class="fas fa-map-marker-alt text-orange-500 text-xs"></i> ${exp.city || "City"}
           </p>
           <div class="flex items-center justify-between border-t border-gray-50 pt-3">
-             <div class="flex items-center gap-1 text-yellow-400 text-sm">
-                 <i class="fas fa-star"></i>
-                 <span class="text-gray-700 font-bold">${rating > 0 ? rating.toFixed(1) : 'New'}</span>
-                 <span class="text-gray-400 text-xs">(${reviews})</span>
-             </div>
+            <div class="flex items-center gap-1 text-yellow-400 text-sm">
+              <i class="fas fa-star"></i>
+              <span class="text-gray-700 font-bold">${rating > 0 ? rating.toFixed(1) : "New"}</span>
+              <span class="text-gray-400 text-xs">(${reviews})</span>
+            </div>
           </div>
         </div>
       </a>`;
@@ -135,11 +166,10 @@ async function fetchExperiences({ initial = false } = {}) {
     }
 
     if (initial) {
-      allExperiences = data; // Keep a copy for fallback
+      allExperiences = data; // Store for fallback
     }
 
     if (data.length === 0 && !initial && allExperiences.length > 0) {
-      // Smart fallback
       const sorted = [...allExperiences].sort(
         (a, b) => (b.averageRating || 0) - (a.averageRating || 0)
       );
@@ -167,24 +197,29 @@ function handleCategoryClick(e) {
   const category = btn.getAttribute("data-category") || "";
   currentCategory = category;
 
-  // Toggle active style
   categoryButtons.forEach(b => {
     b.classList.remove("bg-gray-900", "text-white");
     b.classList.add("bg-white", "text-gray-600", "border");
   });
-  
+
   btn.classList.remove("bg-white", "text-gray-600", "border");
   btn.classList.add("bg-gray-900", "text-white");
-  
+
   fetchExperiences();
 }
 
-// Initialize Filter UI
 function initFilterUI() {
   if (filterBtn && filterPanel) {
     filterBtn.addEventListener("click", () => {
       filterPanel.classList.toggle("hidden");
     });
+  }
+
+  if (minPriceInput) {
+    minPriceInput.addEventListener("input", () => clampPriceInput(minPriceInput));
+  }
+  if (maxPriceInput) {
+    maxPriceInput.addEventListener("input", () => clampPriceInput(maxPriceInput));
   }
 
   if (applyFiltersBtn) {
@@ -220,5 +255,4 @@ function initExplorePage() {
   initFilterUI();
 }
 
-// Initialize on DOM ready
 document.addEventListener("DOMContentLoaded", initExplorePage);

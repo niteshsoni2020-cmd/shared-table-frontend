@@ -3,212 +3,288 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Explore – The Shared Table Story</title>
+  <title>The Shared Table Story — Explore</title>
 
-  <!-- Tailwind -->
+  <!-- Tailwind CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- Icons & Fonts -->
-  <link
-    rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
-  />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
-    rel="stylesheet"
-  />
+  <!-- Inter Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet" />
 
   <style>
     body {
-      font-family: "Plus Jakarta Sans", sans-serif;
-    }
-    /* optional: hide scrollbars for horizontal chip bar */
-    .scrollbar-hide::-webkit-scrollbar {
-      display: none;
-    }
-    .scrollbar-hide {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
+      font-family: 'Inter', sans-serif;
     }
   </style>
 </head>
-<body class="bg-gray-50 text-gray-900 flex flex-col min-h-screen">
-  <!-- NAVBAR INJECTED BY common.js -->
-  <nav id="navbar-placeholder"></nav>
+<body class="bg-gray-50 text-gray-900">
 
-  <!-- Sticky search / filter bar -->
-  <div class="bg-white shadow-sm border-b border-gray-100 sticky top-[72px] z-40">
-    <div class="max-w-6xl mx-auto px-4 py-3">
-      <!-- Top row: title + search + date + filter button -->
-      <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 class="text-lg md:text-xl font-semibold text-gray-900">
-            Discover shared tables near you
-          </h1>
-          <p class="text-xs md:text-sm text-gray-500 mt-1">
-            Find home-cooked meals, supper clubs, and cultural food experiences.
-          </p>
+  <!-- NAVBAR -->
+  <header class="bg-white/90 backdrop-blur border-b border-gray-200 sticky top-0 z-30">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <a href="index.html" class="flex items-center gap-2">
+        <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-gray-900 text-white text-sm font-bold">
+          T
+        </span>
+        <div class="flex flex-col leading-tight">
+          <span class="text-sm font-semibold tracking-wide">The Shared Table Story</span>
+          <span class="text-xs text-gray-500">Real people. Real tables. Real stories.</span>
         </div>
+      </a>
 
-        <div class="flex flex-col md:flex-row gap-2 md:items-center">
-          <!-- Search -->
-          <div class="flex items-center bg-gray-50 border border-gray-200 rounded-full px-3 py-2 w-full md:w-64">
-            <i class="fas fa-search text-gray-400 text-sm mr-2"></i>
-            <input
-              id="search-input"
-              type="text"
-              placeholder="Search by city, cuisine or host"
-              class="bg-transparent outline-none flex-1 text-sm text-gray-800"
-            />
-          </div>
+      <nav class="hidden md:flex items-center gap-4 text-sm">
+        <a href="explore.html" class="text-gray-900 font-medium">Explore</a>
+        <a href="host-dashboard.html" class="text-gray-600 hover:text-gray-900">Host</a>
+        <a href="about.html" class="text-gray-600 hover:text-gray-900">About</a>
+      </nav>
 
-          <!-- Date -->
-          <div
-            class="flex items-center bg-gray-50 border border-gray-200 rounded-full px-3 py-2 w-full md:w-44"
-          >
-            <i class="fas fa-calendar-alt text-gray-400 text-sm mr-2"></i>
-            <input
-              id="date-input"
-              type="date"
-              class="bg-transparent outline-none text-sm text-gray-800 w-full"
-            />
-          </div>
-
-          <!-- Filters button -->
-          <button
-            id="filter-btn"
-            class="px-4 py-2 bg-white border border-gray-200 rounded-full text-sm text-gray-700 hover:bg-gray-100 flex items-center justify-center gap-2"
-            type="button"
-          >
-            <i class="fas fa-sliders-h text-xs"></i>
-            <span>Filters</span>
-          </button>
-        </div>
+      <div class="flex items-center gap-2">
+        <a href="login.html" class="hidden sm:inline-flex text-sm text-gray-700 hover:text-gray-900">
+          Log in
+        </a>
+        <a href="signup.html" class="inline-flex items-center rounded-full bg-gray-900 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-black">
+          Sign up
+        </a>
       </div>
+    </div>
+  </header>
 
-      <!-- Filter panel (toggles open/close) -->
-      <div
-        id="filter-panel"
-        class="hidden mt-3 p-4 bg-gray-50 rounded-xl border border-gray-200"
-      >
-        <div class="flex flex-col md:flex-row gap-6 items-center">
-          <!-- Price Range -->
-          <div class="w-full md:w-auto">
-            <label
-              class="block text-xs font-bold text-gray-500 uppercase mb-1"
-            >
-              Price Range (AUD)
-            </label>
-            <div class="flex items-center gap-2">
+  <!-- FILTER BAR (with smart price filter) -->
+  <section class="bg-white/95 backdrop-blur border-b border-gray-200">
+    <div class="max-w-6xl mx-auto px-4 py-4 space-y-4">
+
+      <!-- TOP FILTER ROW: SEARCH / DATE / GUESTS / LOCATION -->
+      <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+
+        <!-- Left block: search + meta -->
+        <div class="flex-1 space-y-2">
+          <div class="flex flex-col sm:flex-row sm:items-end sm:gap-3">
+            <!-- Search -->
+            <div class="flex-1">
+              <label for="searchInput" class="block text-xs font-semibold text-gray-600 tracking-wide uppercase">
+                What are you craving?
+              </label>
               <input
-                type="number"
-                id="min-price"
-                placeholder="Min"
-                min="0"
-                step="1"
-                class="w-24 px-3 py-2 rounded border border-gray-300 text-sm"
+                id="searchInput"
+                type="text"
+                placeholder="Search by cuisine, vibe, neighbourhood…"
+                class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900"
               />
-              <span class="text-gray-400">–</span>
+            </div>
+
+            <!-- Date -->
+            <div class="w-full sm:w-40">
+              <label for="dateFilter" class="block text-xs font-semibold text-gray-600 tracking-wide uppercase">
+                Date
+              </label>
               <input
+                id="dateFilter"
+                type="date"
+                class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900"
+              />
+            </div>
+
+            <!-- Guests -->
+            <div class="w-full sm:w-32">
+              <label for="guestsFilter" class="block text-xs font-semibold text-gray-600 tracking-wide uppercase">
+                Guests
+              </label>
+              <input
+                id="guestsFilter"
                 type="number"
-                id="max-price"
-                placeholder="Max"
-                min="0"
+                min="1"
                 step="1"
-                class="w-24 px-3 py-2 rounded border border-gray-300 text-sm"
+                placeholder="2"
+                class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900"
               />
             </div>
           </div>
 
-          <!-- Apply button -->
-          <div class="w-full md:w-auto flex items-end pt-4">
-            <button
-              id="apply-filters"
-              type="button"
-              class="bg-gray-900 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-black transition"
-            >
-              Apply
-            </button>
+          <!-- Location -->
+          <div class="flex flex-col sm:flex-row sm:items-end sm:gap-3">
+            <div class="w-full sm:w-64">
+              <label for="locationFilter" class="block text-xs font-semibold text-gray-600 tracking-wide uppercase">
+                Location
+              </label>
+              <input
+                id="locationFilter"
+                type="text"
+                placeholder="Melbourne, Sydney, Fitzroy, CBD…"
+                class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900"
+              />
+            </div>
           </div>
+        </div>
+
+        <!-- Right block: Apply / Clear -->
+        <div class="flex items-end gap-2 justify-end mt-2 md:mt-0">
+          <button
+            id="clearAllFiltersBtn"
+            type="button"
+            class="inline-flex items-center rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-100"
+          >
+            Clear all
+          </button>
+          <button
+            id="applyFiltersBtn"
+            type="button"
+            class="inline-flex items-center rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-black"
+          >
+            Apply filters
+          </button>
         </div>
       </div>
 
-      <!-- Category chips -->
-      <div
-        id="category-chips"
-        class="flex gap-2 mt-3 overflow-x-auto pb-2 scrollbar-hide"
-      >
-        <button
-          class="filter-chip px-4 py-2 rounded-full text-xs font-medium bg-gray-900 text-white whitespace-nowrap"
-          data-category="all"
-          type="button"
-        >
-          All
-        </button>
-        <button
-          class="filter-chip px-4 py-2 rounded-full text-xs font-medium bg-white border border-gray-200 text-gray-600 whitespace-nowrap"
-          data-category="Dinner"
-          type="button"
-        >
-          Dinner
-        </button>
-        <button
-          class="filter-chip px-4 py-2 rounded-full text-xs font-medium bg-white border border-gray-200 text-gray-600 whitespace-nowrap"
-          data-category="Lunch"
-          type="button"
-        >
-          Lunch
-        </button>
-        <button
-          class="filter-chip px-4 py-2 rounded-full text-xs font-medium bg-white border border-gray-200 text-gray-600 whitespace-nowrap"
-          data-category="Cooking Class"
-          type="button"
-        >
-          Cooking Class
-        </button>
-        <button
-          class="filter-chip px-4 py-2 rounded-full text-xs font-medium bg-white border border-gray-200 text-gray-600 whitespace-nowrap"
-          data-category="Culture"
-          type="button"
-        >
-          Culture
-        </button>
+      <!-- PRICE + SMART PRESETS -->
+      <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <!-- Manual price entry -->
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 tracking-wide uppercase">
+            Price range (per guest)
+          </label>
+
+          <div class="mt-2 flex items-center gap-3">
+            <!-- Min -->
+            <div class="flex items-center gap-1">
+              <span class="text-sm text-gray-500">$</span>
+              <input
+                id="minPrice"
+                type="number"
+                min="0"
+                step="5"
+                placeholder="Min"
+                class="w-24 rounded-lg border border-gray-300 px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900"
+              />
+            </div>
+
+            <span class="text-gray-400 text-sm">to</span>
+
+            <!-- Max -->
+            <div class="flex items-center gap-1">
+              <span class="text-sm text-gray-500">$</span>
+              <input
+                id="maxPrice"
+                type="number"
+                min="0"
+                step="5"
+                placeholder="Max"
+                class="w-24 rounded-lg border border-gray-300 px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900"
+              />
+            </div>
+
+            <!-- Clear price -->
+            <button
+              id="clearPriceFilter"
+              type="button"
+              class="text-xs text-gray-500 underline underline-offset-2 hover:text-gray-700 ml-1"
+            >
+              Clear price
+            </button>
+          </div>
+
+          <p id="priceSummary" class="mt-1 text-xs text-gray-500">
+            Any price
+          </p>
+          <p id="smartPriceHint" class="mt-0.5 text-xs text-gray-400">
+            Smart filter will auto-tune once we see results.
+          </p>
+        </div>
+
+        <!-- Smart presets -->
+        <div class="flex flex-wrap gap-2 md:justify-end">
+          <button
+            type="button"
+            data-price-preset
+            data-min=""
+            data-max=""
+            class="price-preset-chip inline-flex items-center rounded-full border border-gray-900 px-3 py-1 text-xs font-medium text-gray-900 bg-gray-100"
+          >
+            Any
+          </button>
+
+          <button
+            type="button"
+            data-price-preset
+            data-min="0"
+            data-max="40"
+            class="price-preset-chip inline-flex items-center rounded-full border border-gray-300 px-3 py-1 text-xs font-medium text-gray-700 hover:border-gray-900 hover:text-gray-900"
+          >
+            Budget (&lt; $40)
+          </button>
+
+          <button
+            type="button"
+            data-price-preset
+            data-min="40"
+            data-max="80"
+            class="price-preset-chip inline-flex items-center rounded-full border border-gray-300 px-3 py-1 text-xs font-medium text-gray-700 hover:border-gray-900 hover:text-gray-900"
+          >
+            Standard ($40–80)
+          </button>
+
+          <button
+            type="button"
+            data-price-preset
+            data-min="80"
+            data-max="150"
+            class="price-preset-chip inline-flex items-center rounded-full border border-gray-300 px-3 py-1 text-xs font-medium text-gray-700 hover:border-gray-900 hover:text-gray-900"
+          >
+            Premium ($80–150)
+          </button>
+
+          <button
+            type="button"
+            data-price-preset
+            data-min="150"
+            data-max=""
+            class="price-preset-chip inline-flex items-center rounded-full border border-gray-300 px-3 py-1 text-xs font-medium text-gray-700 hover:border-gray-900 hover:text-gray-900"
+          >
+            Luxury (&gt; $150)
+          </button>
+        </div>
+      </div>
+
+      <!-- ACTIVE FILTER CHIPS (smart) -->
+      <div id="activeFiltersBar" class="flex flex-wrap gap-2 text-xs"></div>
+
+      <!-- META LINE: count + summary -->
+      <div class="flex items-center justify-between text-xs text-gray-500 mt-1">
+        <p id="resultMetaText">Loading experiences…</p>
       </div>
     </div>
-  </div>
+  </section>
 
-  <!-- MAIN GRID -->
-  <div class="max-w-6xl mx-auto px-4 py-8 flex-grow">
+  <!-- RESULTS GRID -->
+  <main class="max-w-6xl mx-auto px-4 py-6">
     <div
-      id="experiences-grid"
-      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-    ></div>
-
-    <!-- No results state -->
-    <div id="no-results" class="hidden text-center py-12">
-      <div class="text-6xl mb-4">🍂</div>
-      <h3 class="text-xl font-bold text-gray-900 mb-2">
-        No experiences found
-      </h3>
-      <p class="text-gray-500 mb-4 text-sm">
-        Try adjusting your search, date, or filters.
-      </p>
-      <button
-        type="button"
-        onclick="document.getElementById('search-input').value=''; document.getElementById('date-input').value=''; document.getElementById('min-price').value=''; document.getElementById('max-price').value='';"
-        class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-full text-xs font-medium text-gray-700 hover:bg-gray-50"
-      >
-        Clear filters
-      </button>
+      id="experienceGrid"
+      class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 auto-rows-fr"
+    >
+      <!-- JS will inject cards here -->
     </div>
-  </div>
 
-  <!-- FOOTER INJECTED BY common.js -->
-  <footer id="footer-placeholder"></footer>
+    <!-- Empty state -->
+    <div id="emptyState" class="hidden text-center py-16 text-sm text-gray-500">
+      No tables match these filters yet. Try widening your price or date.
+    </div>
+  </main>
 
-  <!-- Shared helpers (API_BASE, showModal, getToken, navbar/footer injection) -->
-  <script src="js/common.js"></script>
-  <!-- Explore page logic (the explore.js we just fixed) -->
-  <script src="js/explore.js"></script>
+  <!-- FOOTER -->
+  <footer class="border-t border-gray-200 mt-8">
+    <div class="max-w-6xl mx-auto px-4 py-6 text-xs text-gray-500 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+      <p>&copy; <span id="yearSpan"></span> The Shared Table Story.</p>
+      <div class="flex gap-3">
+        <a href="terms.html" class="hover:text-gray-700">Terms</a>
+        <a href="privacy.html" class="hover:text-gray-700">Privacy</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('yearSpan').textContent = new Date().getFullYear();
+  </script>
+
+  <!-- EXPLORE LOGIC -->
+  <script src="explore.js"></script>
 </body>
 </html>

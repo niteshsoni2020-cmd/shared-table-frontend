@@ -1,26 +1,26 @@
-// public/js/common.js
+// Frontend/js/common.js
+
+// 🔴 THE CRITICAL FIX: The correct URL from your logs
+const API_URL = 'https://shared-table-api.onrender.com/api';
 
 document.addEventListener('DOMContentLoaded', () => {
     injectNavbar();
     injectFooter();
     checkAuthStatus();
-    initializeMobileMenu(); // Fixes the "Mobile Trap"
+    initializeMobileMenu();
 });
 
-// 1. THE "ONE TRUTH" NAVBAR (Injected into every page)
+// 1. THE "ONE TRUTH" NAVBAR
 function injectNavbar() {
     const navbarPlaceholder = document.getElementById('navbar-placeholder');
     if (!navbarPlaceholder) return;
 
-    // Note: We added the "🔥 Deals" link here as requested
     navbarPlaceholder.innerHTML = `
         <header class="bg-white shadow-sm sticky top-0 z-50">
             <div class="container mx-auto px-4 py-4 flex justify-between items-center">
-                
                 <a href="index.html" class="text-2xl font-bold text-orange-600 flex items-center gap-2 font-serif">
                     <i class="fas fa-utensils"></i> The Shared Table Story
                 </a>
-
                 <nav class="hidden md:flex items-center space-x-8">
                     <a href="index.html" class="text-gray-600 hover:text-orange-600 font-medium transition">Home</a>
                     <a href="explore.html" class="text-gray-600 hover:text-orange-600 font-medium transition">Explore</a>
@@ -28,31 +28,22 @@ function injectNavbar() {
                         <i class="fas fa-fire"></i> Deals
                     </a>
                     <a href="host.html" class="text-gray-600 hover:text-orange-600 font-medium transition">Become a Host</a>
-                    
                     <div id="auth-section-desktop">
-                        <a href="login.html" class="bg-gray-900 text-white px-5 py-2 rounded-full font-medium hover:bg-gray-800 transition">
-                            Login
-                        </a>
+                        <a href="login.html" class="bg-gray-900 text-white px-5 py-2 rounded-full font-medium hover:bg-gray-800 transition">Login</a>
                     </div>
                 </nav>
-
                 <button id="mobile-menu-btn" class="md:hidden text-gray-700 focus:outline-none">
                     <i class="fas fa-bars text-2xl"></i>
                 </button>
             </div>
-
             <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-gray-100 absolute w-full left-0 shadow-lg">
                 <div class="flex flex-col p-4 space-y-4">
                     <a href="index.html" class="text-gray-700 hover:text-orange-600 font-medium">Home</a>
                     <a href="explore.html" class="text-gray-700 hover:text-orange-600 font-medium">Explore</a>
-                    <a href="explore.html?filter=deals" class="text-red-600 font-bold flex items-center gap-2">
-                        <i class="fas fa-fire"></i> Deals
-                    </a>
+                    <a href="explore.html?filter=deals" class="text-red-600 font-bold flex items-center gap-2"><i class="fas fa-fire"></i> Deals</a>
                     <a href="host.html" class="text-gray-700 hover:text-orange-600 font-medium">Become a Host</a>
                     <div id="auth-section-mobile" class="pt-4 border-t border-gray-100">
-                        <a href="login.html" class="block w-full text-center bg-gray-900 text-white px-5 py-3 rounded-lg font-medium">
-                            Login / Sign Up
-                        </a>
+                        <a href="login.html" class="block w-full text-center bg-gray-900 text-white px-5 py-3 rounded-lg font-medium">Login / Sign Up</a>
                     </div>
                 </div>
             </div>
@@ -60,11 +51,10 @@ function injectNavbar() {
     `;
 }
 
-// 2. THE "ONE TRUTH" FOOTER
+// 2. THE FOOTER
 function injectFooter() {
     const footerPlaceholder = document.getElementById('footer-placeholder');
     if (!footerPlaceholder) return;
-
     footerPlaceholder.innerHTML = `
         <footer class="bg-gray-900 text-white py-12 mt-auto">
             <div class="container mx-auto px-4 grid md:grid-cols-4 gap-8">
@@ -89,9 +79,8 @@ function injectFooter() {
                 </div>
                 <div>
                     <h4 class="font-bold mb-4">Join the Table</h4>
-                    <p class="text-gray-400 text-sm mb-4">Get latest stories and deals.</p>
                     <div class="flex">
-                        <input type="email" placeholder="Email" class="px-3 py-2 rounded-l-lg bg-gray-800 border-none text-white focus:ring-1 focus:ring-orange-500 w-full">
+                        <input type="email" placeholder="Email" class="px-3 py-2 rounded-l-lg bg-gray-800 border-none text-white w-full">
                         <button class="bg-orange-600 px-4 py-2 rounded-r-lg hover:bg-orange-700 transition">Go</button>
                     </div>
                 </div>
@@ -103,13 +92,9 @@ function injectFooter() {
     `;
 }
 
-// 3. AUTH STATUS CHECKER (Updates Login Button -> Profile Avatar)
+// 3. AUTH STATUS
 function checkAuthStatus() {
     const token = localStorage.getItem('token');
-    
-    // We assume the user name is stored, or we just show "Profile"
-    // Ideally, we fetch the user object, but for speed, we toggle the UI based on token presence.
-    
     if (token) {
         const userHtmlDesktop = `
             <div class="relative group">
@@ -123,34 +108,26 @@ function checkAuthStatus() {
                 </div>
             </div>
         `;
-
         const userHtmlMobile = `
             <a href="my-bookings.html" class="block text-gray-700 hover:text-orange-600 font-medium py-2">Dashboard</a>
             <a href="profile.html" class="block text-gray-700 hover:text-orange-600 font-medium py-2">My Profile</a>
             <button id="logout-btn-mobile" class="block w-full text-left text-red-600 font-medium py-2">Logout</button>
         `;
 
-        // Update Desktop
         const desktopAuth = document.getElementById('auth-section-desktop');
         if (desktopAuth) desktopAuth.innerHTML = userHtmlDesktop;
-
-        // Update Mobile
         const mobileAuth = document.getElementById('auth-section-mobile');
         if (mobileAuth) mobileAuth.innerHTML = userHtmlMobile;
 
-        // Activate Logout Buttons
         attachLogoutListeners();
-        
-        // Attempt to load real profile pic if available
         loadNavProfilePic();
     }
 }
 
-// 4. MOBILE MENU LOGIC (Fixes the Trap)
+// 4. MOBILE MENU
 function initializeMobileMenu() {
     const btn = document.getElementById('mobile-menu-btn');
     const menu = document.getElementById('mobile-menu');
-
     if (btn && menu) {
         btn.addEventListener('click', () => {
             menu.classList.toggle('hidden');
@@ -158,37 +135,30 @@ function initializeMobileMenu() {
     }
 }
 
-// 5. LOGOUT LOGIC
+// 5. LOGOUT
 function attachLogoutListeners() {
     const handleLogout = () => {
         localStorage.removeItem('token');
         window.location.href = 'index.html';
     };
-
     const desktopBtn = document.getElementById('logout-btn');
     const mobileBtn = document.getElementById('logout-btn-mobile');
-
     if (desktopBtn) desktopBtn.addEventListener('click', handleLogout);
     if (mobileBtn) mobileBtn.addEventListener('click', handleLogout);
 }
 
-// 6. LOAD USER PIC (Tiny UX improvement)
+// 6. PROFILE PIC
 async function loadNavProfilePic() {
     const token = localStorage.getItem('token');
     const img = document.getElementById('nav-user-pic');
     if (!token || !img) return;
-
     try {
-        const res = await fetch('https://the-shared-table.onrender.com/api/auth/me', {
+        const res = await fetch(`${API_URL}/auth/me`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         if (res.ok) {
             const user = await res.json();
-            if (user.profilePic) {
-                img.src = user.profilePic;
-            }
+            if (user.profilePic) img.src = user.profilePic;
         }
-    } catch (e) {
-        // Silent fail, keep placeholder
-    }
+    } catch (e) {}
 }

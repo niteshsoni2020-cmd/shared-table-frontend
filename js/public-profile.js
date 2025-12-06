@@ -1,6 +1,7 @@
 // Frontend/js/public-profile.js
 
-const API_BASE = 'https://shared-table-api.onrender.com/api';
+// 🔴 CONFIG
+const API_BASE = 'https://shared-table-api.onrender.com';
 
 // Get Host ID from URL
 const params = new URLSearchParams(window.location.search);
@@ -20,6 +21,10 @@ const hostBadgeEl = document.getElementById('host-badge');
 const gridEl = document.getElementById('experiences-grid');
 const noExpEl = document.getElementById('no-experiences');
 
+// Review Elements
+const reviewsContainer = document.getElementById('reviews-container');
+const reviewsList = document.getElementById('reviews-list');
+
 document.addEventListener('DOMContentLoaded', async () => {
     if (!userId) {
         showError();
@@ -27,7 +32,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     try {
-        const res = await fetch(`${API_BASE}/users/${userId}/profile`);
+        const res = await fetch(`${API_BASE}/api/users/${userId}/profile`);
         if (!res.ok) throw new Error("Host not found");
 
         const data = await res.json();
@@ -39,7 +44,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 function renderProfile(data) {
-    const { user, isHost, experiences } = data;
+    const { user, isHost, experiences, reviews, hostStats } = data;
 
     // 1. Render Host Info
     hostNameEl.textContent = user.name;
@@ -47,17 +52,37 @@ function renderProfile(data) {
     if (user.location) hostLocationEl.innerHTML = `<i class="fas fa-map-marker-alt mr-1"></i> ${user.location}`;
     if (user.bio) hostBioEl.textContent = user.bio;
     
-    // Rating Logic
-    if (user.guestRating > 0) {
-        hostRatingEl.textContent = `${user.guestRating.toFixed(1)} (${user.guestReviewCount} reviews)`;
+    // 2. Render HOST Stats (The "Zero Blind Spot" Fix)
+    // We use the calculated stats from the backend, not the user.guestRating
+    if (hostStats && hostStats.rating > 0) {
+        hostRatingEl.textContent = `${hostStats.rating.toFixed(1)} (${reviews ? reviews.length : 0} reviews)`;
+    } else {
+        hostRatingEl.textContent = "New Host";
     }
 
     // Verified Badge
-    if (user.isHost) {
+    if (isHost) {
         hostBadgeEl.classList.remove('hidden');
     }
 
-    // 2. Render Experiences
+    // 3. Render Reviews
+    if (reviews && reviews.length > 0) {
+        reviewsContainer.classList.remove('hidden');
+        reviewsList.innerHTML = reviews.map(r => `
+            <div class="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="font-bold text-gray-900 text-sm">${r.authorName || 'Guest'}</span>
+                    <span class="text-xs text-gray-500">${new Date(r.date).toLocaleDateString()}</span>
+                </div>
+                <div class="text-yellow-500 text-xs mb-2">
+                    ${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}
+                </div>
+                <p class="text-gray-600 text-sm italic">"${r.comment}"</p>
+            </div>
+        `).join('');
+    }
+
+    // 4. Render Experiences (Cross-Selling Grid)
     if (!experiences || experiences.length === 0) {
         noExpEl.classList.remove('hidden');
     } else {
@@ -74,7 +99,10 @@ function renderProfile(data) {
 function createExperienceCard(exp) {
     const img = exp.imageUrl || (exp.images && exp.images[0]) || "https://via.placeholder.com/400x300";
     const card = document.createElement('a');
-    card.href = `experience.html?id=${exp._id}`;
+    // Mongoose usually returns _id, but we handle both just in case
+    const safeId = exp._id || exp.id;
+    card.href = `experience.html?id=${safeId}`;
+    
     card.className = "group block bg-white rounded-xl shadow-sm hover:shadow-md transition overflow-hidden border border-gray-100 flex flex-col";
     
     card.innerHTML = `

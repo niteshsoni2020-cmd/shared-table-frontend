@@ -27,9 +27,9 @@
             <a href="explore.html" class="text-orange-600 hover:underline mt-4 inline-block">Back to Explore</a>
         </div>
 
-        <div id="profile-content" class="hidden max-w-5xl mx-auto">
+        <div id="profile-content" class="hidden max-w-5xl mx-auto space-y-12">
             
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 mb-12 flex flex-col md:flex-row gap-8 items-start">
+            <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 flex flex-col md:flex-row gap-8 items-start">
                 <div class="flex-shrink-0 relative">
                     <img id="host-pic" src="https://via.placeholder.com/150" class="w-32 h-32 md:w-40 md:h-40 rounded-full object-cover border-4 border-white shadow-lg">
                     <div id="host-badge" class="absolute bottom-2 right-2 bg-orange-100 text-orange-700 p-1.5 rounded-full border border-white shadow-sm hidden">
@@ -44,11 +44,19 @@
                         <span><i class="fas fa-star text-yellow-500 mr-1"></i> <span id="host-rating">New</span></span>
                     </div>
                     
-                    <h3 class="text-lg font-bold mb-2">About me</h3>
+                    <h3 class="text-lg font-bold mb-2 font-serif text-gray-800">About me</h3>
                     <p id="host-bio" class="text-gray-600 leading-relaxed max-w-2xl">
                         This host hasn't written a bio yet.
                     </p>
                 </div>
+            </div>
+
+            <div id="reviews-container" class="hidden">
+                <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+                    <i class="fas fa-comment-alt text-orange-600"></i> What Guests Say
+                </h2>
+                <div id="reviews-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    </div>
             </div>
 
             <div>

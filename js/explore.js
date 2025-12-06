@@ -1,466 +1,406 @@
-// explore.js
+// js/explore.js
 
-const SEARCH_API = "/api/search"; // change if your backend uses a different path
+// TODO: adjust to your actual backend route if different
+const API_URL = "/api/search";
 
 document.addEventListener("DOMContentLoaded", () => {
-  // --- BASIC FILTER ELEMENTS ---
-  const searchInput = document.getElementById("searchInput");
-  const dateFilter = document.getElementById("dateFilter");
-  const guestsFilter = document.getElementById("guestsFilter");
-  const locationFilter = document.getElementById("locationFilter");
+    // --- ELEMENTS ---
+    const searchInput   = document.getElementById("search-input");
+    const dateInput     = document.getElementById("date-input");
+    const filterBtn     = document.getElementById("filter-btn");
+    const filterPanel   = document.getElementById("filter-panel");
+    const applyFilters  = document.getElementById("apply-filters");
 
-  const minPriceInput = document.getElementById("minPrice");
-  const maxPriceInput = document.getElementById("maxPrice");
-  const clearPriceFilterBtn = document.getElementById("clearPriceFilter");
-  const priceSummary = document.getElementById("priceSummary");
-  const smartPriceHint = document.getElementById("smartPriceHint");
-  const pricePresetChips = document.querySelectorAll("[data-price-preset]");
+    const priceSliderEl     = document.getElementById("price-slider");
+    const priceMinLabelEl   = document.getElementById("price-min-label");
+    const priceMaxLabelEl   = document.getElementById("price-max-label");
+    const priceSummaryEl    = document.getElementById("price-summary");
+    const priceHintEl       = document.getElementById("price-hint");
+    const minPriceHiddenEl  = document.getElementById("min-price");
+    const maxPriceHiddenEl  = document.getElementById("max-price");
 
-  const clearAllFiltersBtn = document.getElementById("clearAllFiltersBtn");
-  const applyFiltersBtn = document.getElementById("applyFiltersBtn");
+    const categoryChips = document.querySelectorAll(".filter-chip");
 
-  const activeFiltersBar = document.getElementById("activeFiltersBar");
-  const experienceGrid = document.getElementById("experienceGrid");
-  const emptyState = document.getElementById("emptyState");
-  const resultMetaText = document.getElementById("resultMetaText");
+    const experiencesGrid = document.getElementById("experiences-grid");
+    const noResultsEl     = document.getElementById("no-results");
 
-  // --- UTILITIES ---
+    // --- STATE ---
+    let activeCategory = "all";
 
-  const sanitizeInt = (raw) => {
-    if (raw === null || raw === undefined || raw === "") return null;
-    const num = Number(raw);
-    if (Number.isNaN(num)) return null;
-    if (num < 0) return 0; // clamp negative to 0
-    return Math.floor(num);
-  };
+    const PRICE_MIN = 0;
+    const PRICE_MAX = 250; // adjust if you want a higher ceiling
 
-  const formatPrice = (value) => `$${Number(value).toFixed(0)}`;
+    // null = no bound (full range)
+    let sliderMin = null;
+    let sliderMax = null;
 
-  const debounce = (fn, delay = 400) => {
-    let t;
-    return (...args) => {
-      clearTimeout(t);
-      t = setTimeout(() => fn(...args), delay);
+    // --- UTILS ---
+    const sanitizeInt = (raw) => {
+        if (raw === null || raw === undefined || raw === "") return null;
+        const num = Number(raw);
+        if (Number.isNaN(num)) return null;
+        if (num < 0) return 0;
+        return Math.floor(num);
     };
-  };
 
-  // --- PRICE RANGE NORMALISATION + SUMMARY ---
+    const formatPrice = (value) => "$" + Number(value).toFixed(0);
 
-  const updatePriceSummary = () => {
-    const min = sanitizeInt(minPriceInput.value);
-    const max = sanitizeInt(maxPriceInput.value);
+    const debounce = (fn, delay = 400) => {
+        let t;
+        return (...args) => {
+            clearTimeout(t);
+            t = setTimeout(() => fn(...args), delay);
+        };
+    };
 
-    if (min === null && max === null) {
-      priceSummary.textContent = "Any price";
-      return;
-    }
+    // --- PRICE SLIDER INIT ---
+    const initPriceSlider = () => {
+        if (!priceSliderEl || typeof noUiSlider === "undefined") return;
 
-    if (min !== null && max !== null) {
-      priceSummary.textContent = `Showing ${formatPrice(min)} – ${formatPrice(max)} per guest`;
-    } else if (min !== null) {
-      priceSummary.textContent = `Showing ${formatPrice(min)}+ per guest`;
-    } else if (max !== null) {
-      priceSummary.textContent = `Showing up to ${formatPrice(max)} per guest`;
-    }
-  };
+        noUiSlider.create(priceSliderEl, {
+            start: [PRICE_MIN, 120],
+            connect: true,
+            range: { min: PRICE_MIN, max: PRICE_MAX },
+            step: 5,
+            // Slider **prevents handles from crossing**, so min>max bug is impossible
+            format: {
+                to: (value) => Math.round(value),
+                from: (value) => Number(value)
+            }
+        });
 
-  const normalizePriceRange = () => {
-    let min = sanitizeInt(minPriceInput.value);
-    let max = sanitizeInt(maxPriceInput.value);
+        const updateFromSlider = (values) => {
+            const [min, max] = values.map((v) => Math.round(v));
 
-    // Keep DOM in sync with sanitised values
-    minPriceInput.value = min === null ? "" : min;
-    maxPriceInput.value = max === null ? "" : max;
+            // Smart: treat full extent as "no bound"
+            sliderMin = min <= PRICE_MIN ? null : min;
+            sliderMax = max >= PRICE_MAX ? null : max;
 
-    // Enforce max >= min when both exist
-    if (min !== null && max !== null && max < min) {
-      max = min;
-      maxPriceInput.value = max;
-    }
+            if (minPriceHiddenEl) {
+                minPriceHiddenEl.value = sliderMin === null ? "" : sliderMin;
+            }
+            if (maxPriceHiddenEl) {
+                maxPriceHiddenEl.value = sliderMax === null ? "" : sliderMax;
+            }
 
-    // HTML constraint
-    if (min !== null) {
-      maxPriceInput.min = String(min);
-    } else {
-      maxPriceInput.min = "0";
-    }
+            if (priceMinLabelEl) {
+                priceMinLabelEl.textContent =
+                    sliderMin === null ? "$0" : formatPrice(sliderMin);
+            }
 
-    updatePriceSummary();
-  };
+            if (priceMaxLabelEl) {
+                priceMaxLabelEl.textContent =
+                    sliderMax === null ? formatPrice(PRICE_MAX) + "+" : formatPrice(sliderMax);
+            }
 
-  // --- SMART PRICE HINT (from result set) ---
-  const updateSmartPriceHintFromResults = (experiences) => {
-    const prices = experiences
-      .map((exp) => exp.pricePerGuest || exp.price || exp.price_per_guest)
-      .map(Number)
-      .filter((n) => !Number.isNaN(n) && n >= 0);
+            if (priceSummaryEl) {
+                if (sliderMin === null && sliderMax === null) {
+                    priceSummaryEl.textContent = "Any price";
+                } else if (sliderMin !== null && sliderMax !== null) {
+                    priceSummaryEl.textContent =
+                        `Showing ${formatPrice(sliderMin)} – ${formatPrice(sliderMax)} per guest`;
+                } else if (sliderMin !== null) {
+                    priceSummaryEl.textContent =
+                        `Showing ${formatPrice(sliderMin)}+ per guest`;
+                } else {
+                    priceSummaryEl.textContent =
+                        `Showing up to ${formatPrice(sliderMax)} per guest`;
+                }
+            }
+        };
 
-    if (!prices.length) {
-      smartPriceHint.textContent = "Smart filter will auto-tune once we see more tables.";
-      return;
-    }
+        priceSliderEl.noUiSlider.on("update", updateFromSlider);
 
-    prices.sort((a, b) => a - b);
+        priceSliderEl.noUiSlider.on("change", () => {
+            debouncedFetch();
+        });
 
-    const p25 = prices[Math.floor(prices.length * 0.25)];
-    const p50 = prices[Math.floor(prices.length * 0.5)];
-    const p75 = prices[Math.floor(prices.length * 0.75)];
+        // initialise labels
+        updateFromSlider(priceSliderEl.noUiSlider.get());
+    };
 
-    smartPriceHint.textContent =
-      `Smart hint: most shared tables sit around ${formatPrice(p25)} – ${formatPrice(p75)} per guest (median ${formatPrice(p50)}).`;
-  };
+    // --- CATEGORY CHIPS ---
+    const initCategoryChips = () => {
+        categoryChips.forEach((chip) => {
+            chip.addEventListener("click", () => {
+                categoryChips.forEach((c) => {
+                    c.classList.remove("active");
+                    c.classList.remove("bg-gray-900", "text-white", "border-transparent");
+                    c.classList.add("bg-white", "border-gray-200", "text-gray-600");
+                });
 
-  // --- ACTIVE FILTER CHIPS ---
+                chip.classList.add("active");
+                chip.classList.add("bg-gray-900", "text-white");
+                chip.classList.remove("bg-white", "border-gray-200", "text-gray-600");
 
-  const rebuildActiveFilterChips = () => {
-    activeFiltersBar.innerHTML = "";
+                activeCategory = chip.getAttribute("data-category") || "all";
+                debouncedFetch();
+            });
+        });
+    };
 
-    const chips = [];
+    // --- FILTER PANEL TOGGLE ---
+    const initFilterPanel = () => {
+        if (!filterBtn || !filterPanel) return;
+        filterBtn.addEventListener("click", () => {
+            filterPanel.classList.toggle("hidden");
+        });
+    };
 
-    const q = (searchInput.value || "").trim();
-    if (q) {
-      chips.push({
-        type: "q",
-        label: `Search: “${q}”`,
-        clear: () => (searchInput.value = "")
-      });
-    }
+    // --- SMART PRICE HINT ---
+    const updatePriceHintFromResults = (experiences) => {
+        if (!priceHintEl) return;
 
-    if (dateFilter.value) {
-      chips.push({
-        type: "date",
-        label: `On ${dateFilter.value}`,
-        clear: () => (dateFilter.value = "")
-      });
-    }
+        const prices = (experiences || [])
+            .map((exp) => exp.pricePerGuest || exp.price || exp.price_per_guest)
+            .map(Number)
+            .filter((n) => !Number.isNaN(n) && n >= 0);
 
-    const guests = sanitizeInt(guestsFilter.value);
-    if (guests !== null) {
-      chips.push({
-        type: "guests",
-        label: `${guests} guest${guests > 1 ? "s" : ""}`,
-        clear: () => (guestsFilter.value = "")
-      });
-    }
-
-    const loc = (locationFilter.value || "").trim();
-    if (loc) {
-      chips.push({
-        type: "location",
-        label: loc,
-        clear: () => (locationFilter.value = "")
-      });
-    }
-
-    const min = sanitizeInt(minPriceInput.value);
-    const max = sanitizeInt(maxPriceInput.value);
-    if (min !== null || max !== null) {
-      let label;
-      if (min !== null && max !== null) {
-        label = `${formatPrice(min)} – ${formatPrice(max)} per guest`;
-      } else if (min !== null) {
-        label = `${formatPrice(min)}+ per guest`;
-      } else {
-        label = `Up to ${formatPrice(max)} per guest`;
-      }
-      chips.push({
-        type: "price",
-        label,
-        clear: () => {
-          minPriceInput.value = "";
-          maxPriceInput.value = "";
-          maxPriceInput.min = "0";
-          updatePriceSummary();
+        if (!prices.length) {
+            priceHintEl.textContent =
+                "Smart filter will auto-tune as more tables are added.";
+            return;
         }
-      });
-    }
 
-    if (!chips.length) {
-      return;
-    }
+        prices.sort((a, b) => a - b);
 
-    chips.forEach((chip) => {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className =
-        "inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-800 border border-gray-200";
-      btn.innerHTML = `
-        <span>${chip.label}</span>
-        <span class="text-gray-400 text-[10px]">✕</span>
-      `;
-      btn.addEventListener("click", () => {
-        chip.clear();
-        normalizePriceRange();
-        triggerFetch();
-      });
-      activeFiltersBar.appendChild(btn);
-    });
-  };
+        const p25 = prices[Math.floor(prices.length * 0.25)];
+        const p50 = prices[Math.floor(prices.length * 0.5)];
+        const p75 = prices[Math.floor(prices.length * 0.75)];
 
-  // --- RENDER CARDS ---
+        priceHintEl.textContent =
+            `Most tables sit around ${formatPrice(p25)} – ${formatPrice(p75)} (median ${formatPrice(p50)} per guest).`;
+    };
 
-  const renderExperiences = (experiences) => {
-    experienceGrid.innerHTML = "";
+    // --- RENDER EXPERIENCES ---
+    const renderExperiences = (experiences) => {
+        experiencesGrid.innerHTML = "";
 
-    if (!experiences || !experiences.length) {
-      emptyState.classList.remove("hidden");
-      resultMetaText.textContent = "No tables found. Try adjusting your filters.";
-      return;
-    }
+        if (!experiences || !experiences.length) {
+            experiencesGrid.classList.add("hidden");
+            noResultsEl.classList.remove("hidden");
+            return;
+        }
 
-    emptyState.classList.add("hidden");
+        experiencesGrid.classList.remove("hidden");
+        noResultsEl.classList.add("hidden");
 
-    experiences.forEach((exp) => {
-      const {
-        _id,
-        title,
-        city,
-        suburb,
-        country,
-        date,
-        time,
-        cuisine,
-        tags,
-        pricePerGuest,
-        price,
-        maxGuests,
-        rating,
-        numReviews,
-        primaryImageUrl,
-        imageUrl
-      } = exp;
+        experiences.forEach((exp) => {
+            const {
+                _id,
+                id,
+                title,
+                city,
+                suburb,
+                country,
+                cuisine,
+                hostName,
+                date,
+                time,
+                tags,
+                pricePerGuest,
+                price,
+                maxGuests,
+                rating,
+                numReviews,
+                mainImageUrl,
+                imageUrl
+            } = exp;
 
-      const displayPrice = pricePerGuest || price;
-      const locationBits = [suburb, city, country].filter(Boolean).join(", ");
-      const img = primaryImageUrl || imageUrl || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=1200&auto=format&fit=crop";
+            const cardId   = _id || id || "";
+            const img      = mainImageUrl || imageUrl || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=800&auto=format&fit=crop";
+            const displayPrice = pricePerGuest || price;
+            const locationText = [suburb, city, country].filter(Boolean).join(", ");
+            const hostText     = hostName ? `Hosted by ${hostName}` : "";
+            const dateText     = [date, time].filter(Boolean).join(" • ");
 
-      const card = document.createElement("article");
-      card.className =
-        "group flex flex-col overflow-hidden rounded-2xl bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow";
+            const chipTags = (tags || []).slice(0, 3);
 
-      card.innerHTML = `
-        <div class="relative h-44 w-full overflow-hidden">
-          <img
-            src="${img}"
-            alt="${title || "Shared table"}"
-            class="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
-          />
-          <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-black/0 to-black/0"></div>
-          ${
-            displayPrice
-              ? `<div class="absolute bottom-2 left-2 inline-flex items-center rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-gray-900 shadow">
-                    ${formatPrice(displayPrice)} <span class="text-[10px] font-normal ml-1">/ guest</span>
-                 </div>`
-              : ""
-          }
-        </div>
+            const card = document.createElement("div");
+            card.className =
+                "bg-white rounded-xl shadow-sm hover:shadow-md transition overflow-hidden border border-gray-100 flex flex-col";
 
-        <div class="flex flex-1 flex-col p-3.5 gap-2.5">
-          <div class="flex items-start justify-between gap-2">
-            <h3 class="text-sm font-semibold text-gray-900 line-clamp-2">
-              ${title || "Shared table experience"}
-            </h3>
-            ${
-              rating
-                ? `<div class="flex items-center gap-1 text-[11px] text-gray-700">
-                    <span>★</span>
-                    <span>${Number(rating).toFixed(1)}</span>
-                    ${numReviews ? `<span class="text-gray-400">(${numReviews})</span>` : ""}
-                  </div>`
-                : ""
+            card.innerHTML = `
+                <div class="relative h-44 w-full overflow-hidden">
+                    <img 
+                        src="${img}" 
+                        alt="${title || "Shared table"}" 
+                        class="w-full h-full object-cover transform group-hover:scale-105 transition duration-300">
+                    ${
+                        displayPrice
+                            ? `<div class="absolute bottom-3 left-3 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-sm font-semibold text-gray-900 shadow-sm">
+                                  ${formatPrice(displayPrice)} <span class="text-xs font-normal text-gray-500">/ guest</span>
+                               </div>`
+                            : ""
+                    }
+                </div>
+
+                <div class="p-4 flex flex-col gap-2 flex-grow">
+                    <div class="flex items-start justify-between gap-2">
+                        <h3 class="text-sm font-semibold text-gray-900 line-clamp-2">
+                            ${title || "Shared table experience"}
+                        </h3>
+                        ${
+                            rating
+                                ? `<div class="flex items-center text-xs text-gray-700 gap-1">
+                                        <i class="fas fa-star text-amber-400"></i>
+                                        <span>${Number(rating).toFixed(1)}</span>
+                                        ${
+                                            numReviews
+                                                ? `<span class="text-gray-400">(${numReviews})</span>`
+                                                : ""
+                                        }
+                                   </div>`
+                                : ""
+                        }
+                    </div>
+
+                    ${
+                        locationText
+                            ? `<p class="text-xs text-gray-500 flex items-center gap-1">
+                                    <i class="fas fa-map-marker-alt text-gray-400"></i>
+                                    <span class="line-clamp-1">${locationText}</span>
+                               </p>`
+                            : ""
+                    }
+
+                    ${
+                        hostText
+                            ? `<p class="text-xs text-gray-500 flex items-center gap-1">
+                                    <i class="fas fa-user text-gray-400"></i>
+                                    <span class="line-clamp-1">${hostText}</span>
+                               </p>`
+                            : ""
+                    }
+
+                    ${
+                        dateText
+                            ? `<p class="text-xs text-gray-500 flex items-center gap-1">
+                                    <i class="far fa-clock text-gray-400"></i>
+                                    <span>${dateText}</span>
+                               </p>`
+                            : ""
+                    }
+
+                    ${
+                        cuisine
+                            ? `<p class="text-xs text-gray-500 flex items-center gap-1">
+                                    <i class="fas fa-utensils text-gray-400"></i>
+                                    <span>${cuisine}</span>
+                               </p>`
+                            : ""
+                    }
+
+                    ${
+                        chipTags.length
+                            ? `<div class="flex flex-wrap gap-1 mt-1">
+                                    ${chipTags
+                                        .map(
+                                            (tag) =>
+                                                `<span class="px-2 py-0.5 text-[11px] bg-gray-100 text-gray-700 rounded-full">
+                                                    ${tag}
+                                                 </span>`
+                                        )
+                                        .join("")}
+                               </div>`
+                            : ""
+                    }
+
+                    <div class="mt-3 flex items-center justify-between text-xs text-gray-500">
+                        <span>
+                            ${
+                                maxGuests
+                                    ? `Up to ${maxGuests} guests`
+                                    : `Shared table experience`
+                            }
+                        </span>
+                        ${
+                            cardId
+                                ? `<a 
+                                      href="experience.html?id=${cardId}" 
+                                      class="inline-flex items-center gap-1 text-orange-600 font-semibold hover:text-orange-700">
+                                      View
+                                      <i class="fas fa-arrow-right text-[10px]"></i>
+                                   </a>`
+                                : ""
+                        }
+                    </div>
+                </div>
+            `;
+
+            experiencesGrid.appendChild(card);
+        });
+    };
+
+    // --- FETCH LOGIC ---
+    const fetchExperiences = async () => {
+        // Show loading spinner
+        experiencesGrid.innerHTML = `
+            <div class="col-span-full text-center py-12">
+                <i class="fas fa-spinner fa-spin text-3xl text-orange-500"></i>
+            </div>
+        `;
+        noResultsEl.classList.add("hidden");
+
+        const params = new URLSearchParams();
+
+        const searchTerm = (searchInput?.value || "").trim();
+        if (searchTerm) params.set("q", searchTerm);
+
+        if (dateInput?.value) params.set("date", dateInput.value);
+
+        if (activeCategory && activeCategory !== "all") {
+            params.set("category", activeCategory);
+        }
+
+        if (sliderMin !== null) params.set("minPrice", String(sliderMin));
+        if (sliderMax !== null) params.set("maxPrice", String(sliderMax));
+
+        try {
+            const res = await fetch(`${API_URL}?${params.toString()}`);
+            if (!res.ok) throw new Error("Failed to fetch experiences");
+
+            const data = await res.json();
+            renderExperiences(data);
+            updatePriceHintFromResults(data);
+        } catch (err) {
+            console.error(err);
+            experiencesGrid.innerHTML = `
+                <div class="col-span-full text-center py-12">
+                    <p class="text-gray-500 mb-2">We hit a small snag.</p>
+                    <p class="text-gray-400 text-sm">Please refresh or try again in a moment.</p>
+                </div>
+            `;
+        }
+    };
+
+    const debouncedFetch = debounce(fetchExperiences, 400);
+
+    // --- EVENT WIRING ---
+    if (searchInput) {
+        searchInput.addEventListener("input", () => debouncedFetch());
+        searchInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                fetchExperiences();
             }
-          </div>
-
-          <p class="text-xs text-gray-500 line-clamp-1">
-            ${locationBits || "Exact location shared after booking"}
-          </p>
-
-          <p class="text-xs text-gray-500 line-clamp-1">
-            ${(cuisine ? cuisine + " • " : "") + (time || "")}
-          </p>
-
-          <div class="flex flex-wrap gap-1.5 mt-1">
-            ${
-              (tags || [])
-                .slice(0, 3)
-                .map(
-                  (tag) =>
-                    `<span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[10px] text-gray-700">${tag}</span>`
-                )
-                .join("") || ""
-            }
-          </div>
-
-          <div class="mt-2 flex items-center justify-between">
-            <span class="text-[11px] text-gray-500">
-              ${maxGuests ? `Up to ${maxGuests} guests` : "Shared table"}
-            </span>
-            <a
-              href="experience.html?id=${_id}"
-              class="inline-flex items-center rounded-full bg-gray-900 px-3 py-1 text-[11px] font-semibold text-white hover:bg-black"
-            >
-              View table
-            </a>
-          </div>
-        </div>
-      `;
-
-      experienceGrid.appendChild(card);
-    });
-  };
-
-  // --- FETCH LOGIC ---
-
-  const fetchAndRenderExperiences = async () => {
-    resultMetaText.textContent = "Finding tables that match your vibe…";
-
-    // Build query params
-    const params = new URLSearchParams();
-
-    const q = (searchInput.value || "").trim();
-    if (q) params.set("q", q);
-
-    if (dateFilter.value) params.set("date", dateFilter.value);
-
-    const guests = sanitizeInt(guestsFilter.value);
-    if (guests !== null) params.set("guests", String(guests));
-
-    const loc = (locationFilter.value || "").trim();
-    if (loc) params.set("location", loc);
-
-    const min = sanitizeInt(minPriceInput.value);
-    const max = sanitizeInt(maxPriceInput.value);
-    if (min !== null) params.set("minPrice", String(min));
-    if (max !== null) params.set("maxPrice", String(max));
-
-    try {
-      const res = await fetch(`${SEARCH_API}?${params.toString()}`);
-      if (!res.ok) throw new Error("Failed to fetch experiences");
-      const data = await res.json();
-
-      renderExperiences(data);
-      rebuildActiveFilterChips();
-      updateSmartPriceHintFromResults(data);
-
-      const count = data.length || 0;
-      resultMetaText.textContent =
-        count === 1 ? "1 table found." : `${count} tables found.`;
-    } catch (err) {
-      console.error(err);
-      resultMetaText.textContent = "We hit a small snag loading tables.";
-      emptyState.classList.remove("hidden");
-      emptyState.textContent =
-        "We couldn't load tables right now. Please try again in a moment.";
+        });
     }
-  };
 
-  const triggerFetch = debounce(fetchAndRenderExperiences, 300);
+    if (dateInput) {
+        dateInput.addEventListener("change", () => debouncedFetch());
+    }
 
-  // --- EVENT WIRING ---
+    if (applyFilters) {
+        applyFilters.addEventListener("click", () => {
+            fetchExperiences();
+        });
+    }
 
-  // Price typing
-  minPriceInput.addEventListener("input", () => {
-    normalizePriceRange();
-    // don't auto fetch on every keystroke; wait for Apply or preset
-  });
+    initFilterPanel();
+    initCategoryChips();
+    initPriceSlider();
 
-  maxPriceInput.addEventListener("input", () => {
-    normalizePriceRange();
-  });
-
-  // Clear price
-  clearPriceFilterBtn.addEventListener("click", () => {
-    minPriceInput.value = "";
-    maxPriceInput.value = "";
-    maxPriceInput.min = "0";
-    updatePriceSummary();
-    // reset preset visual to "Any"
-    pricePresetChips.forEach((c) => {
-      c.classList.remove("bg-gray-100", "border-gray-900", "text-gray-900");
-      c.classList.add("border-gray-300", "text-gray-700");
-      if (c.getAttribute("data-min") === "" && c.getAttribute("data-max") === "") {
-        c.classList.add("bg-gray-100", "border-gray-900", "text-gray-900");
-        c.classList.remove("border-gray-300", "text-gray-700");
-      }
-    });
-    triggerFetch();
-  });
-
-  // Price presets (smart chips)
-  pricePresetChips.forEach((chip) => {
-    chip.addEventListener("click", () => {
-      const min = chip.getAttribute("data-min");
-      const max = chip.getAttribute("data-max");
-
-      // reset styles
-      pricePresetChips.forEach((c) => {
-        c.classList.remove("bg-gray-100", "border-gray-900", "text-gray-900");
-        c.classList.add("border-gray-300", "text-gray-700");
-      });
-
-      chip.classList.add("bg-gray-100", "border-gray-900", "text-gray-900");
-      chip.classList.remove("border-gray-300", "text-gray-700");
-
-      minPriceInput.value = min !== "" ? min : "";
-      maxPriceInput.value = max !== "" ? max : "";
-
-      normalizePriceRange();
-      triggerFetch(); // auto-apply smart preset
-    });
-  });
-
-  // Search typing – debounce for smart feel
-  searchInput.addEventListener("input", () => {
-    triggerFetch();
-  });
-
-  // Enter key on text filters triggers immediate fetch
-  [searchInput, locationFilter].forEach((el) => {
-    el.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        fetchAndRenderExperiences();
-      }
-    });
-  });
-
-  // Date & guests changes
-  dateFilter.addEventListener("change", () => triggerFetch());
-  guestsFilter.addEventListener("input", () => triggerFetch());
-  locationFilter.addEventListener("input", () => triggerFetch());
-
-  // Clear all filters
-  clearAllFiltersBtn.addEventListener("click", () => {
-    searchInput.value = "";
-    dateFilter.value = "";
-    guestsFilter.value = "";
-    locationFilter.value = "";
-    minPriceInput.value = "";
-    maxPriceInput.value = "";
-    maxPriceInput.min = "0";
-    updatePriceSummary();
-
-    // reset preset chips
-    pricePresetChips.forEach((c) => {
-      c.classList.remove("bg-gray-100", "border-gray-900", "text-gray-900");
-      c.classList.add("border-gray-300", "text-gray-700");
-      if (c.getAttribute("data-min") === "" && c.getAttribute("data-max") === "") {
-        c.classList.add("bg-gray-100", "border-gray-900", "text-gray-900");
-        c.classList.remove("border-gray-300", "text-gray-700");
-      }
-    });
-
-    rebuildActiveFilterChips();
-    fetchAndRenderExperiences();
-  });
-
-  // Apply button (explicit)
-  applyFiltersBtn.addEventListener("click", () => {
-    normalizePriceRange();
-    fetchAndRenderExperiences();
-  });
-
-  // --- INITIAL LOAD ---
-  normalizePriceRange();
-  fetchAndRenderExperiences();
+    // Initial load
+    fetchExperiences();
 });

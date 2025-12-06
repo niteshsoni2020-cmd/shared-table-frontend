@@ -1,158 +1,229 @@
-// Frontend/js/explore.js
+// js/explore.js
 
 // 🔴 THE CORRECT BACKEND URL
 const API_URL = 'https://shared-table-api.onrender.com/api'; 
+// NOTE: GPT used 'API_BASE', we stick to 'API_URL' to match common.js usage if needed, 
+// or define API_BASE if you prefer. Let's use the explicit URL to be safe.
+const API_BASE = 'https://shared-table-api.onrender.com';
 
-// DOM Elements
-const grid = document.getElementById('experiences-grid');
-const searchInput = document.getElementById('search-input');
-const dateInput = document.getElementById('date-input');
-const categoryChips = document.querySelectorAll('.filter-chip');
-const noResultsSection = document.getElementById('no-results');
+const searchInput = document.getElementById("search-input");
+const dateInput = document.getElementById("date-input");
+const experiencesGrid = document.getElementById("experiences-grid");
+const noResultsMessage = document.getElementById("no-results"); // Changed ID to match your HTML
+const categoryButtons = document.querySelectorAll(".filter-chip"); // Changed selector to match your HTML class
 
-// Filter Elements
+// Filter Panel Elements
 const filterBtn = document.getElementById('filter-btn');
 const filterPanel = document.getElementById('filter-panel');
 const minPriceInput = document.getElementById('min-price');
 const maxPriceInput = document.getElementById('max-price');
 const applyFiltersBtn = document.getElementById('apply-filters');
 
-let currentCategory = 'all';
+let allExperiences = [];
+let currentCategory = "";
+let isLoading = false;
 
-document.addEventListener('DOMContentLoaded', () => {
-    // Check URL params for initial filter (e.g. ?filter=deals)
-    const urlParams = new URLSearchParams(window.location.search);
-    if(urlParams.get('filter') === 'deals') {
-        // Just a placeholder for now, ideally backend handles this
-        console.log("Deals filter active");
+function setLoading(state) {
+  isLoading = state;
+  if (!experiencesGrid) return;
+  if (state) {
+    experiencesGrid.innerHTML = `
+      <div class="col-span-full flex items-center justify-center py-10 text-gray-500">
+        <span class="fas fa-spinner fa-spin mr-2 text-orange-500 text-xl"></span>
+        Loading experiences...
+      </div>
+    `;
+    if (noResultsMessage) noResultsMessage.classList.add("hidden");
+  }
+}
+
+function buildQueryParams() {
+  const params = new URLSearchParams();
+  const q = (searchInput?.value || "").trim();
+  const date = dateInput?.value || "";
+  const category = currentCategory || "";
+  const minPrice = minPriceInput?.value || "";
+  const maxPrice = maxPriceInput?.value || "";
+
+  if (q) params.set("q", q);
+  if (date) params.set("date", date);
+  if (category && category !== "all") params.set("category", category);
+  if (minPrice) params.set("minPrice", minPrice);
+  if (maxPrice) params.set("maxPrice", maxPrice);
+  
+  return params.toString();
+}
+
+function renderExperiences(list, { isFallback = false } = {}) {
+  if (!experiencesGrid) return;
+
+  if (!list || list.length === 0) {
+    experiencesGrid.innerHTML = "";
+    if (noResultsMessage) {
+      noResultsMessage.classList.remove("hidden");
+      // If it's a fallback situation, we might want to append recommendations below this message
+      // But for now, just showing the message is safer than complex logic
     }
+    return;
+  }
 
-    loadExperiences();
+  if (noResultsMessage) noResultsMessage.classList.add("hidden");
 
-    // 1. Toggle Filter Panel
-    if (filterBtn) {
-        filterBtn.addEventListener('click', () => {
-            filterPanel.classList.toggle('hidden');
-        });
-    }
+  experiencesGrid.innerHTML = list
+    .map(exp => {
+      const img = exp.imageUrl || (exp.images && exp.images[0]) || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=800&auto=format&fit=crop";
+      const price = exp.price ? `$${exp.price}` : "Price on request";
+      const rating = exp.averageRating || 0;
+      const reviews = exp.reviewCount || 0;
 
-    // 2. Apply Price Filters
-    if (applyFiltersBtn) {
-        applyFiltersBtn.addEventListener('click', () => {
-            loadExperiences();
-        });
-    }
+      return `
+      <a href="experience.html?id=${exp._id}" class="group block bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition">
+        <div class="relative h-48 overflow-hidden bg-gray-200">
+          <img src="${img}" alt="${exp.title}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" 
+               onerror="this.src='https://via.placeholder.com/400?text=No+Image'">
+          <div class="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md text-xs font-bold shadow-sm">
+            ${price}
+          </div>
+          ${exp.isPaused ? '<div class="absolute inset-0 bg-black/50 flex items-center justify-center text-white font-bold">Currently Paused</div>' : ''}
+        </div>
+        <div class="p-4">
+          <div class="flex items-center gap-2 mb-2">
+            <img src="${exp.hostPic || 'https://via.placeholder.com/30'}" class="w-6 h-6 rounded-full border border-gray-100">
+            <span class="text-xs text-gray-500 truncate">${exp.hostName || 'Local Host'}</span>
+          </div>
+          <h3 class="font-bold text-gray-900 mb-1 truncate">${exp.title}</h3>
+          <p class="text-sm text-gray-500 mb-3 flex items-center gap-1">
+            <i class="fas fa-map-marker-alt text-orange-500 text-xs"></i> ${exp.city || "City"}
+          </p>
+          <div class="flex items-center justify-between border-t border-gray-50 pt-3">
+             <div class="flex items-center gap-1 text-yellow-400 text-sm">
+                 <i class="fas fa-star"></i>
+                 <span class="text-gray-700 font-bold">${rating > 0 ? rating.toFixed(1) : 'New'}</span>
+                 <span class="text-gray-400 text-xs">(${reviews})</span>
+             </div>
+          </div>
+        </div>
+      </a>`;
+    })
+    .join("");
+}
 
-    // 3. Search Listener (Debounced)
-    let timeout = null;
-    if (searchInput) {
-        searchInput.addEventListener('input', () => {
-            clearTimeout(timeout);
-            timeout = setTimeout(loadExperiences, 500);
-        });
-    }
-
-    // 4. Date Listener
-    if (dateInput) {
-        dateInput.addEventListener('change', () => {
-            loadExperiences();
-        });
-    }
-
-    // 5. Category Listeners
-    categoryChips.forEach(chip => {
-        chip.addEventListener('click', () => {
-            // Visual Toggle
-            categoryChips.forEach(c => {
-                c.classList.remove('bg-gray-900', 'text-white');
-                c.classList.add('bg-white', 'text-gray-600', 'border');
-            });
-            
-            chip.classList.remove('bg-white', 'text-gray-600', 'border');
-            chip.classList.add('bg-gray-900', 'text-white');
-            
-            currentCategory = chip.getAttribute('data-category');
-            loadExperiences();
-        });
-    });
-});
-
-async function loadExperiences() {
-    // Show Loading State
-    grid.innerHTML = '<div class="col-span-full text-center py-12"><i class="fas fa-spinner fa-spin text-3xl text-gray-300"></i></div>';
-    if(noResultsSection) noResultsSection.classList.add('hidden');
-    grid.classList.remove('hidden');
-
-    // Gather Inputs
-    const query = searchInput ? searchInput.value : '';
-    const date = dateInput ? dateInput.value : '';
-    const minPrice = minPriceInput ? minPriceInput.value : '';
-    const maxPrice = maxPriceInput ? maxPriceInput.value : '';
+async function fetchExperiences({ initial = false } = {}) {
+  try {
+    setLoading(true);
+    const qs = buildQueryParams();
+    const url = qs ? `${API_BASE}/api/experiences?${qs}` : `${API_BASE}/api/experiences`;
+    const res = await fetch(url);
     
-    // Construct Query URL
-    let url = `${API_URL}/experiences?`;
-    if (query) url += `q=${encodeURIComponent(query)}&`;
-    if (date) url += `date=${date}&`;
-    if (minPrice) url += `minPrice=${minPrice}&`;
-    if (maxPrice) url += `maxPrice=${maxPrice}&`;
-    if (currentCategory !== 'all') url += `category=${encodeURIComponent(currentCategory)}&`;
+    if(!res.ok) throw new Error("Server error");
+    
+    const data = await res.json();
 
-    try {
-        const res = await fetch(url);
-        
-        if (!res.ok) {
-            throw new Error(`Server responded with ${res.status}`);
-        }
-
-        const data = await res.json();
-
-        if (data.length === 0) {
-            grid.classList.add('hidden');
-            if(noResultsSection) noResultsSection.classList.remove('hidden');
-        } else {
-            renderGrid(data);
-        }
-    } catch (err) {
-        console.error(err);
-        grid.innerHTML = `
-            <div class="col-span-full text-center text-red-500 py-8">
-                <p class="font-bold">Failed to load experiences.</p>
-                <p class="text-sm">Please check if the Backend is running.</p>
-            </div>
-        `;
+    if (!Array.isArray(data)) {
+      console.error("Unexpected experiences response:", data);
+      renderExperiences([]);
+      return;
     }
+
+    if (initial) {
+      allExperiences = data; // Keep a copy for fallback
+    }
+
+    if (data.length === 0 && !initial && allExperiences.length > 0) {
+      // Smart fallback: no matches → show top-rated from allExperiences
+      const sorted = [...allExperiences].sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0));
+      // We render these but let the user know they are recommendations
+      renderExperiences(sorted.slice(0, 4), { isFallback: true });
+      // Explicitly show a "No exact matches" toast or message if desired
+      if(noResultsMessage) {
+           noResultsMessage.classList.remove("hidden");
+           noResultsMessage.innerHTML = `
+             <div class="col-span-full text-center py-8">
+                <p class="text-xl">🍂 No exact matches found.</p>
+                <p class="text-gray-500">But check out these popular experiences!</p>
+             </div>
+           `;
+           // Then append the grid manually or handle via UI - for now, simplest is just showing the fallback grid
+      }
+    } else {
+      renderExperiences(data);
+    }
+  } catch (err) {
+    console.error("Error loading experiences:", err);
+    if (noResultsMessage) {
+      noResultsMessage.classList.remove("hidden");
+      noResultsMessage.innerHTML = `
+        <div class="text-center text-red-500 text-sm">
+          Something went wrong loading experiences. Is the backend running?
+        </div>
+      `;
+    }
+  } finally {
+    setLoading(false);
+  }
 }
 
-function renderGrid(experiences) {
-    grid.innerHTML = experiences.map(exp => `
-        <a href="experience.html?id=${exp._id}" class="group block bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition">
-            <div class="relative h-48 overflow-hidden bg-gray-200">
-                <img src="${exp.imageUrl || (exp.images && exp.images[0]) || 'https://via.placeholder.com/400'}" 
-                     class="w-full h-full object-cover group-hover:scale-105 transition duration-500" 
-                     onerror="this.src='https://via.placeholder.com/400?text=No+Image'"
-                     alt="${exp.title}">
-                <div class="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md text-xs font-bold shadow-sm">
-                    $${exp.price}
-                </div>
-                ${exp.isPaused ? '<div class="absolute inset-0 bg-black/50 flex items-center justify-center text-white font-bold">Currently Paused</div>' : ''}
-            </div>
-            <div class="p-4">
-                <div class="flex items-center gap-2 mb-2">
-                    <img src="${exp.hostPic || 'https://via.placeholder.com/30'}" class="w-6 h-6 rounded-full border border-gray-100">
-                    <span class="text-xs text-gray-500 truncate">${exp.hostName || 'Local Host'}</span>
-                </div>
-                <h3 class="font-bold text-gray-900 mb-1 truncate">${exp.title}</h3>
-                <p class="text-sm text-gray-500 mb-3 flex items-center gap-1">
-                    <i class="fas fa-map-marker-alt text-orange-500 text-xs"></i> ${exp.city}
-                </p>
-                <div class="flex items-center justify-between border-t border-gray-50 pt-3">
-                    <div class="flex items-center gap-1 text-yellow-400 text-sm">
-                        <i class="fas fa-star"></i>
-                        <span class="text-gray-700 font-bold">${exp.averageRating ? exp.averageRating.toFixed(1) : 'New'}</span>
-                        <span class="text-gray-400 text-xs">(${exp.reviewCount || 0})</span>
-                    </div>
-                </div>
-            </div>
-        </a>
-    `).join('');
+function handleCategoryClick(e) {
+  const btn = e.currentTarget;
+  const category = btn.getAttribute("data-category") || "";
+  currentCategory = category;
+
+  // Toggle active style
+  categoryButtons.forEach(b => {
+      b.classList.remove("bg-gray-900", "text-white");
+      b.classList.add("bg-white", "text-gray-600", "border");
+  });
+  
+  if (category !== "all") {
+    btn.classList.remove("bg-white", "text-gray-600", "border");
+    btn.classList.add("bg-gray-900", "text-white");
+  } else {
+    // "All" button style
+    btn.classList.remove("bg-white", "text-gray-600", "border");
+    btn.classList.add("bg-gray-900", "text-white");
+  }
+  
+  fetchExperiences();
 }
+
+function initExplorePage() {
+  if (!experiencesGrid) return;
+
+  // Initial load
+  fetchExperiences({ initial: true });
+
+  // Listeners
+  if (searchInput) {
+    let searchTimeout;
+    searchInput.addEventListener("input", () => {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        fetchExperiences();
+      }, 500);
+    });
+  }
+
+  if (dateInput) {
+    dateInput.addEventListener("change", () => {
+      fetchExperiences();
+    });
+  }
+  
+  // Filter Panel Toggles
+  if (filterBtn && filterPanel) {
+      filterBtn.addEventListener('click', () => {
+          filterPanel.classList.toggle('hidden');
+      });
+  }
+  
+  if (applyFiltersBtn) {
+      applyFiltersBtn.addEventListener('click', () => {
+          fetchExperiences();
+      });
+  }
+
+  categoryButtons.forEach(btn => btn.addEventListener("click", handleCategoryClick));
+}
+
+// Initialize on DOM ready
+document.addEventListener("DOMContentLoaded", initExplorePage);

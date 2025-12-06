@@ -1,147 +1,313 @@
 // js/admin.js
 
-let allListings = []; 
+const API_BASE = "https://shared-table-api.onrender.com/api";
 
-document.addEventListener("DOMContentLoaded", async () => {
-    const token = getToken();
-    if (!token) { window.location.href = "login.html"; return; }
-    loadAdminData();
-});
+// DOM Elements
+const totalUsersEl = document.getElementById("stats-total-users");
+const totalHostsEl = document.getElementById("stats-total-hosts");
+const totalBookingsEl = document.getElementById("stats-total-bookings");
+const totalRevenueEl = document.getElementById("stats-total-revenue");
 
-async function loadAdminData() {
-    const token = getToken();
-    const statsEl = { rev: document.getElementById("stat-revenue"), users: document.getElementById("stat-users"), exps: document.getElementById("stat-exps"), bk: document.getElementById("stat-bookings") };
-    const tableBody = document.getElementById("users-table-body");
-    const disputeBody = document.getElementById("disputes-table-body");
-    const disputeSection = document.getElementById("resolution-center");
+const bookingsTableBodyEl = document.getElementById("bookings-table-body");
+const bookingsLoadingEl = document.getElementById("bookings-loading");
+const bookingsEmptyEl = document.getElementById("bookings-empty");
+const bookingsErrorEl = document.getElementById("bookings-error");
 
-    try {
-        // 1. STATS
-        const resStats = await fetch(`${API_BASE}/api/admin/stats`, { headers: { "Authorization": `Bearer ${token}` } });
-        if (resStats.status === 403) { alert("Access Denied."); window.location.href = "index.html"; return; }
-        const stats = await resStats.json();
-        
-        statsEl.rev.textContent = `$${stats.totalRevenue.toLocaleString()}`;
-        statsEl.users.textContent = stats.userCount;
-        statsEl.exps.textContent = stats.expCount;
-        statsEl.bk.textContent = stats.bookingCount;
+// --------------------
+// Auth Guard
+// --------------------
+function getCurrentUser() {
+  const raw = localStorage.getItem("user");
+  if (!raw) return null;
 
-        // 2. USERS
-        const resUsers = await fetch(`${API_BASE}/api/admin/users`, { headers: { "Authorization": `Bearer ${token}` } });
-        const users = await resUsers.json();
-        tableBody.innerHTML = users.map(u => `
-            <tr class="hover:bg-gray-800 transition">
-                <td class="px-6 py-4 font-mono text-xs text-gray-500">#${String(u.id).slice(-4)}</td>
-                <td class="px-6 py-4 font-bold text-gray-200">${u.name}</td>
-                <td class="px-6 py-4 text-gray-400">${u.email}</td>
-                <td class="px-6 py-4"><span class="px-2 py-1 rounded text-xs font-bold uppercase border ${u.role === 'Admin' ? 'bg-purple-900/30 text-purple-300 border-purple-800' : 'bg-gray-700/30 text-gray-400 border-gray-600'}">${u.role}</span></td>
-                <td class="px-6 py-4 text-right">${u.role !== 'Admin' ? `<button onclick="banUser('${u.id}')" class="text-red-400 hover:bg-red-900/40 px-3 py-1.5 rounded border border-red-900/50 text-xs">Ban</button>` : '<span class="text-xs italic">Protected</span>'}</td>
-            </tr>`).join("");
-
-        // 3. BOOKINGS & DISPUTES
-        // Note: Using the route we added in Phase 3 (admin view all bookings)
-        const resBookings = await fetch(`${API_BASE}/api/admin/stats`, { headers: { "Authorization": `Bearer ${token}` } }); 
-        // We need specific booking data, but stats only gave summary. 
-        // We will assume/add a fetch for recent bookings if available, or skip if not added yet.
-        // *Correction:* We should add a specific route for bookings if we want detailed disputes.
-        // For this step, we will rely on the hypothetical data structure or add a route in server.js if missing. 
-        // Actually, let's use the listings fetch for now to keep it simple, or skip disputes if no route.
-        // WAIT: We need to see the bookings. Let's add a quick fetch for all bookings if we have the route.
-        // Assuming we didn't add /api/admin/bookings, we will skip populate for now or you can add the route.
-        // *Self-Correction*: In Phase 3 Step 1, we DID NOT add GET /api/admin/bookings explicitly in the final code block I gave you.
-        // The previous server.js code had /api/admin/stats and /api/admin/users.
-        // To make this work, we need to update server.js slightly or skip this.
-        // *Better plan:* I will provide the updated server.js snippet below if you want, OR we just focus on Listings/Users.
-        // Let's assume for now we just show the section but it might be empty until backend support.
-        
-        // 4. LISTINGS
-        const resExps = await fetch(`${API_BASE}/api/experiences`);
-        allListings = await resExps.json();
-        renderListingsTable(allListings);
-
-    } catch (err) { console.error("Admin Load Error", err); }
+  try {
+    return JSON.parse(raw);
+  } catch (err) {
+    console.error("Failed to parse user from localStorage", err);
+    return null;
+  }
 }
 
-// --- RENDER TABLE ---
-function renderListingsTable(data) {
-    const tbody = document.getElementById("listings-table-body");
-    const noResults = document.getElementById("no-results");
-    
-    if (data.length === 0) {
-        tbody.innerHTML = "";
-        noResults.classList.remove("hidden");
-        return;
+function requireAdmin() {
+  const token = localStorage.getItem("token");
+  const user = getCurrentUser();
+
+  if (!token || !user || user.role !== "Admin") {
+    // Hard redirect to login
+    window.location.href = "login.html";
+  }
+}
+
+// --------------------
+// Helpers
+// --------------------
+function formatCurrency(amount) {
+  if (amount === null || amount === undefined || isNaN(Number(amount))) {
+    return "—";
+  }
+  try {
+    return new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency: "AUD"
+    }).format(Number(amount));
+  } catch {
+    return `$${Number(amount).toFixed(2)}`;
+  }
+}
+
+function formatDate(dateValue) {
+  if (!dateValue) return "—";
+  try {
+    const d = new Date(dateValue);
+    return d.toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "numeric"
+    });
+  } catch {
+    return String(dateValue);
+  }
+}
+
+// --------------------
+// Fetch Admin Stats
+// --------------------
+async function fetchAdminStats() {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("Missing auth token");
+
+  const res = await fetch(`${API_BASE}/admin/stats`, {
+    method: "GET",
+    headers: {
+      "Authorization": `Bearer ${token}`
     }
-    
-    noResults.classList.add("hidden");
-    tbody.innerHTML = data.map(exp => `
-        <tr class="hover:bg-gray-800 transition group border-b border-gray-800 last:border-0">
-            <td class="px-6 py-4">
-                <input type="checkbox" value="${exp.id}" onclick="updateBulkState()" class="listing-checkbox rounded border-gray-600 bg-gray-700 text-orange-600 cursor-pointer">
-            </td>
-            <td class="px-6 py-4 font-mono text-xs text-gray-500">#${String(exp.id).slice(-4)}</td>
-            <td class="px-6 py-4 font-bold text-gray-200">
-                <a href="experience.html?id=${exp.id}" target="_blank" class="hover:underline hover:text-orange-400">${exp.title}</a>
-            </td>
-            <td class="px-6 py-4">
-                <span class="bg-gray-700/50 px-2 py-1 rounded text-xs text-gray-300 font-mono">Host #${String(exp.hostId).slice(-4)}</span>
-            </td>
-            <td class="px-6 py-4 text-green-400 font-bold">$${exp.price}</td>
-            <td class="px-6 py-4 text-right">
-                <button onclick="forceDeleteListing('${exp.id}')" class="text-red-400 hover:text-white hover:bg-red-600 px-3 py-1.5 rounded transition text-xs font-bold">Delete</button>
-            </td>
-        </tr>`).join("");
-        
-    document.getElementById("select-all").checked = false;
-    updateBulkState();
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to load admin stats");
+  }
+
+  const data = await res.json();
+  // Expecting: { totalUsers, totalHosts, totalBookings, totalRevenue }
+  totalUsersEl.textContent = data.totalUsers ?? "0";
+  totalHostsEl.textContent = data.totalHosts ?? "0";
+  totalBookingsEl.textContent = data.totalBookings ?? "0";
+  totalRevenueEl.textContent = formatCurrency(data.totalRevenue ?? 0);
 }
 
-// --- FILTERS & ACTIONS ---
-function filterListings() {
-    const query = document.getElementById("search-listings").value.toLowerCase();
-    const filtered = allListings.filter(exp => exp.title.toLowerCase().includes(query));
-    renderListingsTable(filtered);
-}
+// --------------------
+// Fetch Admin Bookings
+// --------------------
+async function fetchAdminBookings() {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("Missing auth token");
 
-function toggleSelectAll() {
-    const master = document.getElementById("select-all");
-    const boxes = document.querySelectorAll(".listing-checkbox");
-    boxes.forEach(box => box.checked = master.checked);
-    updateBulkState();
-}
+  bookingsLoadingEl.classList.remove("hidden");
+  bookingsEmptyEl.classList.add("hidden");
+  bookingsErrorEl.classList.add("hidden");
+  bookingsTableBodyEl.innerHTML = "";
 
-function updateBulkState() {
-    const boxes = document.querySelectorAll(".listing-checkbox:checked");
-    const btn = document.getElementById("bulk-delete-btn");
-    const countSpan = document.getElementById("selected-count");
-    if (boxes.length > 0) { btn.classList.remove("hidden"); btn.classList.add("flex"); countSpan.textContent = boxes.length; } 
-    else { btn.classList.add("hidden"); btn.classList.remove("flex"); }
-}
+  try {
+    const res = await fetch(`${API_BASE}/admin/bookings`, {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${token}`
+      }
+    });
 
-async function bulkDelete() {
-    const ids = Array.from(document.querySelectorAll(".listing-checkbox:checked")).map(box => box.value);
-    if (!confirm(`⚠️ DELETE ${ids.length} listing(s)?`)) return;
-    const token = getToken();
-    for (const id of ids) {
-        try { await fetch(`${API_BASE}/api/admin/experiences/${id}`, { method: "DELETE", headers: { "Authorization": `Bearer ${token}` } }); } catch(err) {}
+    if (!res.ok) {
+      throw new Error("Failed to load bookings");
     }
-    loadAdminData();
+
+    const bookings = await res.json();
+
+    if (!bookings || bookings.length === 0) {
+      bookingsEmptyEl.classList.remove("hidden");
+      return;
+    }
+
+    bookings.forEach(booking => {
+      const tr = createBookingRow(booking);
+      bookingsTableBodyEl.appendChild(tr);
+    });
+  } catch (err) {
+    console.error(err);
+    bookingsErrorEl.classList.remove("hidden");
+  } finally {
+    bookingsLoadingEl.classList.add("hidden");
+  }
 }
 
-async function banUser(id) {
-    if(!confirm(`⚠️ BAN User?`)) return;
-    const token = getToken();
-    try {
-        const res = await fetch(`${API_BASE}/api/admin/users/${id}`, { method: "DELETE", headers: { "Authorization": `Bearer ${token}` } });
-        if(res.ok) { alert("User banned."); loadAdminData(); }
-    } catch(err) { alert("Error."); }
+// --------------------
+// Create Table Row
+// --------------------
+function createBookingRow(booking) {
+  const tr = document.createElement("tr");
+  tr.className = "hover:bg-slate-50/60";
+
+  const experience = booking.experience || booking.experienceDetails || {};
+  const user = booking.user || booking.guest || {};
+
+  const bookingDate =
+    booking.date ||
+    booking.experienceDate ||
+    booking.bookingDate ||
+    booking.createdAt;
+
+  const guestName =
+    user.name ||
+    user.fullName ||
+    user.email ||
+    "Unknown guest";
+
+  const experienceTitle =
+    experience.title ||
+    booking.title ||
+    "Untitled experience";
+
+  const amount =
+    booking.amount ||
+    booking.totalPrice ||
+    booking.price ||
+    0;
+
+  const statusRaw = booking.status || booking.paymentStatus || "unknown";
+  const status = String(statusRaw).toLowerCase();
+
+  // --- Date ---
+  const tdDate = document.createElement("td");
+  tdDate.className = "px-4 sm:px-5 py-3 whitespace-nowrap text-xs sm:text-sm text-slate-700";
+  tdDate.textContent = formatDate(bookingDate);
+
+  // --- Guest Name ---
+  const tdGuest = document.createElement("td");
+  tdGuest.className = "px-4 sm:px-5 py-3 whitespace-nowrap text-xs sm:text-sm text-slate-800";
+  tdGuest.textContent = guestName;
+
+  // --- Experience Title ---
+  const tdExperience = document.createElement("td");
+  tdExperience.className = "px-4 sm:px-5 py-3 text-xs sm:text-sm text-slate-800";
+  tdExperience.textContent = experienceTitle;
+
+  // --- Amount ---
+  const tdAmount = document.createElement("td");
+  tdAmount.className = "px-4 sm:px-5 py-3 whitespace-nowrap text-xs sm:text-sm text-slate-800";
+  tdAmount.textContent = formatCurrency(amount);
+
+  // --- Status ---
+  const tdStatus = document.createElement("td");
+  tdStatus.className = "px-4 sm:px-5 py-3 whitespace-nowrap text-xs sm:text-sm";
+  const statusBadge = document.createElement("span");
+  statusBadge.className =
+    "inline-flex items-center rounded-full px-2.5 py-0.5 text-[0.7rem] font-medium";
+  if (status === "confirmed" || status === "paid") {
+    statusBadge.classList.add("bg-emerald-50", "text-emerald-700", "border", "border-emerald-100");
+    statusBadge.textContent = "Confirmed";
+  } else if (status === "cancelled" || status === "canceled" || status === "refunded") {
+    statusBadge.classList.add("bg-red-50", "text-red-700", "border", "border-red-100");
+    statusBadge.textContent = "Cancelled";
+  } else if (status === "pending") {
+    statusBadge.classList.add("bg-amber-50", "text-amber-700", "border", "border-amber-100");
+    statusBadge.textContent = "Pending";
+  } else {
+    statusBadge.classList.add("bg-slate-100", "text-slate-700", "border", "border-slate-200");
+    statusBadge.textContent = statusRaw;
+  }
+  tdStatus.appendChild(statusBadge);
+
+  // --- Actions ---
+  const tdActions = document.createElement("td");
+  tdActions.className = "px-4 sm:px-5 py-3 whitespace-nowrap text-xs sm:text-sm";
+
+  const canCancel = !(status === "cancelled" || status === "canceled" || status === "refunded");
+  const cancelBtn = document.createElement("button");
+  cancelBtn.type = "button";
+  cancelBtn.textContent = canCancel ? "Cancel / Refund" : "Cancelled";
+  cancelBtn.disabled = !canCancel;
+  cancelBtn.className =
+    "inline-flex items-center justify-center rounded-full px-3 py-1.5 text-xs font-semibold border transition " +
+    (canCancel
+      ? "border-slate-300 text-slate-700 bg-white hover:bg-slate-50 hover:border-slate-400"
+      : "border-slate-200 text-slate-400 bg-slate-50 cursor-not-allowed");
+
+  if (canCancel) {
+    cancelBtn.addEventListener("click", async () => {
+      const confirmed = window.confirm("Are you sure you want to cancel / refund this booking?");
+      if (!confirmed) return;
+
+      cancelBtn.disabled = true;
+      cancelBtn.textContent = "Processing…";
+
+      try {
+        await cancelBooking(booking._id || booking.id || booking.bookingId);
+        // Update UI
+        statusBadge.className =
+          "inline-flex items-center rounded-full px-2.5 py-0.5 text-[0.7rem] font-medium bg-red-50 text-red-700 border border-red-100";
+        statusBadge.textContent = "Cancelled";
+        cancelBtn.textContent = "Cancelled";
+      } catch (err) {
+        console.error(err);
+        alert("Failed to cancel booking. Please try again.");
+        cancelBtn.disabled = false;
+        cancelBtn.textContent = "Cancel / Refund";
+      }
+    });
+  }
+
+  tdActions.appendChild(cancelBtn);
+
+  tr.appendChild(tdDate);
+  tr.appendChild(tdGuest);
+  tr.appendChild(tdExperience);
+  tr.appendChild(tdAmount);
+  tr.appendChild(tdStatus);
+  tr.appendChild(tdActions);
+
+  return tr;
 }
 
-async function forceDeleteListing(id) {
-    if(!confirm(`⚠️ DELETE Listing?`)) return;
-    const token = getToken();
-    try {
-        const res = await fetch(`${API_BASE}/api/admin/experiences/${id}`, { method: "DELETE", headers: { "Authorization": `Bearer ${token}` } });
-        if(res.ok) { alert("Listing deleted."); loadAdminData(); }
-    } catch(err) { alert("Error."); }
+// --------------------
+// Cancel / Refund
+// --------------------
+async function cancelBooking(bookingId) {
+  if (!bookingId) throw new Error("Missing booking id");
+
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("Missing auth token");
+
+  const url = `${API_BASE}/bookings/${bookingId}/cancel`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${token}`,
+      "Content-Type": "application/json"
+    }
+  });
+
+  if (!res.ok) {
+    throw new Error("Cancel / refund request failed");
+  }
+
+  return res.json();
 }
+
+// --------------------
+// Init
+// --------------------
+async function initAdminDashboard() {
+  requireAdmin();
+
+  try {
+    await fetchAdminStats();
+  } catch (err) {
+    console.error("Stats error:", err);
+  }
+
+  try {
+    await fetchAdminBookings();
+  } catch (err) {
+    console.error("Bookings error:", err);
+  }
+}
+
+document.addEventListener("DOMContentLoaded", initAdminDashboard);

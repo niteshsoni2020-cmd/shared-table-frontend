@@ -287,3 +287,29 @@ if (bookingForm) {
         }
     });
 }
+
+// 9. DYNAMIC SEO HELPER
+function updatePageMetadata(exp) {
+    // 1. Update Browser Tab Title
+    document.title = `${exp.title} | The Shared Table Story`;
+
+    // 2. Update Meta Description (for search engines/sharing that support JS)
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) {
+        metaDesc = document.createElement('meta');
+        metaDesc.name = "description";
+        document.head.appendChild(metaDesc);
+    }
+    metaDesc.content = `Book ${exp.title} in ${exp.city}. Hosted by ${exp.hostName}. ${exp.description.substring(0, 100)}...`;
+
+    // 3. Update Open Graph Image (for sharing)
+    let ogImage = document.querySelector('meta[property="og:image"]');
+    if (!ogImage) {
+        ogImage = document.createElement('meta');
+        ogImage.setAttribute('property', 'og:image');
+        document.head.appendChild(ogImage);
+    }
+    // Use the experience image if available, else generic
+    const imgUrl = exp.imageUrl || (exp.images && exp.images[0]);
+    if (imgUrl) ogImage.content = imgUrl;
+}

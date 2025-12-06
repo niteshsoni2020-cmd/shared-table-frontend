@@ -4,25 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Explore - The Shared Table Story</title>
-
     <script src="https://cdn.tailwindcss.com"></script>
-
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nouislider@15.7.0/dist/nouislider.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/nouislider@15.7.0/dist/nouislider.min.js"></script>
-
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
-
-        /* Custom Slider Styling to match Orange Theme */
         .noUi-target { border-radius: 9999px; border: 1px solid #e5e7eb; background: #f9fafb; box-shadow: none; }
-        .noUi-connect { background: #ea580c; /* orange-600 */ }
+        .noUi-connect { background: #ea580c; }
         .noUi-handle { border-radius: 9999px; border: 1px solid #ea580c; width: 18px; height: 18px; top: -7px; background: #ffffff; box-shadow: 0 1px 2px rgba(0,0,0,0.1); cursor: grab; }
         .noUi-handle::before, .noUi-handle::after { display: none; }
-        
-        /* Hide Scrollbar for Categories */
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
@@ -36,51 +28,39 @@
             
             <div class="flex flex-col xl:flex-row gap-4">
                 <div class="flex-grow flex flex-col md:flex-row gap-2">
-                    
                     <div class="relative flex-grow">
                         <i class="fas fa-search absolute left-4 top-3.5 text-gray-400"></i>
                         <input type="text" id="search-input" placeholder="Search dish, host, or vibe..." class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none text-sm transition">
                     </div>
-
                     <div class="relative w-full md:w-48">
                         <i class="fas fa-map-marker-alt absolute left-4 top-3.5 text-gray-400"></i>
-                        <input type="text" id="location-input" placeholder="City (e.g. Melbourne)" class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none text-sm transition">
+                        <input type="text" id="location-input" placeholder="City" class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none text-sm transition">
                     </div>
-                    
                     <div class="relative w-full md:w-40">
                         <input type="date" id="date-input" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none text-gray-600 text-sm transition">
                     </div>
-
                     <div class="relative w-full md:w-32">
                         <i class="fas fa-user-friends absolute left-4 top-3.5 text-gray-400"></i>
                         <input type="number" id="guests-input" min="1" placeholder="Guests" class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none text-sm transition">
                     </div>
                 </div>
-
                 <div class="flex gap-2">
-                    <button id="clear-filters-btn" class="px-4 py-3 bg-gray-100 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-200 transition flex items-center gap-2 whitespace-nowrap">
-                        <i class="fas fa-times"></i> Clear
-                    </button>
-                    <button id="filter-btn" class="px-6 py-3 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition flex items-center justify-center gap-2 whitespace-nowrap">
-                        <i class="fas fa-sliders-h"></i> Filters
-                    </button>
+                    <button id="clear-filters-btn" class="px-4 py-3 bg-gray-100 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-200 transition flex items-center gap-2 whitespace-nowrap"><i class="fas fa-times"></i> Clear</button>
+                    <button id="filter-btn" class="px-6 py-3 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition flex items-center justify-center gap-2 whitespace-nowrap"><i class="fas fa-sliders-h"></i> Filters</button>
                 </div>
             </div>
 
             <div id="filter-panel" class="hidden mt-1 p-6 bg-gray-50 rounded-xl border border-gray-200 transition-all duration-300 shadow-inner">
                 <div class="flex flex-col md:flex-row gap-8 items-start">
-                    
                     <div class="w-full md:w-1/2">
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-4">Price Range (per guest)</label>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-4">Price Range</label>
                         <div id="price-slider" class="mb-4 mx-2"></div>
                         <div class="flex justify-between text-sm font-medium text-gray-700">
                             <span id="price-min-label">$0</span>
                             <span id="price-max-label">$300+</span>
                         </div>
-                        <input type="hidden" id="min-price" />
-                        <input type="hidden" id="max-price" />
+                        <input type="hidden" id="min-price" /><input type="hidden" id="max-price" />
                     </div>
-
                     <div class="w-full md:w-1/4">
                         <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Sort By</label>
                         <div class="relative">
@@ -92,11 +72,8 @@
                             <i class="fas fa-chevron-down absolute right-4 top-3 text-gray-400 pointer-events-none"></i>
                         </div>
                     </div>
-
                     <div class="w-full md:w-1/4 flex items-end">
-                        <button id="apply-filters" class="w-full bg-orange-600 text-white px-6 py-2.5 rounded-lg font-bold hover:bg-orange-700 transition shadow-sm">
-                            Apply Changes
-                        </button>
+                        <button id="apply-filters" class="w-full bg-orange-600 text-white px-6 py-2.5 rounded-lg font-bold hover:bg-orange-700 transition shadow-sm">Apply</button>
                     </div>
                 </div>
             </div>
@@ -104,37 +81,35 @@
             <div id="active-filters-bar" class="flex flex-wrap gap-2 text-xs"></div>
 
             <div class="flex gap-2 mt-4 overflow-x-auto pb-2 scrollbar-hide" id="category-chips">
-                <button class="filter-chip active px-4 py-2 bg-gray-900 text-white rounded-full text-sm font-medium whitespace-nowrap transition border border-transparent" data-category="all">All</button>
-                <button class="filter-chip px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-full text-sm font-medium whitespace-nowrap hover:border-orange-500 transition" data-category="Dinner">Dinner</button>
-                <button class="filter-chip px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-full text-sm font-medium whitespace-nowrap hover:border-orange-500 transition" data-category="Lunch">Lunch</button>
-                <button class="filter-chip px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-full text-sm font-medium whitespace-nowrap hover:border-orange-500 transition" data-category="Cooking Class">Cooking Class</button>
-                <button class="filter-chip px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-full text-sm font-medium whitespace-nowrap hover:border-orange-500 transition" data-category="Culture">Culture</button>
+                <button class="filter-chip active px-4 py-2 bg-gray-900 text-white rounded-full text-sm font-medium whitespace-nowrap transition border border-transparent" data-category="all">
+                    All Stories
+                </button>
+                <button class="filter-chip px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-full text-sm font-medium whitespace-nowrap hover:border-orange-500 transition" data-category="Culture">
+                    <i class="fas fa-om mr-1"></i> Culture & Festivals
+                </button>
+                <button class="filter-chip px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-full text-sm font-medium whitespace-nowrap hover:border-orange-500 transition" data-category="Food">
+                    <i class="fas fa-utensils mr-1"></i> Food & Dining
+                </button>
+                <button class="filter-chip px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-full text-sm font-medium whitespace-nowrap hover:border-orange-500 transition" data-category="Nature">
+                    <i class="fas fa-tree mr-1"></i> Nature & Tours
+                </button>
             </div>
         </div>
     </div>
 
     <div class="container mx-auto px-4 py-8 flex-grow">
-        
         <div id="experiences-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            <div class="col-span-full text-center py-12">
-                <i class="fas fa-spinner fa-spin text-3xl text-orange-500"></i>
-                <p class="text-gray-400 mt-4 text-sm">Finding experiences...</p>
-            </div>
+            <div class="col-span-full text-center py-12"><i class="fas fa-spinner fa-spin text-3xl text-orange-500"></i></div>
         </div>
-
         <div id="no-results" class="hidden text-center py-12">
             <div class="text-6xl mb-4 opacity-50">🍂</div>
             <h3 class="text-xl font-bold text-gray-900 mb-2">No experiences found</h3>
-            <p class="text-gray-500 mb-8 max-w-md mx-auto">We couldn't find matches for your current filters. Try adjusting your dates, price range, or location.</p>
-            <button onclick="document.getElementById('clear-filters-btn').click()" class="text-orange-600 font-bold hover:underline">
-                Clear all filters
-            </button>
+            <p class="text-gray-500 mb-8">Try adjusting your filters.</p>
+            <button onclick="document.getElementById('clear-filters-btn').click()" class="text-orange-600 font-bold hover:underline">Clear all filters</button>
         </div>
-
     </div>
 
     <footer id="footer-placeholder"></footer>
-
     <script src="js/common.js"></script>
     <script src="js/explore.js"></script>
 </body>

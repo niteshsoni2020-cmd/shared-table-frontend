@@ -1,215 +1,104 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
-  <title>Host an Experience | The Shared Table Story</title>
-  <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/3447/3447693.png">
-
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-  
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-  <style> 
-    body { font-family: 'Inter', sans-serif; } 
-    .img-delete-btn {
-        position: absolute; top: 4px; right: 4px;
-        background: rgba(0,0,0,0.6); color: white;
-        border-radius: 50%; width: 20px; height: 20px;
-        display: flex; align-items: center; justify-content: center;
-        font-size: 10px; cursor: pointer; transition: background 0.2s;
-    }
-    .img-delete-btn:hover { background: red; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Become a Host - The Shared Table Story</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
+    <script>
+        if (!localStorage.getItem('token')) window.location.href = 'login.html';
+    </script>
 </head>
-<body class="bg-gray-50 text-gray-900">
+<body class="bg-gray-50 text-gray-900 flex flex-col min-h-screen">
 
-  <nav class="sticky top-0 z-50 flex items-center justify-between px-6 py-6 bg-white/95 backdrop-blur shadow-sm border-b border-gray-100 transition-all">
-    <a href="index.html" class="flex items-center gap-3 hover:opacity-90 transition group">
-      <div class="h-10 w-10 bg-orange-600 rounded-full flex items-center justify-center shadow-lg border-2 border-transparent group-hover:scale-105 transition">
-        <span class="font-bold text-white text-lg">Q</span>
-      </div>
-      <div>
-        <h1 class="text-2xl font-bold tracking-tight leading-none text-gray-900">The Shared Table Story</h1>
-        <p class="text-[10px] tracking-[0.2em] uppercase text-orange-600 font-bold mt-0.5">Experiences</p>
-      </div>
-    </a>
-    <div class="hidden md:flex items-center space-x-8 text-sm font-semibold tracking-wide text-gray-600">
-      <a href="explore.html" class="hover:text-orange-600 transition duration-300">Explore</a>
-      <a href="host.html" class="text-orange-600 font-bold">Host an Experience</a>
-      <div id="nav-auth"></div>
-    </div>
-    <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600 focus:outline-none hover:text-orange-600 transition">
-        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
-    </button>
-  </nav>
+    <nav id="navbar-placeholder"></nav>
 
-  <div id="mobile-menu" class="hidden fixed inset-0 z-[100] bg-white text-gray-900 p-6 animate-fade-in overflow-y-auto">
-      <div class="flex justify-between items-center mb-8">
-          <h2 class="text-2xl font-bold">Menu</h2>
-          <button onclick="toggleMobileMenu()" class="text-gray-500 hover:text-black p-2 rounded-full hover:bg-gray-100 transition">
-              <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-          </button>
-      </div>
-      <div id="mobile-auth"></div>
-  </div>
+    <div class="container mx-auto px-4 py-12 max-w-3xl flex-grow">
+        <h1 class="text-3xl font-bold mb-2">Host an Experience</h1>
+        <p class="text-gray-600 mb-8">Share your culture, food, or nature with travellers.</p>
 
-  <main class="max-w-6xl mx-auto px-4 py-12">
-    <div class="grid md:grid-cols-3 gap-12">
-      
-      <div class="md:col-span-2">
-        <div class="mb-8">
-          <h1 class="text-3xl font-bold mb-3 text-gray-900">Host meaningful moments</h1>
-          <p class="text-gray-500 text-lg">Turn your home into a destination and your stories into memories.</p>
-        </div>
-
-        <form id="host-form" onsubmit="handleCreateExperience(event)" class="space-y-8 bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
-          
-          <div class="space-y-6">
-            <h2 class="text-xl font-bold border-b pb-2">The Basics</h2>
+        <form id="create-experience-form" class="bg-white p-8 rounded-xl shadow-sm border border-gray-100 space-y-6">
             
             <div>
-              <label class="block text-sm font-bold text-gray-700 mb-1">Experience Title</label>
-              <input id="title" type="text" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-orange-100 transition" placeholder="e.g. Authentic Diwali Dinner in Carlton" required />
+                <label class="block text-sm font-bold text-gray-700 mb-1">Experience Title</label>
+                <input type="text" id="title" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none" placeholder="e.g., Sunset Diwali Feast" required>
             </div>
 
-            <div class="grid md:grid-cols-2 gap-4">
-               <div>
-                 <label class="block text-sm font-bold text-gray-700 mb-1">City / Suburb</label>
-                 <input id="city" type="text" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-orange-100 transition" placeholder="e.g. Carlton, Melbourne" required />
-               </div>
-               <div>
-                 <label class="block text-sm font-bold text-gray-700 mb-1">Category</label>
-                 <select id="category" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-orange-100 transition cursor-pointer">
-                   <option value="Culture & Festivals">Culture & Festivals</option>
-                   <option value="Food & Dining">Food & Dining</option>
-                   <option value="Nature & Tours">Nature & Tours</option>
-                 </select>
-               </div>
-            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Category</label>
+                    <select id="tags" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none">
+                        <option value="Culture">Culture & Festivals</option>
+                        <option value="Food">Food & Dining</option>
+                        <option value="Nature">Nature & Tours</option>
+                    </select>
+                    <p class="text-xs text-gray-500 mt-1">Choose the primary pillar of your story.</p>
+                </div>
 
-            <div>
-                <label class="block text-sm font-bold text-gray-700 mb-2">Pin Exact Location</label>
-                <div id="map-picker" class="h-64 w-full rounded-lg border border-gray-200 z-0 shadow-sm"></div>
-                <p class="text-xs text-gray-400 mt-1">Click on the map to set the meeting point.</p>
-                <input type="hidden" id="lat" name="lat" />
-                <input type="hidden" id="lng" name="lng" />
-            </div>
-
-            <div>
-              <label class="block text-sm font-bold text-gray-700 mb-1">Gallery (Max 5 Images)</label>
-              <input id="imageUpload" type="file" multiple accept="image/*" class="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 cursor-pointer" />
-              <p class="text-xs text-gray-400 mt-1">First image will be the cover. Add more anytime.</p>
-              <div id="image-preview" class="flex flex-wrap gap-4 mt-4 min-h-[6rem]"></div>
-            </div>
-
-            <div>
-              <label class="block text-sm font-bold text-gray-700 mb-1">Description</label>
-              <textarea id="description" rows="4" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-orange-100 transition" placeholder="Describe what guests will do..." required></textarea>
-            </div>
-          </div>
-
-          <div class="space-y-6 pt-6 border-t border-gray-100">
-            <h2 class="text-xl font-bold border-b pb-2">Logistics</h2>
-            
-            <div class="grid md:grid-cols-2 gap-6">
-              <div><label class="block text-sm font-bold text-gray-700 mb-1">Available From</label><input id="startDate" type="date" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg" required /></div>
-              <div><label class="block text-sm font-bold text-gray-700 mb-1">Until</label><input id="endDate" type="date" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg" required /></div>
-            </div>
-
-            <div>
-               <label class="block text-sm font-bold text-gray-700 mb-2">Which days are you available?</label>
-               <div class="flex flex-wrap gap-2">
-                   <label class="cursor-pointer"><input type="checkbox" name="days" value="Mon" checked class="peer sr-only"><div class="px-4 py-2 border border-gray-200 rounded-lg peer-checked:bg-black peer-checked:text-white peer-checked:border-black text-sm font-bold transition">Mon</div></label>
-                   <label class="cursor-pointer"><input type="checkbox" name="days" value="Tue" checked class="peer sr-only"><div class="px-4 py-2 border border-gray-200 rounded-lg peer-checked:bg-black peer-checked:text-white peer-checked:border-black text-sm font-bold transition">Tue</div></label>
-                   <label class="cursor-pointer"><input type="checkbox" name="days" value="Wed" checked class="peer sr-only"><div class="px-4 py-2 border border-gray-200 rounded-lg peer-checked:bg-black peer-checked:text-white peer-checked:border-black text-sm font-bold transition">Wed</div></label>
-                   <label class="cursor-pointer"><input type="checkbox" name="days" value="Thu" checked class="peer sr-only"><div class="px-4 py-2 border border-gray-200 rounded-lg peer-checked:bg-black peer-checked:text-white peer-checked:border-black text-sm font-bold transition">Thu</div></label>
-                   <label class="cursor-pointer"><input type="checkbox" name="days" value="Fri" checked class="peer sr-only"><div class="px-4 py-2 border border-gray-200 rounded-lg peer-checked:bg-black peer-checked:text-white peer-checked:border-black text-sm font-bold transition">Fri</div></label>
-                   <label class="cursor-pointer"><input type="checkbox" name="days" value="Sat" checked class="peer sr-only"><div class="px-4 py-2 border border-gray-200 rounded-lg peer-checked:bg-black peer-checked:text-white peer-checked:border-black text-sm font-bold transition">Sat</div></label>
-                   <label class="cursor-pointer"><input type="checkbox" name="days" value="Sun" checked class="peer sr-only"><div class="px-4 py-2 border border-gray-200 rounded-lg peer-checked:bg-black peer-checked:text-white peer-checked:border-black text-sm font-bold transition">Sun</div></label>
-               </div>
-            </div>
-
-            <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
-               <label class="block text-sm font-bold text-gray-700 mb-3">Daily Schedule</label>
-               <div class="grid grid-cols-2 gap-4 mb-3">
-                 <div><span class="text-xs text-gray-500 uppercase font-bold">Start Time</span><select id="slot1Start" class="w-full mt-1 p-2 bg-white border border-gray-200 rounded-lg" required></select></div>
-                 <div><span class="text-xs text-gray-500 uppercase font-bold">Duration</span><select id="slot1Duration" class="w-full mt-1 p-2 bg-white border border-gray-200 rounded-lg" required><option value="60">1 hour</option><option value="90">1.5 hours</option><option value="120">2 hours</option><option value="180">3 hours</option></select></div>
-               </div>
-               <div class="grid grid-cols-2 gap-4 opacity-70">
-                 <div><span class="text-xs text-gray-400 uppercase font-bold">Start Time (Optional)</span><select id="slot2Start" class="w-full mt-1 p-2 bg-white border border-gray-200 rounded-lg"></select></div>
-                 <div><span class="text-xs text-gray-400 uppercase font-bold">Duration</span><select id="slot2Duration" class="w-full mt-1 p-2 bg-white border border-gray-200 rounded-lg"><option value="">Select</option><option value="60">1 hour</option><option value="120">2 hours</option></select></div>
-               </div>
-            </div>
-          </div>
-
-          <div class="space-y-6 pt-6 border-t border-gray-100">
-            <h2 class="text-xl font-bold border-b pb-2">Pricing & Rules</h2>
-            <div class="grid md:grid-cols-2 gap-6">
-               <div>
-                 <label class="block text-sm font-bold text-gray-700 mb-1">Price per Person (AUD)</label>
-                 <div class="relative"><span class="absolute left-3 top-3 text-gray-400">$</span><input id="price" type="number" class="w-full pl-8 p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none" required /></div>
-               </div>
-               <div><label class="block text-sm font-bold text-gray-700 mb-1">Max Guests</label><input id="maxGuests" type="number" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg" placeholder="10" /></div>
-            </div>
-
-            <div class="bg-orange-50 p-4 rounded-xl border border-orange-100">
-                <h3 class="font-bold text-orange-900 mb-2 text-sm">Allow Private Events? (Optional)</h3>
-                <div class="grid md:grid-cols-2 gap-4">
-                  <div><label class="block text-xs font-bold text-orange-800 mb-1">Private Price Total</label><input id="privatePrice" type="number" class="w-full p-2 bg-white border border-orange-200 rounded-lg" /></div>
-                  <div><label class="block text-xs font-bold text-orange-800 mb-1">Max Private Guests</label><input id="privateCapacity" type="number" class="w-full p-2 bg-white border border-orange-200 rounded-lg" /></div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">City</label>
+                    <input type="text" id="city" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none" placeholder="e.g. Melbourne" required>
                 </div>
             </div>
 
             <div>
-               <label class="block text-sm font-bold text-gray-700 mb-2">Group Discounts</label>
-               <div class="grid grid-cols-3 gap-2">
-                 <div><span class="text-xs text-gray-500">1-2 Guests</span><select id="discSmall" class="w-full mt-1 p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"></select></div>
-                 <div><span class="text-xs text-gray-500">3-4 Guests</span><select id="discMedium" class="w-full mt-1 p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"></select></div>
-                 <div><span class="text-xs text-gray-500">5-6 Guests</span><select id="discLarge" class="w-full mt-1 p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"></select></div>
-               </div>
+                <label class="block text-sm font-bold text-gray-700 mb-1">The Story (Description)</label>
+                <textarea id="description" rows="5" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none" placeholder="What will guests do? What makes this special?" required></textarea>
             </div>
-          </div>
 
-          <div class="pt-6">
-             <button type="submit" class="w-full py-4 bg-orange-600 hover:bg-orange-700 text-white font-bold text-lg rounded-xl shadow-lg transition transform hover:scale-[1.01]">Publish Experience</button>
-             <p id="status-message" class="text-center text-sm mt-3 text-gray-500"></p>
-          </div>
+            <div class="grid grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Price (AUD)</label>
+                    <input type="number" id="price" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none" placeholder="85" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Max Guests</label>
+                    <input type="number" id="maxGuests" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none" placeholder="6" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Days</label>
+                    <input type="text" id="availableDays" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none" placeholder="Fri, Sat" value="Fri, Sat, Sun">
+                </div>
+            </div>
 
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Start Date</label>
+                    <input type="date" id="startDate" class="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">End Date</label>
+                    <input type="date" id="endDate" class="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none" required>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-2">Cover Photo</label>
+                <div class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:bg-gray-50 transition cursor-pointer relative">
+                    <input type="file" id="imageInput" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*">
+                    <div id="upload-placeholder">
+                        <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-2"></i>
+                        <p class="text-sm text-gray-500">Click to upload image</p>
+                    </div>
+                    <div id="upload-preview" class="hidden">
+                        <p class="text-sm text-green-600 font-bold"><i class="fas fa-check"></i> Image Selected</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-4">
+                <button type="submit" id="submit-btn" class="w-full bg-gray-900 text-white py-3 rounded-lg font-bold hover:bg-gray-800 transition shadow-lg">
+                    Publish Experience
+                </button>
+            </div>
         </form>
-      </div>
-
-      <aside class="hidden md:block col-span-1 space-y-6">
-         <div class="bg-gray-900 p-6 rounded-2xl shadow-xl text-white">
-            <h3 class="font-bold text-lg mb-4 text-orange-500">Why Hosting Matters</h3>
-            <p class="text-sm text-gray-300 mb-4 leading-relaxed">
-                Hosting isn’t about serving food. It’s about serving connection.
-            </p>
-            <ul class="space-y-3 text-xs text-gray-400">
-                <li class="flex gap-2"><span>✨</span> Share a piece of your culture</li>
-                <li class="flex gap-2"><span>✨</span> Create a safe, warm environment</li>
-                <li class="flex gap-2"><span>✨</span> Welcome guests like family</li>
-            </ul>
-            <p class="mt-4 text-xs italic text-gray-500 border-t border-gray-700 pt-4">
-                "A good experience fills the stomach. A great experience fills the heart."
-            </p>
-         </div>
-
-         <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 sticky top-28">
-            <h3 class="font-bold text-lg mb-4 text-gray-900">Hosting Tips</h3>
-            <div class="space-y-4">
-               <div class="flex gap-3"><div class="h-8 w-8 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center shrink-0 text-lg">📸</div><div><h4 class="font-bold text-sm">Great Photos Matter</h4><p class="text-xs text-gray-500 leading-relaxed">Guests love to see where they will be eating or walking. Use bright, clear images.</p></div></div>
-               <div class="flex gap-3"><div class="h-8 w-8 bg-green-50 text-green-600 rounded-full flex items-center justify-center shrink-0 text-lg">🏷️</div><div><h4 class="font-bold text-sm">Pricing Smart</h4><p class="text-xs text-gray-500 leading-relaxed">Start with a lower price to get your first reviews, then adjust later.</p></div></div>
-            </div>
-         </div>
-      </aside>
     </div>
-  </main>
 
-  <script src="js/common.js"></script>
-  <script src="js/host.js"></script>
+    <footer id="footer-placeholder"></footer>
+    <script src="js/common.js"></script>
+    <script src="js/host.js"></script>
 </body>
 </html>

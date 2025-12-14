@@ -8,7 +8,7 @@
   const stored = localStorage.getItem("API_BASE");
   const isLocal = (location.hostname === "localhost" || location.hostname === "127.0.0.1");
 
-  window.API_BASE = stored || (isLocal ? "http://localhost:4000" : "https://PASTE-YOUR-REAL-BACKEND-URL-HERE");
+  window.API_BASE = stored || (isLocal ? "http://localhost:4000" : "https://shared-table-api.onrender.com");
 
   window.setAuth = function (token, user) {
     try {

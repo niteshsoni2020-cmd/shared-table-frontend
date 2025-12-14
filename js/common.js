@@ -1,3 +1,42 @@
+
+/* ================================
+   AUTH + API BASE (AUTO-ADDED)
+   ================================ */
+(function () {
+  // Allow override via localStorage if needed:
+  // localStorage.setItem("API_BASE", "http://localhost:4000");
+  const stored = localStorage.getItem("API_BASE");
+  const isLocal = (location.hostname === "localhost" || location.hostname === "127.0.0.1");
+
+  window.API_BASE = stored || (isLocal ? "http://localhost:4000" : "https://YOUR-ACTUAL-BACKEND-URL");
+
+  window.setAuth = function (token, user) {
+    try {
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user || {}));
+    } catch (e) {}
+  };
+
+  window.getAuthToken = function () {
+    try { return localStorage.getItem("token"); } catch (e) { return null; }
+  };
+
+  window.getAuthUser = function () {
+    try { return JSON.parse(localStorage.getItem("user") || "{}"); } catch (e) { return {}; }
+  };
+
+  window.authFetch = async function (path, opts) {
+    const token = window.getAuthToken();
+    const headers = Object.assign({}, (opts && opts.headers) || {});
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+    if (!headers["Content-Type"] && opts && opts.method && opts.method !== "GET") {
+      headers["Content-Type"] = "application/json";
+    }
+    const url = path.startsWith("http") ? path : `${window.API_BASE}${path}`;
+    return fetch(url, Object.assign({}, opts || {}, { headers }));
+  };
+})();
+
 // Frontend/js/common.js
 
 // 🔴 THE CRITICAL FIX: The correct URL from your logs

@@ -52,7 +52,7 @@
       ? (apiUrl + pth.slice(4))
       : (apiUrl + pth);
 
-    return fetch(url, Object.assign({}, opts || {}, { headers }));
+    return (window.fetch)(url, Object.assign({}, opts || {}, { headers }));
   }
 
   function setText(id, val) {

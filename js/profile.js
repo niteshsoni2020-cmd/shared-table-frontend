@@ -8,6 +8,25 @@
     location.href = "login.html?returnTo=" + returnTo;
   }
 
+  function getStoredUser() {
+    try { return (window.getAuthUser && window.getAuthUser()) || {}; } catch (_) { return {}; }
+  }
+
+  function setStoredUser(nextUser) {
+    try {
+      const token = getToken();
+      if (window.setAuth) window.setAuth(token || "", nextUser || {});
+      else localStorage.setItem("user", JSON.stringify(nextUser || {}));
+    } catch (_) {}
+  }
+
+  function syncNavAvatar(url) {
+    try {
+      const img = document.getElementById("nav-user-pic");
+      if (img && url) img.src = url;
+    } catch (_) {}
+  }
+
   const CLOUDINARY_URL = (window.CLOUDINARY_URL || "");
   const CLOUDINARY_UPLOAD_PRESET = (window.CLOUDINARY_PRESET || "");
 
@@ -43,15 +62,26 @@
     try {
       const res = await window.authFetch("/api/auth/me");
       if (!res.ok) throw new Error("Failed to load profile");
-      const user = await res.json();
+      const data = await res.json();
+      const user = (data && data.user) ? data.user : data;
 
       if (nameInput) nameInput.value = user.name || "";
       if (emailInput) emailInput.value = user.email || "";
       if (bioInput) bioInput.value = user.bio || "";
       if (profilePicPreview && user.profilePic) profilePicPreview.src = user.profilePic;
 
+      // keep localStorage user in sync so navbar can reflect it everywhere
+      const prev = getStoredUser();
+      setStoredUser(Object.assign({}, prev, {
+        name: user.name || prev.name,
+        email: user.email || prev.email,
+        bio: user.bio || prev.bio,
+        profilePic: user.profilePic || prev.profilePic
+      }));
+      if (user.profilePic) syncNavAvatar(user.profilePic);
+
       setHostSectionEnabled(false);
-    } catch (e) {
+    } catch (_) {
       setHostSectionEnabled(false);
     }
   }
@@ -64,7 +94,6 @@
       name: (nameInput && nameInput.value) || "",
       bio: (bioInput && bioInput.value) || ""
     };
-
     if (newProfilePicUrl) updateData.profilePic = newProfilePicUrl;
 
     const res = await window.authFetch("/api/auth/update", {
@@ -82,7 +111,22 @@
       throw new Error(msg);
     }
 
-    return res.json();
+    const data = await res.json();
+    const user = (data && data.user) ? data.user : data;
+
+    // update stored user so navbar + other pages get fresh avatar/name without refresh
+    const prev = getStoredUser();
+    const merged = Object.assign({}, prev, {
+      name: updateData.name || prev.name,
+      bio: updateData.bio || prev.bio
+    });
+    if (user && user.profilePic) merged.profilePic = user.profilePic;
+    else if (newProfilePicUrl) merged.profilePic = newProfilePicUrl;
+
+    setStoredUser(merged);
+    if (merged.profilePic) syncNavAvatar(merged.profilePic);
+
+    return data;
   }
 
   if (!getToken()) {
@@ -106,7 +150,10 @@
       reader.readAsDataURL(file);
 
       if (uploadBtn) uploadBtn.classList.remove("hidden");
-      if (uploadStatus) uploadStatus.textContent = "Click 'Upload & Save' to confirm.";
+      if (uploadStatus) {
+        uploadStatus.textContent = "Click 'Upload & Save' to confirm.";
+        uploadStatus.className = "text-xs text-gray-500 mt-1";
+      }
     });
   }
 
@@ -151,9 +198,17 @@
           uploadStatus.textContent = "Profile picture updated!";
           uploadStatus.className = "text-xs text-green-600 mt-1 font-bold";
         }
+
+        // ensure preview matches final secure URL and nav sync happens even if API returns old shape
+        if (profilePicPreview) profilePicPreview.src = secureUrl;
+        syncNavAvatar(secureUrl);
+
         uploadBtn.classList.add("hidden");
       } catch (err) {
-        if (uploadStatus) uploadStatus.textContent = (err && err.message) || "Upload failed.";
+        if (uploadStatus) {
+          uploadStatus.textContent = (err && err.message) || "Upload failed.";
+          uploadStatus.className = "text-xs text-red-600 mt-1 font-bold";
+        }
       } finally {
         if (uploadSpinner) uploadSpinner.classList.add("hidden");
         uploadBtn.disabled = false;

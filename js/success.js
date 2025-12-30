@@ -22,7 +22,7 @@ const sessionId = urlParams.get("sessionId");
 const experienceIdFromUrl = urlParams.get("experienceId"); // optional
 
 // Token for "my-bookings"
-const token = localStorage.getItem("token");
+const token = (window.getAuthToken && window.getAuthToken()) || "";
 
 // Utility: show/hide states
 function showLoading() {

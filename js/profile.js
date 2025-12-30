@@ -119,19 +119,33 @@
       if (uploadSpinner) uploadSpinner.classList.remove("hidden");
       uploadBtn.disabled = true;
 
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
-
       try {
         if (!CLOUDINARY_URL || !CLOUDINARY_UPLOAD_PRESET) throw new Error("Upload not configured");
-        const res = await fetch(CLOUDINARY_URL, { method: "POST", body: formData });
-        if (!res.ok) throw new Error("Image upload failed");
 
-        const data = await res.json();
-        if (!data || !data.secure_url) throw new Error("Image upload failed");
+        const secureUrl = await new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open("POST", CLOUDINARY_URL, true);
 
-        await saveProfile(data.secure_url);
+          xhr.onload = () => {
+            try {
+              if (xhr.status < 200 || xhr.status >= 300) return reject(new Error("Image upload failed"));
+              const data = JSON.parse(xhr.responseText || "{}");
+              if (!data || !data.secure_url) return reject(new Error("Image upload failed"));
+              return resolve(data.secure_url);
+            } catch (_) {
+              return reject(new Error("Image upload failed"));
+            }
+          };
+
+          xhr.onerror = () => reject(new Error("Image upload failed"));
+
+          const formData = new FormData();
+          formData.append("file", file);
+          formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+          xhr.send(formData);
+        });
+
+        await saveProfile(secureUrl);
 
         if (uploadStatus) {
           uploadStatus.textContent = "Profile picture updated!";

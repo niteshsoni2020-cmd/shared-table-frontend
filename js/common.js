@@ -3,6 +3,7 @@
    - API base
    - auth helpers
    - navbar/footer injection
+   - global head assets (fonts/icons/css)
    ================================ */
 
 (function () {
@@ -21,7 +22,6 @@
   // Cloudinary config (single-truth; used by profile.js)
   window.CLOUDINARY_URL = window.CLOUDINARY_URL || "https://api.cloudinary.com/v1_1/dkqf90k20/image/upload";
   window.CLOUDINARY_PRESET = window.CLOUDINARY_PRESET || "unsigned_preset";
-
 
   window.setAuth = function (token, user) {
     try {
@@ -43,7 +43,7 @@
     if (path.startsWith("http://") || path.startsWith("https://")) return path;
     if (!path.startsWith("/")) return "/" + path;
     return path;
-    }
+  }
 
   window.authFetch = async function (path, opts) {
     const token = window.getAuthToken();
@@ -54,13 +54,56 @@
     if (!headers["Content-Type"] && method !== "GET") headers["Content-Type"] = "application/json";
 
     const pth = normalizePath(path);
-    const url = pth.startsWith("/api/") ? (window.API_URL + pth.slice(4)) : (window.API_URL + pth);
+    const url = pth.startsWith("/api/")
+      ? (window.API_URL + pth.slice(4))
+      : (window.API_URL + pth);
+
     return fetch(url, Object.assign({}, opts || {}, { headers }));
   };
 })();
 
-// DOM bootstrap
+function ensureHeadLink(id, rel, href, extraAttrs) {
+  try {
+    const head = document.head || document.getElementsByTagName("head")[0];
+    if (!head) return;
+    if (id && document.getElementById(id)) return;
+
+    const link = document.createElement("link");
+    if (id) link.id = id;
+    link.rel = rel;
+    link.href = href;
+
+    if (extraAttrs && typeof extraAttrs === "object") {
+      for (const k of Object.keys(extraAttrs)) link.setAttribute(k, String(extraAttrs[k]));
+    }
+    head.appendChild(link);
+  } catch (_) {}
+}
+
+function ensureHeadAssets() {
+  // single fonts across all pages (even if individual pages also include fonts)
+  ensureHeadLink(
+    "tsts-fonts",
+    "stylesheet",
+    "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap"
+  );
+
+  // Font Awesome for navbar icons
+  ensureHeadLink(
+    "tsts-fa",
+    "stylesheet",
+    "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+  );
+
+  // Design system CSS everywhere
+  ensureHeadLink("tsts-design-system", "stylesheet", "css/design-system.css");
+
+  // Manifest (safe to include via JS)
+  ensureHeadLink("tsts-manifest", "manifest", "manifest.json");
+}
+
 document.addEventListener("DOMContentLoaded", () => {
+  ensureHeadAssets();
   injectNavbar();
   injectFooter();
   applyAuthStateToNav();
@@ -225,7 +268,6 @@ async function loadNavProfilePic() {
 
   try {
     const res = await window.authFetch("/api/auth/me", { method: "GET" });
-
     if (!res.ok) return;
     const user = await res.json();
     if (user && user.profilePic) img.src = user.profilePic;

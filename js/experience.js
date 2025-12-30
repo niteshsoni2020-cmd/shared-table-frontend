@@ -26,7 +26,7 @@
 
   function inferApiUrl() {
     // prefer common.js contract
-    if (window.API_URL) return String(window.API_URL);
+    if (window["API_URL"]) return String(window["API_URL"]);
 
     // safe fallback if common.js didn't load for any reason
     const isLocal = (location.hostname === "localhost" || location.hostname === "127.0.0.1");

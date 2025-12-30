@@ -124,16 +124,30 @@ if (form) {
 
       if (imageInput && imageInput.files && imageInput.files.length > 0) {
         const file = imageInput.files[0];
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
-
         if (!CLOUDINARY_URL || !CLOUDINARY_UPLOAD_PRESET) throw new Error("Upload not configured");
-        const uploadRes = await fetch(CLOUDINARY_URL, { method: "POST", body: formData });
-        if (!uploadRes.ok) throw new Error("Image upload failed.");
+        imageUrl = await new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open("POST", CLOUDINARY_URL, true);
 
-        const uploadData = await uploadRes.json();
-        imageUrl = uploadData && uploadData.secure_url ? uploadData.secure_url : null;
+          xhr.onload = () => {
+            try {
+              if (xhr.status < 200 || xhr.status >= 300) return reject(new Error("Image upload failed."));
+              const uploadData = JSON.parse(xhr.responseText || "{}");
+              const url = uploadData && uploadData.secure_url ? uploadData.secure_url : null;
+              if (!url) return reject(new Error("Image upload failed."));
+              return resolve(url);
+            } catch (_) {
+              return reject(new Error("Image upload failed."));
+            }
+          };
+
+          xhr.onerror = () => reject(new Error("Image upload failed."));
+
+          const formData = new FormData();
+          formData.append("file", file);
+          formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+          xhr.send(formData);
+        });
       }
 
       // 2) COLLECT TAGS

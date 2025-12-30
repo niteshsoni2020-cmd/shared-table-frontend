@@ -60,7 +60,7 @@ async function updateMaxDiscountBanner() {
   if (!bannerEl) return;
 
   try {
-      const res = await fetch(`${API_BASE}/api/experiences`);
+      const res = await window.authFetch("/api/experiences");
       const experiences = await res.json();
       
       let maxDiscount = 0;
@@ -84,10 +84,10 @@ async function loadHomeRecommendations() {
 
   const token = getToken();
   try {
-      const endpoint = token ? `${API_BASE}/api/recommendations` : `${API_BASE}/api/experiences?sort=rating_desc`;
+      const endpoint = token ? "/api/recommendations" : "/api/experiences?sort=rating_desc";
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
       
-      const res = await fetch(endpoint, { headers });
+      const res = await window.authFetch(endpoint, { headers });
       const data = await res.json();
       
       const recs = data.slice(0, 4); 

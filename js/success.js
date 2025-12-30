@@ -1,7 +1,4 @@
 // js/success.js
-
-const API_BASE = "https://shared-table-api.onrender.com/api";
-
 const loadingStateEl = document.getElementById("loading-state");
 const successStateEl = document.getElementById("success-state");
 const errorStateEl = document.getElementById("error-state");
@@ -51,9 +48,9 @@ function showError(message) {
 
 // Verify payment with backend
 async function verifyBooking(bookingId, sessionId) {
-  const url = `${API_BASE}/bookings/verify`;
+  const url = `/api/bookings/verify`;
 
-  const res = await fetch(url, {
+  const res = await window.authFetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
@@ -83,13 +80,10 @@ async function fetchBookingDetails(bookingId) {
     throw new Error("You need to be logged in to view your booking.");
   }
 
-  const url = `${API_BASE}/bookings/my-bookings`;
+  const url = `/api/bookings/my-bookings`;
 
-  const res = await fetch(url, {
-    method: "GET",
-    headers: {
-      "Authorization": `Bearer ${token}`
-    }
+  const res = await window.authFetch(url, {
+    method: "GET"
   });
 
   if (!res.ok) {

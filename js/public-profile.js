@@ -1,8 +1,6 @@
 // Frontend/js/public-profile.js
 
 // 🔴 CONFIG
-const API_BASE = 'https://shared-table-api.onrender.com';
-
 // Get Host ID from URL
 const params = new URLSearchParams(window.location.search);
 const userId = params.get('id');
@@ -32,7 +30,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     try {
-        const res = await fetch(`${API_BASE}/api/users/${userId}/profile`);
+        const res = await window.authFetch(`/api/users/${userId}/profile`);
         if (!res.ok) throw new Error("Host not found");
 
         const data = await res.json();

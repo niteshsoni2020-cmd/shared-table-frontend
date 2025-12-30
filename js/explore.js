@@ -1,7 +1,6 @@
 // Frontend/js/explore.js
 
 // 🔴 CONFIG
-const API_BASE = 'https://shared-table-api.onrender.com/api';
 const ENDPOINT = '/experiences'; 
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -100,7 +99,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (filterState.guests) params.set("guests", filterState.guests);
 
         try {
-            const res = await fetch(`${API_BASE}${ENDPOINT}?${params.toString()}`);
+            const res = await window.authFetch(`/api${ENDPOINT}?${params.toString()}`);
             if (!res.ok) throw new Error("API Error");
             const data = await res.json();
             renderExperiences(data);

@@ -1,5 +1,11 @@
 // js/login.js
 
+
+// --- Modal fallback (prevents login breaking if modal component isn't loaded) ---
+window.showModal = window.showModal || function (title, message, type) {
+  alert(String(title || "") + "\n\n" + String(message || ""));
+};
+
 // --- 1. TOGGLE FORMS ---
 function toggleAuth(mode) {
     const loginForm = document.getElementById("form-login");
@@ -27,33 +33,41 @@ async function handleLogin(e) {
     const password = document.getElementById("login-password").value;
 
     try {
-        const res = await fetch(`${API_BASE}/api/auth/login`, {
+        const res = await window.authFetch("/api/auth/login", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email, password })
         });
-        const data = await res.json();
+
+        const data = await res.json().catch(() => ({}));
 
         if (!res.ok) {
-            // Use our new pretty modal instead of alert
-            showModal("Login Failed", data.message || "Please check your email and password.", "error");
+            showModal("Login Failed", (data && data.message) || "Please check your email and password.", "error");
             return;
         }
 
-        setAuth(data.token, data.user);
-        
-        if (data.user.email === "admin@sharedtable.com") {
+        if (window.setAuth) window.setAuth(data.token, data.user);
+
+        if (data.user && data.user.email === "admin@sharedtable.com") {
             window.location.href = "admin.html";
             return;
         }
-        
+
         const params = new URLSearchParams(window.location.search);
         const redirect = params.get("redirect");
-        window.location.href = redirect ? decodeURIComponent(redirect) : "index.html";
+        const returnTo = params.get("returnTo");
+        const rawTarget = redirect || returnTo || "index.html";
+
+        let target = rawTarget;
+        try { target = decodeURIComponent(rawTarget); } catch (_) {}
+
+        window.location.href = target;
 
     } catch (err) {
-        showModal("Connection Error", "Could not connect to the server. Please check your internet.", "error");
+        showModal("Connection Error", "Could not connect to the server. Please try again.", "error");
     }
+
+
 }
 
 // --- 3. SIGNUP LOGIC ---
@@ -70,30 +84,32 @@ async function handleSignup(e) {
     }
 
     try {
-        const res = await fetch(`${API_BASE}/api/auth/register`, {
+        const res = await window.authFetch("/api/auth/register", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ name, email, password, termsAgreed: true })
         });
-        const data = await res.json();
+
+        const data = await res.json().catch(() => ({}));
 
         if (!res.ok) {
-            showModal("Signup Failed", data.message || "Please try again.", "error");
+            showModal("Signup Failed", (data && data.message) || "Please try again.", "error");
             return;
         }
 
-        // Success Modal
-        showModal("Welcome Aboard! 🌏", "Your profile has been created successfully. We've sent a welcome email to your inbox.", "success");
-        
-        // Auto Login & Redirect
-        setAuth(data.token, data.user);
+        showModal("Welcome Aboard! 🌏", "Your profile has been created successfully.", "success");
+
+        if (window.setAuth) window.setAuth(data.token, data.user);
+
         setTimeout(() => {
-            window.location.href = "profile.html"; // Go to profile to finish details
-        }, 2500); // Wait 2.5s so they can read the modal
+            window.location.href = "profile.html";
+        }, 1200);
 
     } catch (err) {
-        showModal("Connection Error", "Could not connect to the server.", "error");
+        showModal("Connection Error", "Could not connect to the server. Please try again.", "error");
     }
+
+
 }
 
 // --- 4. INIT ---

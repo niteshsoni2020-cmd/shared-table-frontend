@@ -1,160 +1,244 @@
 // js/admin.js
+// Single-truth networking: window.authFetch + window.getAuthToken from common.js
 
-const API_BASE = "https://shared-table-api.onrender.com/api";
-
-// Elements
-const bookingsTableBodyEl = document.getElementById("bookings-table-body");
-const listingsTableBodyEl = document.getElementById("listings-table-body");
-const usersTableBodyEl = document.getElementById("users-table-body");
-const bookingsLoadingEl = document.getElementById("bookings-loading");
-
-// Stats Elements
-const totalUsersEl = document.getElementById("stats-total-users");
-const totalHostsEl = document.getElementById("stats-total-hosts");
-const totalBookingsEl = document.getElementById("stats-total-bookings");
-const totalRevenueEl = document.getElementById("stats-total-revenue");
-
-// --- 1. INITIALIZATION ---
-document.addEventListener("DOMContentLoaded", () => {
-    requireAdmin();
-    loadDashboard();
-});
-
-function requireAdmin() {
-    const raw = localStorage.getItem("user");
-    if (!raw) return window.location.href = "login.html";
-    const user = JSON.parse(raw);
-    const token = localStorage.getItem("token");
-    if (!token || !user || user.role !== "Admin") {
-        window.location.href = "login.html";
-    }
+function getToken() {
+  return (window.getAuthToken && window.getAuthToken()) || "";
 }
 
-function getToken() { return localStorage.getItem('token'); }
-
-// --- 2. TAB LOGIC ---
-window.switchTab = function(tabName) {
-    ['dashboard', 'listings', 'users'].forEach(t => {
-        const el = document.getElementById(`view-${t}`);
-        const btn = document.getElementById(`tab-${t}`);
-        if(t === tabName) {
-            el.classList.remove('hidden');
-            btn.className = "border-tsts-clay text-tsts-clay border-b-2 py-4 px-1 font-bold text-sm transition";
-        } else {
-            el.classList.add('hidden');
-            btn.className = "border-transparent text-gray-500 hover:text-gray-700 border-b-2 py-4 px-1 font-medium text-sm transition";
-        }
-    });
-
-    if(tabName === 'listings') loadListings();
-    if(tabName === 'users') loadUsers();
+function mustBeAdmin() {
+  const u = (window.getAuthUser && window.getAuthUser()) || {};
+  const isAdminEmail = (u.email || "") === "admin@sharedtable.com";
+  if (!getToken() || !isAdminEmail) {
+    location.href = "login.html?redirect=" + encodeURIComponent("admin.html");
+    return false;
+  }
+  return true;
 }
 
-// --- 3. DASHBOARD LOGIC (Stats + Bookings) ---
-async function loadDashboard() {
-    try {
-        // Fetch Stats
-        const statsRes = await fetch(`${API_BASE}/admin/stats`, { headers: { "Authorization": `Bearer ${getToken()}` } });
-        const stats = await statsRes.json();
-        
-        totalUsersEl.textContent = stats.userCount || 0;
-        totalHostsEl.textContent = stats.expCount || 0; // Approx logic
-        totalBookingsEl.textContent = stats.bookingCount || 0;
-        totalRevenueEl.textContent = `$${stats.totalRevenue || 0}`;
+async function loadStats() {
+  const res = await window.authFetch("/api/admin/stats", { method: "GET" });
+  if (!res.ok) throw new Error("stats");
+  return res.json();
+}
 
-        // Fetch Bookings
-        const bookRes = await fetch(`${API_BASE}/admin/bookings`, { headers: { "Authorization": `Bearer ${getToken()}` } });
-        const bookings = await bookRes.json();
-        
-        renderBookings(bookings);
-        bookingsLoadingEl.classList.add('hidden');
+async function loadBookings() {
+  const res = await window.authFetch("/api/admin/bookings", { method: "GET" });
+  if (!res.ok) throw new Error("bookings");
+  return res.json();
+}
 
-    } catch (err) {
-        console.error(err);
-    }
+async function loadExperiences() {
+  const res = await window.authFetch("/api/admin/experiences", { method: "GET" });
+  if (!res.ok) throw new Error("experiences");
+  return res.json();
+}
+
+async function loadUsers() {
+  const res = await window.authFetch("/api/admin/users", { method: "GET" });
+  if (!res.ok) throw new Error("users");
+  return res.json();
+}
+
+async function toggleExperience(id) {
+  const res = await window.authFetch("/api/admin/experiences/" + encodeURIComponent(id) + "/toggle", {
+    method: "PATCH"
+  });
+  if (!res.ok) {
+    let msg = "Failed to toggle experience";
+    try { msg = (await res.json()).message || msg; } catch (_) {}
+    throw new Error(msg);
+  }
+  return res.json().catch(() => ({}));
+}
+
+async function deleteExperience(id) {
+  const res = await window.authFetch("/api/experiences/" + encodeURIComponent(id), { method: "DELETE" });
+  if (!res.ok) {
+    let msg = "Failed to delete experience";
+    try { msg = (await res.json()).message || msg; } catch (_) {}
+    throw new Error(msg);
+  }
+  return res.json().catch(() => ({}));
+}
+
+async function deleteUser(id) {
+  const res = await window.authFetch("/api/admin/users/" + encodeURIComponent(id), { method: "DELETE" });
+  if (!res.ok) {
+    let msg = "Failed to delete user";
+    try { msg = (await res.json()).message || msg; } catch (_) {}
+    throw new Error(msg);
+  }
+  return res.json().catch(() => ({}));
+}
+
+async function cancelBooking(id) {
+  const res = await window.authFetch("/api/bookings/" + encodeURIComponent(id) + "/cancel", { method: "POST" });
+  if (!res.ok) {
+    let msg = "Failed to cancel booking";
+    try { msg = (await res.json()).message || msg; } catch (_) {}
+    throw new Error(msg);
+  }
+  return res.json().catch(() => ({}));
+}
+
+// ---- Existing render helpers (minimal assumptions) ----
+function $(id) { return document.getElementById(id); }
+
+function safe(v, fallback="") { return (v === null || v === undefined) ? fallback : v; }
+
+function renderStats(stats) {
+  const el = $("stats");
+  if (!el) return;
+  const s = stats || {};
+  el.innerHTML = `
+    <div class="grid md:grid-cols-4 gap-4">
+      <div class="bg-white rounded-xl border border-gray-100 p-4"><div class="text-xs text-gray-500">Users</div><div class="text-2xl font-bold">${safe(s.users, 0)}</div></div>
+      <div class="bg-white rounded-xl border border-gray-100 p-4"><div class="text-xs text-gray-500">Experiences</div><div class="text-2xl font-bold">${safe(s.experiences, 0)}</div></div>
+      <div class="bg-white rounded-xl border border-gray-100 p-4"><div class="text-xs text-gray-500">Bookings</div><div class="text-2xl font-bold">${safe(s.bookings, 0)}</div></div>
+      <div class="bg-white rounded-xl border border-gray-100 p-4"><div class="text-xs text-gray-500">Revenue</div><div class="text-2xl font-bold">$${safe(s.revenue, 0)}</div></div>
+    </div>
+  `;
 }
 
 function renderBookings(bookings) {
-    bookingsTableBodyEl.innerHTML = bookings.map(b => `
-        <tr class="hover:bg-slate-50 transition">
-            <td class="px-6 py-4 whitespace-nowrap text-slate-600">${new Date(b.bookingDate || b.createdAt).toLocaleDateString()}</td>
-            <td class="px-6 py-4 font-bold text-slate-900">${b.user?.name || b.guestName || 'Unknown'}</td>
-            <td class="px-6 py-4 text-slate-800">${b.experience?.title || 'Unknown Experience'}</td>
-            <td class="px-6 py-4 font-mono text-slate-600">$${b.pricing?.totalPrice || b.amountTotal || 0}</td>
-            <td class="px-6 py-4"><span class="px-2 py-1 rounded text-xs font-bold ${b.status === 'confirmed' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600'}">${b.status}</span></td>
-            <td class="px-6 py-4">
-                <button onclick="cancelBooking('${b.id || b._id}')" class="text-red-600 hover:underline text-xs font-bold">Cancel</button>
-            </td>
-        </tr>
-    `).join('');
+  const el = $("bookings");
+  if (!el) return;
+  const rows = (Array.isArray(bookings) ? bookings : []).map(b => {
+    const id = b._id || b.id || "";
+    const title = b.experience?.title || b.experienceTitle || "Experience";
+    const guest = b.guestId?.name || b.guestName || "Guest";
+    const date = b.bookingDate ? new Date(b.bookingDate).toLocaleDateString("en-AU") : "—";
+    const status = b.status || "—";
+    return `
+      <tr class="border-t">
+        <td class="p-3 text-sm">${title}</td>
+        <td class="p-3 text-sm">${guest}</td>
+        <td class="p-3 text-sm">${date}</td>
+        <td class="p-3 text-sm">${status}</td>
+        <td class="p-3 text-sm text-right">
+          <button class="px-3 py-1 text-xs font-bold rounded border border-red-200 text-red-600 hover:bg-red-50"
+            onclick="adminCancelBooking('${id}')">Cancel</button>
+        </td>
+      </tr>
+    `;
+  }).join("");
+
+  el.innerHTML = `
+    <div class="bg-white rounded-xl border border-gray-100 overflow-hidden">
+      <table class="w-full">
+        <thead class="bg-gray-50 text-xs text-gray-500">
+          <tr>
+            <th class="p-3 text-left">Experience</th>
+            <th class="p-3 text-left">Guest</th>
+            <th class="p-3 text-left">Date</th>
+            <th class="p-3 text-left">Status</th>
+            <th class="p-3 text-right">Action</th>
+          </tr>
+        </thead>
+        <tbody>${rows || `<tr><td class="p-6 text-center text-sm text-gray-500" colspan="5">No bookings.</td></tr>`}</tbody>
+      </table>
+    </div>
+  `;
 }
 
-// --- 4. LISTINGS MANAGER ---
-window.loadListings = async function() {
-    try {
-        const res = await fetch(`${API_BASE}/admin/experiences`, { headers: { "Authorization": `Bearer ${getToken()}` } });
-        const exps = await res.json();
-        
-        listingsTableBodyEl.innerHTML = exps.map(e => `
-            <tr class="hover:bg-slate-50 border-b border-gray-50">
-                <td class="px-6 py-4"><img src="${e.imageUrl || e.images?.[0]}" class="w-12 h-12 rounded object-cover bg-gray-200"></td>
-                <td class="px-6 py-4 font-bold text-slate-900 max-w-xs truncate" title="${e.title}">${e.title}</td>
-                <td class="px-6 py-4 text-slate-500 text-xs">${e.hostName}</td>
-                <td class="px-6 py-4 font-mono">$${e.price}</td>
-                <td class="px-6 py-4"><span class="px-2 py-1 rounded text-xs font-bold ${e.isPaused ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'}">${e.isPaused ? 'PAUSED' : 'ACTIVE'}</span></td>
-                <td class="px-6 py-4 flex gap-2">
-                    <button onclick="togglePause('${e._id || e.id}')" class="text-xs bg-slate-100 px-3 py-1 rounded hover:bg-slate-200 font-bold">${e.isPaused ? 'Resume' : 'Pause'}</button>
-                    <button onclick="deleteListing('${e._id || e.id}')" class="text-xs bg-red-50 text-red-600 px-3 py-1 rounded hover:bg-red-100 font-bold">Delete</button>
-                </td>
-            </tr>
-        `).join('');
-    } catch (e) { console.error(e); }
+function renderExperiences(exps) {
+  const el = $("experiences");
+  if (!el) return;
+  const cards = (Array.isArray(exps) ? exps : []).map(e => {
+    const id = e._id || e.id || "";
+    const title = e.title || "Untitled";
+    const city = e.city || "—";
+    const active = (e.isActive !== undefined) ? !!e.isActive : true;
+    return `
+      <div class="bg-white rounded-xl border border-gray-100 p-4 flex items-center justify-between gap-4">
+        <div>
+          <div class="font-bold">${title}</div>
+          <div class="text-xs text-gray-500">${city}</div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button class="px-3 py-1 text-xs font-bold rounded border ${active ? "border-gray-200 text-gray-700 hover:bg-gray-50" : "border-green-200 text-green-700 hover:bg-green-50"}"
+            onclick="adminToggleExperience('${id}')">${active ? "Disable" : "Enable"}</button>
+          <button class="px-3 py-1 text-xs font-bold rounded border border-red-200 text-red-600 hover:bg-red-50"
+            onclick="adminDeleteExperience('${id}')">Delete</button>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  el.innerHTML = `<div class="space-y-3">${cards || `<div class="text-sm text-gray-500 text-center py-8">No experiences.</div>`}</div>`;
 }
 
-window.togglePause = async function(id) {
-    if(!confirm("Change status of this listing?")) return;
-    await fetch(`${API_BASE}/admin/experiences/${id}/toggle`, { method: "PATCH", headers: { "Authorization": `Bearer ${getToken()}` } });
-    loadListings();
+function renderUsers(users) {
+  const el = $("users");
+  if (!el) return;
+  const rows = (Array.isArray(users) ? users : []).map(u => {
+    const id = u._id || u.id || "";
+    const name = u.name || "—";
+    const email = u.email || "—";
+    return `
+      <tr class="border-t">
+        <td class="p-3 text-sm">${name}</td>
+        <td class="p-3 text-sm">${email}</td>
+        <td class="p-3 text-sm text-right">
+          <button class="px-3 py-1 text-xs font-bold rounded border border-red-200 text-red-600 hover:bg-red-50"
+            onclick="adminDeleteUser('${id}')">Delete</button>
+        </td>
+      </tr>
+    `;
+  }).join("");
+
+  el.innerHTML = `
+    <div class="bg-white rounded-xl border border-gray-100 overflow-hidden">
+      <table class="w-full">
+        <thead class="bg-gray-50 text-xs text-gray-500">
+          <tr>
+            <th class="p-3 text-left">Name</th>
+            <th class="p-3 text-left">Email</th>
+            <th class="p-3 text-right">Action</th>
+          </tr>
+        </thead>
+        <tbody>${rows || `<tr><td class="p-6 text-center text-sm text-gray-500" colspan="3">No users.</td></tr>`}</tbody>
+      </table>
+    </div>
+  `;
 }
 
-window.deleteListing = async function(id) {
-    if(!confirm("PERMANENTLY DELETE this listing?")) return;
-    await fetch(`${API_BASE}/experiences/${id}`, { method: "DELETE", headers: { "Authorization": `Bearer ${getToken()}` } });
-    loadListings();
+// expose handlers used by onclick
+window.adminToggleExperience = async function(id) {
+  try { await toggleExperience(id); await boot(); } catch (e) { alert(e.message || "Failed"); }
+};
+window.adminDeleteExperience = async function(id) {
+  if (!confirm("Delete this experience?")) return;
+  try { await deleteExperience(id); await boot(); } catch (e) { alert(e.message || "Failed"); }
+};
+window.adminDeleteUser = async function(id) {
+  if (!confirm("Delete this user?")) return;
+  try { await deleteUser(id); await boot(); } catch (e) { alert(e.message || "Failed"); }
+};
+window.adminCancelBooking = async function(id) {
+  if (!confirm("Cancel this booking?")) return;
+  try { await cancelBooking(id); await boot(); } catch (e) { alert(e.message || "Failed"); }
+};
+
+async function boot() {
+  if (!mustBeAdmin()) return;
+
+  // basic skeleton if containers exist
+  try {
+    const [stats, bookings, exps, users] = await Promise.all([
+      loadStats().catch(() => ({})),
+      loadBookings().catch(() => ([])),
+      loadExperiences().catch(() => ([])),
+      loadUsers().catch(() => ([]))
+    ]);
+
+    renderStats(stats);
+    renderBookings(bookings);
+    renderExperiences(exps);
+    renderUsers(users);
+  } catch (e) {
+    alert("Admin load failed.");
+  }
 }
 
-// --- 5. USERS MANAGER ---
-window.loadUsers = async function() {
-    try {
-        const res = await fetch(`${API_BASE}/admin/users`, { headers: { "Authorization": `Bearer ${getToken()}` } });
-        const users = await res.json();
-        
-        usersTableBodyEl.innerHTML = users.map(u => `
-            <tr class="hover:bg-slate-50 border-b border-gray-50">
-                <td class="px-6 py-4 flex items-center gap-3">
-                    <img src="${u.profilePic || 'https://via.placeholder.com/30'}" class="w-8 h-8 rounded-full bg-gray-200">
-                    <span class="font-bold text-slate-900">${u.name}</span>
-                </td>
-                <td class="px-6 py-4 text-slate-500">${u.email}</td>
-                <td class="px-6 py-4"><span class="text-xs font-bold px-2 py-1 rounded ${u.role === 'Admin' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-700'}">${u.role}</span></td>
-                <td class="px-6 py-4 text-xs text-slate-400">${new Date(u.createdAt || Date.now()).toLocaleDateString()}</td>
-                <td class="px-6 py-4">
-                    ${u.role !== 'Admin' ? `<button onclick="banUser('${u._id || u.id}')" class="text-xs bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 font-bold">BAN USER</button>` : ''}
-                </td>
-            </tr>
-        `).join('');
-    } catch (e) { console.error(e); }
-}
-
-window.banUser = async function(id) {
-    if(!confirm("BAN and DELETE this user? This cannot be undone.")) return;
-    await fetch(`${API_BASE}/admin/users/${id}`, { method: "DELETE", headers: { "Authorization": `Bearer ${getToken()}` } });
-    loadUsers();
-}
-
-// Re-use Cancel Logic
-window.cancelBooking = async function(id) {
-    if(!confirm("Cancel this booking?")) return;
-    await fetch(`${API_BASE}/bookings/${id}/cancel`, { method: "POST", headers: { "Authorization": `Bearer ${getToken()}` } });
-    loadDashboard();
-}
+document.addEventListener("DOMContentLoaded", boot);

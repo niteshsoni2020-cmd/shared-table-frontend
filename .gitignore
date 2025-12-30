@@ -1,2 +1,6 @@
 node_modules
 .DS_Store
+
+# local one-off backups
+_local_bak/
+*.bak*

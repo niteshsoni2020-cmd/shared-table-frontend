@@ -4,3 +4,6 @@ node_modules
 # local one-off backups
 _local_bak/
 *.bak*
+
+# local/garbage quarantines
+_local_bak/

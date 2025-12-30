@@ -14,9 +14,9 @@
     try { return localStorage.getItem("API_BASE") || ""; } catch (_) { return ""; }
   })();
 
-  const defaultProd = `${location.protocol}//${location.host}`;
-  const apiOrigin = storedBase || (isLocal ? "http://localhost:4000" : defaultProd);
-  window.API_URL = `${apiOrigin}/api`;
+  const DEFAULT_PROD_API_ORIGIN = "https://shared-table-api.onrender.com";
+  const apiOrigin = storedBase || (isLocal ? "http://localhost:4000" : DEFAULT_PROD_API_ORIGIN);
+  window.API_URL = apiOrigin + "/api";
 
   // Cloudinary config (single-truth; used by profile.js)
   window.CLOUDINARY_URL = window.CLOUDINARY_URL || "https://api.cloudinary.com/v1_1/dkqf90k20/image/upload";

@@ -16,7 +16,7 @@
     try {
       const token = getToken();
       if (window.setAuth) window.setAuth(token || "", nextUser || {});
-      else localStorage.setItem("user", JSON.stringify(nextUser || {}));
+      /* enforced via common.js only */
     } catch (_) {}
   }
 

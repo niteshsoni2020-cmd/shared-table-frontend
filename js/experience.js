@@ -8,7 +8,7 @@
   }
 
   function getToken() {
-    try { return (window.getAuthToken && window.getAuthToken()) || localStorage.getItem("token") || ""; }
+    try { return (window.getAuthToken && window.getAuthToken())  || ""; }
     catch (_) { return ""; }
   }
 

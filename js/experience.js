@@ -25,10 +25,6 @@
   }
 
   function inferApiUrl() {
-    // prefer common.js contract
-    if (window["API_URL"]) return String(window["API_URL"]);
-
-    // safe fallback if common.js didn't load for any reason
     const isLocal = (location.hostname === "localhost" || location.hostname === "127.0.0.1");
     const DEFAULT_PROD_API_ORIGIN = "https://shared-table-api.onrender.com";
     const apiOrigin = isLocal ? "http://localhost:4000" : DEFAULT_PROD_API_ORIGIN;

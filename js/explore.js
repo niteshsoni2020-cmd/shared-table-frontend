@@ -106,6 +106,22 @@ if (!res.ok) throw new Error("API Error");
         } catch (err) {
             console.error(err);
             experiencesGrid.innerHTML = `<div class="col-span-full text-center text-red-500 py-12">Failed to load experiences.</div>`;
+    try {
+      const res = await window.authFetch(`/api${ENDPOINT}?${params.toString()}`, { method: "GET" });
+      if (!res.ok) throw new Error("API Error");
+      const data = await res.json();
+
+      const list = Array.isArray(data) ? data : (Array.isArray(data.experiences) ? data.experiences : []);
+      if (window.TSTS_DEALS_UI_MODE) {
+        const deals = list.filter(tstsIsDeal);
+        if (deals.length > 0) {
+          tstsSetDealsBanner("");
+          renderExperiences(deals);
+        } else {
+          // Exit deals mode cleanly if no deals exist
+          window.TSTS_DEALS_UI_MODE = false;
+          tstsSetDealsBanner("");
+          renderExperiences(list);
         }
     };
 

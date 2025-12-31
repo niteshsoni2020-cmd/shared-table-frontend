@@ -6,6 +6,28 @@ window.showModal = window.showModal || function (title, message, type) {
   alert(String(title || "") + "\n\n" + String(message || ""));
 };
 
+function safeRedirectTarget(rawTarget) {
+  // Allow only same-site relative navigations (no schemes, no protocol-relative)
+  let t = String(rawTarget || "index.html").trim();
+  try { t = decodeURIComponent(t); } catch (_) {}
+
+  const lower = t.toLowerCase();
+  if (
+    lower.startsWith("http://") ||
+    lower.startsWith("https://") ||
+    lower.startsWith("//") ||
+    lower.startsWith("javascript:")
+  ) {
+    return "index.html";
+  }
+
+  // Must be a simple relative path
+  if (t.startsWith("/")) return t.slice(1);
+  return t;
+}
+
+
+
 // --- 1. TOGGLE FORMS ---
 function toggleAuth(mode) {
     const loginForm = document.getElementById("form-login");
@@ -57,10 +79,7 @@ async function handleLogin(e) {
         const redirect = params.get("redirect");
         const returnTo = params.get("returnTo");
         const rawTarget = redirect || returnTo || "index.html";
-
-        let target = rawTarget;
-        try { target = decodeURIComponent(rawTarget); } catch (_) {}
-
+        const target = safeRedirectTarget(rawTarget);
         window.location.href = target;
 
     } catch (err) {

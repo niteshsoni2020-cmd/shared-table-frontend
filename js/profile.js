@@ -66,9 +66,9 @@
 
       if (res.status === 401 || res.status === 403) {
         try {
-        if (window.clearAuth) window.clearAuth();
-        else { localStorage.removeItem("token"); localStorage.removeItem("user"); }
-      } catch (_) {}
+          if (window.clearAuth) window.clearAuth();
+          else { localStorage.removeItem("token"); localStorage.removeItem("user"); }
+        } catch (_) {}
         return redirectToLogin();
       }
 

@@ -101,12 +101,29 @@ try { if (window.TSTS_LOCAL_API_BASE) window.API_BASE = window.TSTS_LOCAL_API_BA
 })();
 
 // DOM bootstrap
+
+function ensurePageLayout() {
+  try {
+    if (document.getElementById("tsts-layout-style")) return;
+    const st = document.createElement("style");
+    st.id = "tsts-layout-style";
+    st.textContent = `
+      html, body { height: 100%; }
+      body { min-height: 100vh; display: flex; flex-direction: column; }
+      #footer-placeholder { margin-top: auto; }
+    `;
+    (document.head || document.documentElement).appendChild(st);
+  } catch (_) {}
+}
+
 document.addEventListener("DOMContentLoaded", () => {
-  injectNavbar();
+    ensurePageLayout();
+injectNavbar();
   injectFooter();
-  setTstsYear();
+
   applyAuthStateToNav();
   initMobileMenu();
+  initIndexScrollLock();
   setFooterYear();
   initAccountMenu();
 });
@@ -164,30 +181,38 @@ function injectFooter() {
 
   root.innerHTML = `
     <footer class="bg-gray-900 text-white py-12 mt-auto">
-      <div class="container mx-auto px-4 grid md:grid-cols-4 gap-8">
-        <div>
-          <h3 class="text-xl font-bold text-orange-500 mb-4 font-serif">The Shared Table Story</h3>
-          <p class="text-gray-400 text-sm">Reconnect with the world, one meal at a time.</p>
+      <div class="container mx-auto px-4">
+        <div class="grid md:grid-cols-4 gap-8">
+          <div>
+            <h3 class="text-xl font-bold text-orange-500 mb-4 font-serif">The Shared Table Story</h3>
+            <p class="text-gray-400 text-sm">Reconnect with the world, one meal at a time.</p>
+          </div>
+
+          <div>
+            <h4 class="font-bold mb-4">Company</h4>
+            <ul class="space-y-2 text-gray-400 text-sm">
+              <li><a href="about.html" class="hover:text-white transition">About Us</a></li>
+              <li><a href="host.html" class="hover:text-white transition">Become a Host</a></li>
+              <li><a href="mailto:contact@thesharedtablestory.com" class="hover:text-white transition">Contact</a></li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 class="font-bold mb-4">Support</h4>
+            <ul class="space-y-2 text-gray-400 text-sm">
+              <li><a href="terms.html" class="hover:text-white transition">Terms of Service</a></li>
+              <li><a href="privacy.html" class="hover:text-white transition">Privacy Policy</a></li>
+            </ul>
+          </div>
+
+          <div>
+          </div>
         </div>
 
-        <div>
-          <h4 class="font-bold mb-4">Company</h4>
-          <ul class="space-y-2 text-gray-400 text-sm">
-            <li><a href="about.html" class="hover:text-white transition">About Us</a></li>
-            <li><a href="host.html" class="hover:text-white transition">Become a Host</a></li>
-            <li><a href="mailto:contact@thesharedtablestory.com" class="hover:text-white transition">Contact</a></li>
-          </ul>
+        <div class="border-t border-gray-800 mt-10 pt-6 text-center text-gray-400 text-sm">
+          &copy; <span id="tsts-year"></span> The Shared Table Story. All rights reserved.<br>
+          <span class="text-gray-500">The Shared Table Story PTY LTD, 24 Balance Pl, Birtinya QLD 4575.</span>
         </div>
-
-        <div>
-          <h4 class="font-bold mb-4">Support</h4>
-          <ul class="space-y-2 text-gray-400 text-sm">
-            <li><a href="terms.html" class="hover:text-white transition">Terms of Service</a></li>
-            <li><a href="privacy.html" class="hover:text-white transition">Privacy Policy</a></li>
-          </ul>
-        </div>
-<div class="border-t border-gray-800 mt-12 pt-8 text-center text-gray-500 text-sm">
-        &copy; <span id="tsts-year"></span> The Shared Table Story. All rights reserved.<br><span class="text-gray-600">The Shared Table Story PTY LTD, 24 Balance Pl, Birtinya QLD 4575.</span>
       </div>
     </footer>
   `;
@@ -310,12 +335,6 @@ async function loadNavProfilePic() {
   } catch (_) {}
 }
 
-function setTstsYear() {
-  try {
-    const y = document.getElementById("tsts-year");
-    if (y) y.textContent = String(new Date().getFullYear());
-  } catch (_) {}
-}
 
 function normalizeTstsApiUrl(url) {
   try {
@@ -335,3 +354,24 @@ function setFooterYear() {
     if (el.textContent !== y) el.textContent = y;
   } catch (_) {}
 }
+
+
+function initIndexScrollLock() {
+  const p = (location.pathname || "").toLowerCase();
+  const isIndex = (p === "/" || p.endsWith("/index.html") || p.endsWith("index.html"));
+  if (!isIndex) return;
+
+  try { if ("scrollRestoration" in history) history.scrollRestoration = "manual"; } catch (_) {}
+
+  const goTop = () => {
+    try { window.scrollTo(0, 0); } catch (_) {}
+  };
+
+  // DOM ready + after paint
+  goTop();
+  requestAnimationFrame(goTop);
+
+  // handles back/forward cache and Safari weirdness
+  window.addEventListener("pageshow", goTop);
+}
+

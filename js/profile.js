@@ -47,12 +47,14 @@
 
   function setHostSectionEnabled(enabled) {
     if (!hostPaymentSection) return;
-    if (!enabled) {
-      hostPaymentSection.classList.add("hidden");
-      if (bsbInput) bsbInput.value = "";
-      if (accountInput) accountInput.value = "";
-      if (vacationToggle) vacationToggle.checked = false;
+    if (enabled) {
+      hostPaymentSection.classList.remove("hidden");
+      return;
     }
+    hostPaymentSection.classList.add("hidden");
+    if (bsbInput) bsbInput.value = "";
+    if (accountInput) accountInput.value = "";
+    if (vacationToggle) vacationToggle.checked = false;
   }
 
   async function loadProfile() {
@@ -60,7 +62,13 @@
     if (!token) return redirectToLogin();
 
     try {
-      const res = await window.authFetch("/api/auth/me");
+      const res = await window.authFetch("/api/auth/me", { method: "GET" });
+
+      if (res.status === 401 || res.status === 403) {
+        try { localStorage.removeItem("token"); localStorage.removeItem("user"); } catch (_) {}
+        return redirectToLogin();
+      }
+
       if (!res.ok) throw new Error("Failed to load profile");
       const data = await res.json();
       const user = (data && data.user) ? data.user : data;

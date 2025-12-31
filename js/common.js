@@ -256,6 +256,10 @@ function attachLogoutListeners() {
 
 // 6) NAV PROFILE PIC
 async function loadNavProfilePic() {
+  try {
+    if (String(location.pathname || "").endsWith("/profile.html") || String(location.pathname || "").endsWith("profile.html")) return;
+  } catch (_) {}
+
   const token = (window.getAuthToken && window.getAuthToken()) || "";
   const img = document.getElementById("nav-user-pic");
   if (!token || !img) return;

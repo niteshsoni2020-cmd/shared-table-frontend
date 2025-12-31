@@ -18,16 +18,25 @@ try { if (window.TSTS_LOCAL_API_BASE) window.API_BASE = window.TSTS_LOCAL_API_BA
   try {
     if ("scrollRestoration" in history) history.scrollRestoration = "manual";
 
+    function goTop(){
+      try { window.scrollTo(0, 0); } catch (_) {}
+    }
+
     function reset(e){
       if (location.hash) return;
-      if (e && e.persisted) { window.scrollTo(0, 0); return; }
-      window.scrollTo(0, 0);
+
+      // Run immediately + after paint; Safari may restore scroll after events fire
+      goTop();
+      try { requestAnimationFrame(goTop); } catch (_) {}
+      setTimeout(goTop, 0);
+      setTimeout(goTop, 50);
     }
 
     window.addEventListener("DOMContentLoaded", reset);
     window.addEventListener("pageshow", reset);
   } catch (_) {}
 })();
+
 
 /* ================================
    TSTS COMMON (single truth)

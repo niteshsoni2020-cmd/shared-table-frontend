@@ -1,5 +1,5 @@
 // Frontend/js/host.js
-// Uses common.js single-truth: window.authFetch, window.getAuthToken, window.API_URL
+// Uses common.js single-truth: window.authFetch, window.getAuthToken
 
 const form = document.getElementById("create-experience-form");
 const imageInput = document.getElementById("imageInput");

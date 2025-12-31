@@ -1,5 +1,5 @@
 // js/my-bookings.js (CLOSED: dashboard + hosting)
-// Uses common.js single-truth: window.API_URL, window.authFetch, window.getAuthToken
+// Uses common.js single-truth: window.authFetch, window.getAuthToken
 
 const contentEl = document.getElementById("content-area");
 const tabTrips = document.getElementById("tab-trips");

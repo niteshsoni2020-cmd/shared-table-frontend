@@ -81,10 +81,63 @@
   };
 })();
 
+// 0) GLOBAL ASSET INJECTION (single truth)
+function injectGlobalAssets() {
+  try {
+    const head = document.head || document.getElementsByTagName("head")[0];
+    if (!head) return;
+
+    const ensure = (selector, makeEl) => {
+      if (head.querySelector(selector)) return;
+      head.appendChild(makeEl());
+    };
+
+    ensure('script[data-tsts="tailwind"]', () => {
+      const el = document.createElement("script");
+      el.src = "https://cdn.tailwindcss.com";
+      el.setAttribute("data-tsts", "tailwind");
+      return el;
+    });
+
+    ensure('link[data-tsts="fontawesome"]', () => {
+      const el = document.createElement("link");
+      el.rel = "stylesheet";
+      el.href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css";
+      el.setAttribute("data-tsts", "fontawesome");
+      return el;
+    });
+
+    ensure('link[data-tsts="fonts"]', () => {
+      const el = document.createElement("link");
+      el.rel = "stylesheet";
+      el.href = "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap";
+      el.setAttribute("data-tsts", "fonts");
+      return el;
+    });
+
+    ensure('link[href="css/design-system.css"]', () => {
+      const el = document.createElement("link");
+      el.rel = "stylesheet";
+      el.href = "css/design-system.css";
+      return el;
+    });
+
+    ensure('style[data-tsts="font-family"]', () => {
+      const el = document.createElement("style");
+      el.setAttribute("data-tsts", "font-family");
+      el.textContent = "body{font-family:'Plus Jakarta Sans',sans-serif;} h1,h2,h3,.serif{font-family:'Playfair Display',serif;}";
+      return el;
+    });
+  } catch (_) {}
+}
+
+
 // DOM bootstrap
 document.addEventListener("DOMContentLoaded", () => {
+  injectGlobalAssets();
   injectNavbar();
   injectFooter();
+  setTstsYear();
   applyAuthStateToNav();
   initMobileMenu();
 });
@@ -175,7 +228,7 @@ function injectFooter() {
       </div>
 
       <div class="border-t border-gray-800 mt-12 pt-8 text-center text-gray-500 text-sm">
-        &copy; 2025 The Shared Table Story. All rights reserved.
+        &copy; <span id="tsts-year"></span> The Shared Table Story. All rights reserved.<br><span class="text-gray-600">The Shared Table Story PTY LTD, 24 Balance Pl, Birtinya QLD 4575.</span>
       </div>
     </footer>
   `;
@@ -255,5 +308,13 @@ async function loadNavProfilePic() {
     const payload = await res.json();
     const u = (payload && payload.user) ? payload.user : payload;
     if (u && u.profilePic) img.src = u.profilePic;
+  } catch (_) {}
+}
+
+
+function setTstsYear() {
+  try {
+    const y = document.getElementById("tsts-year");
+    if (y) y.textContent = String(new Date().getFullYear());
   } catch (_) {}
 }

@@ -41,13 +41,22 @@
 
   window.setAuth = function (token, user) {
     try {
+      // token: set when truthy, otherwise clear
       if (token) localStorage.setItem("token", token);
-      if (user) localStorage.setItem("user", JSON.stringify(user));
+      else localStorage.removeItem("token");
+
+      // user: set when provided (non-null), otherwise clear
+      if (user != null) localStorage.setItem("user", JSON.stringify(user));
+      else localStorage.removeItem("user");
     } catch (_) {}
   };
 
   window.getAuthToken = function () {
     try { return localStorage.getItem("token") || ""; } catch (_) { return ""; }
+  };
+
+  window.clearAuth = function () {
+    try { localStorage.removeItem("token"); localStorage.removeItem("user"); } catch (_) {}
   };
 
   window.getAuthUser = function () {
@@ -71,6 +80,12 @@
     // Single rule:
     // - Accept "/api/..." or "api/..." or "/..." and always route to API_BASE
     const raw = String(path || "");
+
+    // If caller passes a full URL, do not rewrite it.
+    if (/^https?:\/\//i.test(raw)) {
+      return fetch(raw, Object.assign({}, opts || {}, { headers }));
+    }
+
     const normalized = raw.startsWith("/") ? raw : ("/" + raw);
     const apiPath = normalized.startsWith("/api/") ? normalized : ("/api" + normalized);
 
@@ -250,6 +265,13 @@ async function loadNavProfilePic() {
     if (cached && cached.profilePic) { img.src = cached.profilePic; return; }
 
     const res = await window.authFetch("/api/auth/me", { method: "GET" });
+
+    if (res.status === 401 || res.status === 403) {
+      if (window.clearAuth) window.clearAuth();
+      const returnTo = encodeURIComponent(location.pathname + location.search);
+      location.href = "login.html?returnTo=" + returnTo;
+      return;
+    }
 
     if (!res.ok) return;
     const payload = await res.json();

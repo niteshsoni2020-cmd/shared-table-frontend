@@ -10,7 +10,6 @@ window.TSTS_LOCAL_API_BASE = (function () {
   } catch (_) { return ""; }
 })();
 
-
 // Ensure all API calls route to backend in local dev
 try { if (window.TSTS_LOCAL_API_BASE) window.API_BASE = window.TSTS_LOCAL_API_BASE; } catch (_) {}
 // tsts-scroll-top-guard (global)
@@ -108,6 +107,8 @@ document.addEventListener("DOMContentLoaded", () => {
   setTstsYear();
   applyAuthStateToNav();
   initMobileMenu();
+  setFooterYear();
+  initAccountMenu();
 });
 
 // 1) NAVBAR (single truth)
@@ -185,17 +186,7 @@ function injectFooter() {
             <li><a href="privacy.html" class="hover:text-white transition">Privacy Policy</a></li>
           </ul>
         </div>
-
-        <div>
-          <h4 class="font-bold mb-4">Join the Table</h4>
-          <div class="flex">
-            <input type="email" placeholder="Email" class="px-3 py-2 rounded-l-lg bg-gray-800 border-none text-white w-full">
-            <button class="bg-orange-600 px-4 py-2 rounded-r-lg hover:bg-orange-700 transition">Go</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="border-t border-gray-800 mt-12 pt-8 text-center text-gray-500 text-sm">
+<div class="border-t border-gray-800 mt-12 pt-8 text-center text-gray-500 text-sm">
         &copy; <span id="tsts-year"></span> The Shared Table Story. All rights reserved.<br><span class="text-gray-600">The Shared Table Story PTY LTD, 24 Balance Pl, Birtinya QLD 4575.</span>
       </div>
     </footer>
@@ -208,18 +199,20 @@ function applyAuthStateToNav() {
   if (!token) return;
 
   const userHtmlDesktop = `
-    <div class="relative group">
-      <button class="flex items-center gap-2 focus:outline-none" aria-label="Account menu">
-        <img src="https://via.placeholder.com/40?text=U" class="w-10 h-10 rounded-full border border-gray-200" id="nav-user-pic">
-      </button>
-      <div class="hidden group-hover:block absolute right-0 w-48 bg-white shadow-xl rounded-lg border border-gray-100 py-2 mt-2">
-        <a href="my-bookings.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600">Dashboard</a>
-        <a href="profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600">My Profile</a>
-        <button id="logout-btn" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">Logout</button>
-      </div>
-    </div>
-  `;
+  <div class="relative">
+    <button id="account-menu-btn" class="flex items-center gap-2 focus:outline-none" aria-label="Account menu" aria-expanded="false">
+      <span id="nav-user-avatar" class="w-10 h-10 rounded-full border border-gray-200 bg-gray-100 flex items-center justify-center overflow-hidden">
+        <i class="fas fa-user text-gray-500"></i>
+      </span>
+    </button>
 
+    <div id="account-menu" class="hidden absolute right-0 w-56 bg-white shadow-xl rounded-lg border border-gray-100 py-2 mt-2">
+      <a href="my-bookings.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600">Dashboard</a>
+      <a href="profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600">My Profile</a>
+      <button id="logout-btn" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">Logout</button>
+    </div>
+  </div>
+`;
   const userHtmlMobile = `
     <a href="my-bookings.html" class="block text-gray-700 hover:text-orange-600 font-medium py-2">Dashboard</a>
     <a href="profile.html" class="block text-gray-700 hover:text-orange-600 font-medium py-2">My Profile</a>
@@ -244,6 +237,36 @@ function initMobileMenu() {
   btn.addEventListener("click", () => menu.classList.toggle("hidden"));
 }
 
+function initAccountMenu() {
+  const btn = document.getElementById("account-menu-btn");
+  const menu = document.getElementById("account-menu");
+  if (!btn || !menu) return;
+
+  function close() {
+    menu.classList.add("hidden");
+    btn.setAttribute("aria-expanded", "false");
+  }
+  function open() {
+    menu.classList.remove("hidden");
+    btn.setAttribute("aria-expanded", "true");
+  }
+
+  btn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (menu.classList.contains("hidden")) open();
+    else close();
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!menu.contains(e.target) && !btn.contains(e.target)) close();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") close();
+  });
+}
+
 // 5) LOGOUT
 function attachLogoutListeners() {
   const handleLogout = () => {
@@ -263,19 +286,27 @@ function attachLogoutListeners() {
 // 6) NAV PROFILE PIC
 async function loadNavProfilePic() {
   const token = (window.getAuthToken && window.getAuthToken()) || "";
-  const img = document.getElementById("nav-user-pic");
-  if (!token || !img) return;
+  const avatar = document.getElementById("nav-user-avatar");
+  if (!token || !avatar) return;
+
+  function setImg(url) {
+    if (!url || typeof url !== "string") return false;
+    const u = url.trim();
+    if (!u) return false;
+    avatar.innerHTML = `<img src="${u}" class="w-full h-full object-cover" alt="User">`;
+    return true;
+  }
 
   try {
     const cached = (window.getAuthUser && window.getAuthUser()) || {};
-    if (cached && cached.profilePic) { img.src = cached.profilePic; return; }
+    if (cached && cached.profilePic && setImg(cached.profilePic)) return;
 
     const res = await window.authFetch("/api/auth/me", { method: "GET" });
-
     if (!res.ok) return;
+
     const payload = await res.json();
     const u = (payload && payload.user) ? payload.user : payload;
-    if (u && u.profilePic) img.src = u.profilePic;
+    if (u && u.profilePic) setImg(u.profilePic);
   } catch (_) {}
 }
 
@@ -294,4 +325,13 @@ function normalizeTstsApiUrl(url) {
     if (url === "/api" || url.startsWith("/api/")) return base + url;
     return url;
   } catch (_) { return url; }
+}
+
+function setFooterYear() {
+  try {
+    const el = document.getElementById("tsts-year");
+    if (!el) return;
+    const y = String(new Date().getFullYear());
+    if (el.textContent !== y) el.textContent = y;
+  } catch (_) {}
 }

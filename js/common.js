@@ -34,9 +34,7 @@
   const DEFAULT_PROD_API_ORIGIN = "https://shared-table-api.onrender.com";
   const apiOrigin = storedBase || (isLocal ? "http://localhost:4000" : DEFAULT_PROD_API_ORIGIN);
   window.API_BASE = apiOrigin;
-  window.API_URL = apiOrigin + "/api";
-
-  // Cloudinary config (single-truth; used by profile.js)
+// Cloudinary config (single-truth; used by profile.js)
   window.CLOUDINARY_URL = window.CLOUDINARY_URL || "https://api.cloudinary.com/v1_1/dkqf90k20/image/upload";
   window.CLOUDINARY_PRESET = window.CLOUDINARY_PRESET || "unsigned_preset";
 
@@ -70,8 +68,15 @@
     if (token) headers["Authorization"] = `Bearer ${token}`;
     if (!headers["Content-Type"] && method !== "GET") headers["Content-Type"] = "application/json";
 
-    const pth = normalizePath(path);
-    const url = pth.startsWith("/api/") ? (window.API_URL + pth.slice(4)) : (window.API_URL + pth);
+    // Single rule:
+    // - Accept "/api/..." or "api/..." or "/..." and always route to API_BASE
+    const raw = String(path || "");
+    const normalized = raw.startsWith("/") ? raw : ("/" + raw);
+    const apiPath = normalized.startsWith("/api/") ? normalized : ("/api" + normalized);
+
+    const base = String(window.API_BASE || "").replace(/\/$/, "");
+    const url = base + apiPath;
+
     return fetch(url, Object.assign({}, opts || {}, { headers }));
   };
 })();
@@ -241,6 +246,9 @@ async function loadNavProfilePic() {
   if (!token || !img) return;
 
   try {
+    const cached = (window.getAuthUser && window.getAuthUser()) || {};
+    if (cached && cached.profilePic) { img.src = cached.profilePic; return; }
+
     const res = await window.authFetch("/api/auth/me", { method: "GET" });
 
     if (!res.ok) return;

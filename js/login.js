@@ -132,25 +132,4 @@ async function handleSignup(e) {
 }
 
 // --- 4. INIT ---
-document.addEventListener("DOMContentLoaded", () => {
-    const params = new URLSearchParams(window.location.search);
-    if(params.get("mode") === "signup") {
-        toggleAuth('signup');
-    }
-
-  // Wire UI events (single source; avoid inline handlers)
-  const formLogin = document.getElementById("form-login");
-  const formSignup = document.getElementById("form-signup");
-  const tabLogin = document.getElementById("tab-login");
-  const tabSignup = document.getElementById("tab-signup");
-
-  if (tabLogin) tabLogin.addEventListener("click", () => toggleAuth("login"));
-  if (tabSignup) tabSignup.addEventListener("click", () => toggleAuth("signup"));
-
-  if (formLogin) formLogin.addEventListener("submit", handleLogin);
-  if (formSignup) formSignup.addEventListener("submit", handleSignup);
-
-  // Default view (unless URL forces signup)
-  if (!params.get("mode")) toggleAuth("login");
-
-});
+// Inline handlers in login.html are the single source of truth.

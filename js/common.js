@@ -1,3 +1,20 @@
+// tsts-scroll-top-guard (global)
+// Purpose: prevent Safari/Back-Forward Cache scroll restoration landing mid-page.
+(function(){
+  try {
+    if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+
+    function reset(e){
+      if (location.hash) return;
+      if (e && e.persisted) { window.scrollTo(0, 0); return; }
+      window.scrollTo(0, 0);
+    }
+
+    window.addEventListener("DOMContentLoaded", reset);
+    window.addEventListener("pageshow", reset);
+  } catch (_) {}
+})();
+
 /* ================================
    TSTS COMMON (single truth)
    - API base
@@ -16,6 +33,7 @@
 
   const DEFAULT_PROD_API_ORIGIN = "https://shared-table-api.onrender.com";
   const apiOrigin = storedBase || (isLocal ? "http://localhost:4000" : DEFAULT_PROD_API_ORIGIN);
+  window.API_BASE = apiOrigin;
   window.API_URL = apiOrigin + "/api";
 
   // Cloudinary config (single-truth; used by profile.js)
@@ -43,8 +61,7 @@
     if (path.startsWith("http://") || path.startsWith("https://")) return path;
     if (!path.startsWith("/")) return "/" + path;
     return path;
-    }
-
+  }
   window.authFetch = async function (path, opts) {
     const token = window.getAuthToken();
     const headers = Object.assign({}, (opts && opts.headers) || {});
@@ -227,7 +244,8 @@ async function loadNavProfilePic() {
     const res = await window.authFetch("/api/auth/me", { method: "GET" });
 
     if (!res.ok) return;
-    const user = await res.json();
-    if (user && user.profilePic) img.src = user.profilePic;
+    const payload = await res.json();
+    const u = (payload && payload.user) ? payload.user : payload;
+    if (u && u.profilePic) img.src = u.profilePic;
   } catch (_) {}
 }

@@ -2,9 +2,7 @@ node_modules
 .DS_Store
 
 # local one-off backups
-_local_bak/
 *.bak*
 
 # local/garbage quarantines
-_local_bak/
-_bak/
+_backup_master/

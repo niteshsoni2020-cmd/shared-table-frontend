@@ -33,12 +33,17 @@ const collectionsData = [
 ];
 
 // --- 2. RENDER LOGIC ---
+function getToken() {
+  try { return (window.getAuthToken && window.getAuthToken()) || ""; } catch (_) { return ""; }
+}
+
+
 function renderCollections() {
     const container = document.getElementById("collections-list");
     if (!container) return;
 
     container.innerHTML = collectionsData.map(col => `
-        <div onclick="window.location.href='explore.html?q=${col.searchQuery}'" 
+        <div onclick="window.location.href='explore.html?q=${encodeURIComponent(col.searchQuery)}'" 
              class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition cursor-pointer group flex flex-col justify-between h-full">
             <div>
                 <div class="h-12 w-12 bg-gray-50 rounded-full flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition">
@@ -81,18 +86,14 @@ async function loadHomeRecommendations() {
   const section = document.getElementById("home-recommend");
   const list = document.getElementById("home-recommend-list");
   if (!section || !list) return;
-
   const token = getToken();
   try {
       const endpoint = token ? "/api/recommendations" : "/api/experiences?sort=rating_desc";
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
-      
-      const res = await window.authFetch(endpoint, { headers });
-      const data = await res.json();
-      
-      const recs = data.slice(0, 4); 
-
-      if (recs.length > 0) {
+      const res = await window.authFetch(endpoint, { method: "GET" });
+      const payload = await res.json();
+      const items = Array.isArray(payload) ? payload : (payload && payload.experiences) ? payload.experiences : (payload && payload.items) ? payload.items : [];
+      const recs = items.slice(0, 4);
+if (recs.length > 0) {
           section.classList.remove("hidden");
           list.innerHTML = recs.map(exp => renderCard(exp)).join("");
       }
@@ -107,11 +108,12 @@ function renderCard(exp) {
         imgSrc = exp.imageUrl;
     }
 
-    const rating = exp.averageRating > 0 ? `★ ${exp.averageRating.toFixed(1)}` : "New";
+    const avg = (exp && typeof exp.averageRating === 'number') ? exp.averageRating : 0;
+    const rating = avg > 0 ? `★ ${avg.toFixed(1)}` : "New";
 
     // ADDED: loading="lazy"
     return `
-    <div onclick="window.location.href='experience.html?id=${exp.id}'" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition cursor-pointer group">
+    <div onclick="window.location.href='experience.html?id=${(exp && (exp._id || exp.id)) || ''}'" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition cursor-pointer group">
         <div class="h-48 bg-gray-200 relative overflow-hidden">
             <img src="${imgSrc}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" loading="lazy">
             <div class="absolute top-3 right-3 bg-white/90 backdrop-blur rounded-full px-2 py-1 text-xs font-bold shadow-sm">
@@ -120,9 +122,9 @@ function renderCard(exp) {
         </div>
         <div class="p-4">
             <h3 class="font-bold text-gray-900 mb-1 truncate">${exp.title}</h3>
-            <p class="text-xs text-gray-500 mb-3">${exp.city} • ${exp.tags[0] || 'Experience'}</p>
+            <p class="text-xs text-gray-500 mb-3">${exp.city} • ${(exp && Array.isArray(exp.tags) && exp.tags[0]) ? exp.tags[0] : 'Experience'}</p>
             <div class="flex justify-between items-center border-t border-gray-50 pt-3">
-                <span class="font-bold text-gray-900">$${exp.price}</span>
+                <span class="font-bold text-gray-900">${(exp && (typeof exp.price === 'number' || typeof exp.price === 'string')) ? exp.price : ''}</span>
                 <span class="text-xs text-orange-600 font-bold uppercase tracking-wide group-hover:underline">View</span>
             </div>
         </div>

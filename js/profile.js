@@ -65,7 +65,10 @@
       const res = await window.authFetch("/api/auth/me", { method: "GET" });
 
       if (res.status === 401 || res.status === 403) {
-        try { localStorage.removeItem("token"); localStorage.removeItem("user"); } catch (_) {}
+        try {
+        if (window.clearAuth) window.clearAuth();
+        else { localStorage.removeItem("token"); localStorage.removeItem("user"); }
+      } catch (_) {}
         return redirectToLogin();
       }
 
@@ -109,6 +112,15 @@
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(updateData)
     });
+
+    if (res.status === 401 || res.status === 403) {
+      try {
+        if (window.clearAuth) window.clearAuth();
+        else { localStorage.removeItem("token"); localStorage.removeItem("user"); }
+      } catch (_) {}
+      return redirectToLogin();
+    }
+
 
     if (!res.ok) {
       let msg = "Failed to save settings.";

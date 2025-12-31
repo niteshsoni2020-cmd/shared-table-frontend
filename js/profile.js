@@ -122,16 +122,13 @@
     }
 
 
+    const data = await res.json().catch(() => ({}));
+
     if (!res.ok) {
       let msg = "Failed to save settings.";
-      try {
-        const data = await res.json();
-        msg = data.message || msg;
-      } catch (_) {}
+      try { msg = (data && data.message) || msg; } catch (_) {}
       throw new Error(msg);
     }
-
-    const data = await res.json();
     const user = (data && data.user) ? data.user : data;
 
     // update stored user so navbar + other pages get fresh avatar/name without refresh

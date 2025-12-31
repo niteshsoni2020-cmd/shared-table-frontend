@@ -17,38 +17,13 @@
     location.href = "login.html?returnTo=" + returnTo;
   }
 
-  function normalizePath(path) {
-    if (!path) return "/";
-    if (path.startsWith("http://") || path.startsWith("https://")) return path;
-    if (!path.startsWith("/")) return "/" + path;
-    return path;
-  }
-
-  function inferApiUrl() {
-    const isLocal = (location.hostname === "localhost" || location.hostname === "127.0.0.1");
-    const DEFAULT_PROD_API_ORIGIN = "https://shared-table-api.onrender.com";
-    const apiOrigin = isLocal ? "http://localhost:4000" : DEFAULT_PROD_API_ORIGIN;
-    return apiOrigin + "/api";
-  }
-
   async function af(path, opts) {
-    // use common.js authFetch when available
-    if (window.authFetch) return window.authFetch(path, opts);
-
-    // fallback (keeps page functional even if common.js fails)
-    const token = getToken();
-    const headers = Object.assign({}, (opts && opts.headers) || {});
-    const method = (opts && opts.method) ? String(opts.method).toUpperCase() : "GET";
-    if (token) headers["Authorization"] = `Bearer ${token}`;
-    if (!headers["Content-Type"] && method !== "GET") headers["Content-Type"] = "application/json";
-
-    const pth = normalizePath(path);
-    const apiUrl = inferApiUrl();
-    const url = pth.startsWith("/api/")
-      ? (apiUrl + pth.slice(4))
-      : (apiUrl + pth);
-
-    return (window.fetch)(url, Object.assign({}, opts || {}, { headers }));
+    // STRICT: single truth must come from common.js
+    if (window.authFetch == null) {
+      alert("App bootstrap error: common.js not loaded.");
+      throw new Error("authFetch missing");
+    }
+    return window.authFetch(path, opts);
   }
 
   function setText(id, val) {
@@ -98,6 +73,11 @@
     }
 
     const res = await af(`/api/experiences/${experienceId}`, { method: "GET" });
+
+    if (res.status === 401 || res.status === 403) {
+      try { localStorage.removeItem("token"); localStorage.removeItem("user"); } catch (_) {}
+      return redirectToLogin();
+    }
     if (!res.ok) {
       alert("Experience not found.");
       location.href = "explore.html";
@@ -163,6 +143,11 @@
             guests: Number((guestInput && guestInput.value) || 1)
           })
         });
+
+        if (res.status === 401 || res.status === 403) {
+          try { localStorage.removeItem("token"); localStorage.removeItem("user"); } catch (_) {}
+          return redirectToLogin();
+        }
 
         const data = await res.json().catch(() => ({}));
 

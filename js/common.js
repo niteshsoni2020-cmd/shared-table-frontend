@@ -1,3 +1,18 @@
+
+// --- TSTS LOCAL DEV API BASE (static server -> backend) ---
+window.TSTS_LOCAL_API_BASE = (function () {
+  try {
+    const isLocal = location.hostname === "127.0.0.1" || location.hostname === "localhost";
+    if (!isLocal) return "";
+    // frontend served from 5173/5180/etc; backend runs on 4000
+    if (String(location.port) && String(location.port) !== "4000") return "http://127.0.0.1:4000";
+    return "";
+  } catch (_) { return ""; }
+})();
+
+
+// Ensure all API calls route to backend in local dev
+try { if (window.TSTS_LOCAL_API_BASE) window.API_BASE = window.TSTS_LOCAL_API_BASE; } catch (_) {}
 // tsts-scroll-top-guard (global)
 // Purpose: prevent Safari/Back-Forward Cache scroll restoration landing mid-page.
 (function(){
@@ -38,7 +53,6 @@
   window.CLOUDINARY_URL = window.CLOUDINARY_URL || "https://api.cloudinary.com/v1_1/dkqf90k20/image/upload";
   window.CLOUDINARY_PRESET = window.CLOUDINARY_PRESET || "unsigned_preset";
 
-
   window.setAuth = function (token, user) {
     try {
       if (token) localStorage.setItem("token", token);
@@ -66,7 +80,13 @@
     const method = (opts && opts.method) ? String(opts.method).toUpperCase() : "GET";
 
     if (token) headers["Authorization"] = `Bearer ${token}`;
-    if (!headers["Content-Type"] && method !== "GET") headers["Content-Type"] = "application/json";
+
+    // FormData-safe: never force JSON Content-Type when body is FormData
+    const body = opts && opts.body;
+    const isFormData = (typeof FormData !== "undefined") && (body instanceof FormData);
+    if (!headers["Content-Type"] && method !== "GET" && !isFormData) {
+      headers["Content-Type"] = "application/json";
+    }
 
     // Single rule:
     // - Accept "/api/..." or "api/..." or "/..." and always route to API_BASE
@@ -81,60 +101,8 @@
   };
 })();
 
-// 0) GLOBAL ASSET INJECTION (single truth)
-function injectGlobalAssets() {
-  try {
-    const head = document.head || document.getElementsByTagName("head")[0];
-    if (!head) return;
-
-    const ensure = (selector, makeEl) => {
-      if (head.querySelector(selector)) return;
-      head.appendChild(makeEl());
-    };
-
-    ensure('script[data-tsts="tailwind"]', () => {
-      const el = document.createElement("script");
-      el.src = "https://cdn.tailwindcss.com";
-      el.setAttribute("data-tsts", "tailwind");
-      return el;
-    });
-
-    ensure('link[data-tsts="fontawesome"]', () => {
-      const el = document.createElement("link");
-      el.rel = "stylesheet";
-      el.href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css";
-      el.setAttribute("data-tsts", "fontawesome");
-      return el;
-    });
-
-    ensure('link[data-tsts="fonts"]', () => {
-      const el = document.createElement("link");
-      el.rel = "stylesheet";
-      el.href = "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap";
-      el.setAttribute("data-tsts", "fonts");
-      return el;
-    });
-
-    ensure('link[href="css/design-system.css"]', () => {
-      const el = document.createElement("link");
-      el.rel = "stylesheet";
-      el.href = "css/design-system.css";
-      return el;
-    });
-
-    ensure('style[data-tsts="font-family"]', () => {
-      const el = document.createElement("style");
-      el.setAttribute("data-tsts", "font-family");
-      el.textContent = "body{font-family:'Plus Jakarta Sans',sans-serif;} h1,h2,h3,.serif{font-family:'Playfair Display',serif;}";
-      return el;
-    });
-  } catch (_) {}
-}
-
-
 // DOM bootstrap
 document.addEventListener("DOMContentLoaded", () => {
-  injectGlobalAssets();
   injectNavbar();
   injectFooter();
   setTstsYear();
@@ -311,10 +279,19 @@ async function loadNavProfilePic() {
   } catch (_) {}
 }
 
-
 function setTstsYear() {
   try {
     const y = document.getElementById("tsts-year");
     if (y) y.textContent = String(new Date().getFullYear());
   } catch (_) {}
+}
+
+function normalizeTstsApiUrl(url) {
+  try {
+    if (typeof url !== "string") return url;
+    const base = window.TSTS_LOCAL_API_BASE || "";
+    if (!base) return url;
+    if (url === "/api" || url.startsWith("/api/")) return base + url;
+    return url;
+  } catch (_) { return url; }
 }

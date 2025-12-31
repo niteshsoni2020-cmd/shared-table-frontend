@@ -190,7 +190,7 @@ function injectFooter() {
       </div>
 
       <div class="border-t border-gray-800 mt-12 pt-8 text-center text-gray-500 text-sm">
-        &copy; 2025 The Shared Table Story. All rights reserved.
+        &copy; 2026 The Shared Table Story. All rights reserved.
       </div>
     </footer>
   `;

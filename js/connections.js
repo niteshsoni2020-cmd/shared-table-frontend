@@ -129,7 +129,10 @@
         wrap.className = "p-4 rounded-xl border border-gray-100 bg-white flex items-center justify-between gap-3";
         wrap.innerHTML = `
           ${userRow(c.user)}
-          <a class="text-sm font-bold text-orange-600 hover:underline" href="public-profile.html?id=${encodeURIComponent((c.user && (c.user._id || c.user.id)) || "")}">View profile</a>
+          <div class="flex items-center gap-2">
+            <a class="text-sm font-bold text-orange-600 hover:underline" href="public-profile.html?id=${encodeURIComponent((c.user && (c.user._id || c.user.id)) || "")}">View profile</a>
+            <button class="px-3 py-2 rounded-lg border border-red-200 bg-white text-xs font-bold text-red-600 hover:bg-red-50" data-action="remove" data-userid="${(c.user && (c.user._id || c.user.id)) || ""}">Remove</button>
+          </div>
         `;
         connList.appendChild(wrap);
       });
@@ -190,6 +193,24 @@
     }
   }
 
+  async function onConnectionsClick(e) {
+    const btn = e && e.target ? e.target.closest("button[data-action]") : null;
+    if (!btn) return;
+    const action = btn.getAttribute("data-action");
+    const userId = btn.getAttribute("data-userid");
+    if (!action || !userId) return;
+
+    try {
+      if (action === "remove") {
+        if (!confirm("Remove this connection?")) return;
+        await post("/api/social/connections/" + encodeURIComponent(userId) + "/remove");
+        await loadConnections();
+      }
+    } catch (err) {
+      alert((err && err.message) ? err.message : "Action failed");
+    }
+  }
+
   async function onRequestsClick(e) {
     const btn = e && e.target ? e.target.closest("button[data-action]") : null;
     if (!btn) return;
@@ -218,6 +239,7 @@
     if (reqRefresh) reqRefresh.addEventListener("click", loadRequests);
     if (connRefresh) connRefresh.addEventListener("click", loadConnections);
     if (reqList) reqList.addEventListener("click", onRequestsClick);
+    if (connList) connList.addEventListener("click", onConnectionsClick);
 
     loadRequests();
     loadConnections();

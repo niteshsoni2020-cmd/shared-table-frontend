@@ -30,10 +30,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     try {
-        const res = await window.authFetch(`/api/users/${userId}/profile`);
+        const res = await window.authFetch(`/api/users/${userId}/profile`, { method: "GET" });
+        const data = await res.json().catch(() => null);
         if (!res.ok) throw new Error("Host not found");
-
-        const data = await res.json();
         renderProfile(data);
     } catch (err) {
         console.error(err);
@@ -41,57 +40,82 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-function renderProfile(data) {
-    const { user, isHost, experiences, reviews, hostStats } = data;
+function renderProfile(profile) {
+    const p = (profile && profile.user) ? profile.user : (profile || {});
 
-    // 1. Render Host Info
-    hostNameEl.textContent = user.name;
-    if (user.profilePic) hostPicEl.src = user.profilePic;
-    if (user.location) hostLocationEl.innerHTML = `<i class="fas fa-map-marker-alt mr-1"></i> ${user.location}`;
-    if (user.bio) hostBioEl.textContent = user.bio;
-    
-    // 2. Render HOST Stats (The "Zero Blind Spot" Fix)
-    // We use the calculated stats from the backend, not the user.guestRating
-    if (hostStats && hostStats.rating > 0) {
-        hostRatingEl.textContent = `${hostStats.rating.toFixed(1)} (${reviews ? reviews.length : 0} reviews)`;
-    } else {
-        hostRatingEl.textContent = "New Host";
-    }
+    hostNameEl.textContent = p.name || "";
+    if (p.profilePic) hostPicEl.src = p.profilePic;
+    if (p.bio) hostBioEl.textContent = p.bio;
 
-    // Verified Badge
-    if (isHost) {
-        hostBadgeEl.classList.remove('hidden');
-    }
-
-    // 3. Render Reviews
-    if (reviews && reviews.length > 0) {
-        reviewsContainer.classList.remove('hidden');
-        reviewsList.innerHTML = reviews.map(r => `
-            <div class="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                <div class="flex justify-between items-center mb-2">
-                    <span class="font-bold text-gray-900 text-sm">${r.authorName || 'Guest'}</span>
-                    <span class="text-xs text-gray-500">${new Date(r.date).toLocaleDateString()}</span>
-                </div>
-                <div class="text-yellow-500 text-xs mb-2">
-                    ${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}
-                </div>
-                <p class="text-gray-600 text-sm italic">"${r.comment}"</p>
-            </div>
-        `).join('');
-    }
-
-    // 4. Render Experiences (Cross-Selling Grid)
-    if (!experiences || experiences.length === 0) {
-        noExpEl.classList.remove('hidden');
-    } else {
-        experiences.forEach(exp => {
-            const card = createExperienceCard(exp);
-            gridEl.appendChild(card);
-        });
-    }
+    hostRatingEl.textContent = "New";
+    hostBadgeEl.classList.add('hidden');
 
     loadingEl.classList.add('hidden');
     contentEl.classList.remove('hidden');
+
+    loadReviews().catch(() => {});
+    loadHostExperiences().catch(() => {});
+}
+
+async function loadReviews() {
+    if (!reviewsContainer || !reviewsList) return;
+    const res = await window.authFetch(`/api/reviews?hostId=${encodeURIComponent(userId)}&limit=6&sort=recent`, { method: "GET" });
+    const payload = await res.json().catch(() => null);
+    const list = (payload && payload.ok === true && Array.isArray(payload.reviews)) ? payload.reviews : [];
+    if (!res.ok || list.length === 0) return;
+
+    reviewsContainer.classList.remove('hidden');
+    reviewsList.innerHTML = list.map(r => {
+        const rating = Math.max(0, Math.min(5, parseInt(r.rating, 10) || 0));
+        const dateStr = r.date ? new Date(r.date).toLocaleDateString() : "";
+        const comment = (r.comment == null) ? "" : String(r.comment);
+        return `
+            <div class="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="font-bold text-gray-900 text-sm">${r.authorName || 'Guest'}</span>
+                    <span class="text-xs text-gray-500">${dateStr}</span>
+                </div>
+                <div class="text-yellow-500 text-xs mb-2">
+                    ${'★'.repeat(rating)}${'☆'.repeat(5 - rating)}
+                </div>
+                <p class="text-gray-600 text-sm italic">"${comment}"</p>
+            </div>
+        `;
+    }).join('');
+
+    try {
+        const ratings = list.map((r) => Number(r.rating)).filter((n) => isFinite(n) && n > 0);
+        if (ratings.length > 0) {
+            const avg = ratings.reduce((a, b) => a + b, 0) / ratings.length;
+            hostRatingEl.textContent = `${avg.toFixed(1)} (${ratings.length} reviews)`;
+        }
+    } catch (_) {}
+}
+
+async function loadHostExperiences() {
+    if (!gridEl || !noExpEl) return;
+    const res = await window.authFetch(`/api/experiences`, { method: "GET" });
+    const payload = await res.json().catch(() => null);
+    const list = Array.isArray(payload) ? payload : (payload && Array.isArray(payload.experiences) ? payload.experiences : []);
+    const mine = (list || []).filter((exp) => {
+        try {
+            const e = exp || {};
+            const hid = e.hostId || (e.host && (e.host._id || e.host.id)) || e.hostUserId || "";
+            return hid && String(hid) === String(userId);
+        } catch (_) {
+            return false;
+        }
+    });
+
+    if (mine.length === 0) {
+        noExpEl.classList.remove('hidden');
+        return;
+    }
+
+    mine.forEach(exp => {
+        const card = createExperienceCard(exp);
+        gridEl.appendChild(card);
+    });
 }
 
 function createExperienceCard(exp) {

@@ -39,27 +39,49 @@ document.addEventListener("DOMContentLoaded", () => {
         maxPrice: 300
     };
 
-    // === NEW: URL PARAM HANDLER (The Fix) ===
-    // This reads ?category=Food from the URL and updates state immediately
+    function tstsIsDeal(exp) {
+        try {
+            const e = exp || {};
+            if (e.isDeal === true) return true;
+            const direct = Number(e.discountPercent || e.discount || 0);
+            if (isFinite(direct) && direct > 0) return true;
+            const dyn = e.dynamicDiscounts && typeof e.dynamicDiscounts === "object" ? e.dynamicDiscounts : null;
+            if (dyn) {
+                const vals = Object.values(dyn).map((v) => Number(v)).filter((v) => isFinite(v));
+                if (vals.some((v) => v > 0)) return true;
+            }
+        } catch (_) {}
+        return false;
+    }
+
+    function tstsSetDealsBanner(_) {
+        return;
+    }
+
+    // === URL PARAM HANDLER ===
     const urlParams = new URLSearchParams(window.location.search);
-    const urlCategory = urlParams.get('category');
-    
+    const urlCategory = urlParams.get("category");
+    const urlQuery = urlParams.get("q");
+    const urlFilter = urlParams.get("filter");
+
+    if (urlQuery && elSearch) {
+        filterState.search = String(urlQuery).trim();
+        elSearch.value = filterState.search;
+    }
+
     if (urlCategory) {
         filterState.category = urlCategory;
-
-        // Visual Update: Highlight the correct chip
         categoryChips.forEach(c => {
-            // Reset all chips
             c.classList.remove("active", "bg-gray-900", "text-white", "border-transparent");
             c.classList.add("bg-white", "border-gray-200", "text-gray-600");
-            
-            // Highlight matching chip
             if (c.getAttribute("data-category") === urlCategory) {
                 c.classList.add("active", "bg-gray-900", "text-white", "border-transparent");
                 c.classList.remove("bg-white", "border-gray-200", "text-gray-600");
             }
         });
     }
+
+    window.TSTS_DEALS_UI_MODE = (String(urlFilter || "").trim().toLowerCase() === "deals");
 
     // === INITIALIZE SLIDER ===
     if (elPriceSlider && typeof noUiSlider !== 'undefined') {
@@ -100,28 +122,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
         try {
             const res = await window.authFetch(`/api${ENDPOINT}?${params.toString()}`, { method: "GET" });
-if (!res.ok) throw new Error("API Error");
-            const data = await res.json();
-            renderExperiences(data);
+            if (!res.ok) throw new Error("API Error");
+            const data = await res.json().catch(() => null);
+
+            const list = Array.isArray(data) ? data : (data && Array.isArray(data.experiences) ? data.experiences : []);
+            const out = window.TSTS_DEALS_UI_MODE ? list.filter(tstsIsDeal) : list;
+            if (window.TSTS_DEALS_UI_MODE) tstsSetDealsBanner("");
+            renderExperiences(out);
         } catch (err) {
             console.error(err);
+            experiencesGrid.classList.remove("hidden");
+            noResultsEl.classList.add("hidden");
             experiencesGrid.innerHTML = `<div class="col-span-full text-center text-red-500 py-12">Failed to load experiences.</div>`;
-    try {
-      const res = await window.authFetch(`/api${ENDPOINT}?${params.toString()}`, { method: "GET" });
-      if (!res.ok) throw new Error("API Error");
-      const data = await res.json();
-
-      const list = Array.isArray(data) ? data : (Array.isArray(data.experiences) ? data.experiences : []);
-      if (window.TSTS_DEALS_UI_MODE) {
-        const deals = list.filter(tstsIsDeal);
-        if (deals.length > 0) {
-          tstsSetDealsBanner("");
-          renderExperiences(deals);
-        } else {
-          // Exit deals mode cleanly if no deals exist
-          window.TSTS_DEALS_UI_MODE = false;
-          tstsSetDealsBanner("");
-          renderExperiences(list);
         }
     };
 

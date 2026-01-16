@@ -6,6 +6,39 @@ window.showModal = window.showModal || function (title, message, type) {
   alert(String(title || "") + "\n\n" + String(message || ""));
 };
 
+async function handleForgotPassword(e) {
+    try { if (e && typeof e.preventDefault === "function") e.preventDefault(); } catch (_) {}
+
+    const emailEl = document.getElementById("login-email");
+    const email = String((emailEl && emailEl.value) ? emailEl.value : "").trim();
+
+    if (!email) {
+        showModal("Forgot Password", "Enter your email in the Email field first, then click Forgot Password again.", "error");
+        return;
+    }
+
+    try {
+        const res = await window.authFetch("/api/auth/forgot-password", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email })
+        });
+
+        const data = await res.json().catch(() => ({}));
+        const msg = (data && data.message) ? String(data.message) : "If an account exists, you will receive instructions.";
+
+        // Always show privacy-safe message; backend is intentionally non-enumerating.
+        const next = "reset-password.html?email=" + encodeURIComponent(email);
+        showModal(
+            "Reset Password",
+            msg + "\n\nThen open: " + next,
+            "success"
+        );
+    } catch (_) {
+        showModal("Reset Password", "Could not reach the server. Please try again.", "error");
+    }
+}
+
 function safeRedirectTarget(rawTarget) {
   // Allow only same-site relative navigations (no schemes, no protocol-relative)
   let t = String(rawTarget || "index.html").trim();

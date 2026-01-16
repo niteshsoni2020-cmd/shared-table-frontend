@@ -5,10 +5,42 @@ function getToken() {
   return (window.getAuthToken && window.getAuthToken()) || "";
 }
 
+function getAdminReason() {
+  let r = "";
+  try { r = String(sessionStorage.getItem("admin_reason") || ""); } catch (_) { r = ""; }
+  r = r.trim();
+  if (r.length >= 5) return r;
+  try { r = String(prompt("Admin reason (required)", "") || ""); } catch (_) { r = ""; }
+  r = r.trim();
+  if (r.length < 5) return "";
+  try { sessionStorage.setItem("admin_reason", r); } catch (_) {}
+  return r;
+}
+
+function withOptionalAdminReasonHeaders(opts) {
+  let r = "";
+  try { r = String(sessionStorage.getItem("admin_reason") || ""); } catch (_) { r = ""; }
+  r = r.trim();
+  if (r.length < 5) return opts || {};
+  const headers = Object.assign({}, (opts && opts.headers) || {}, { "X-Admin-Reason": r });
+  return Object.assign({}, opts || {}, { headers });
+}
+
+async function adminFetch(path, opts) {
+  if (!path.startsWith("/api/admin/")) {
+    return window.authFetch(path, withOptionalAdminReasonHeaders(opts));
+  }
+  const reason = getAdminReason();
+  if (!reason) throw new Error("Admin reason required");
+  const headers = Object.assign({}, (opts && opts.headers) || {}, { "X-Admin-Reason": reason });
+  return window.authFetch(path, Object.assign({}, opts || {}, { headers }));
+}
+
 function mustBeAdmin() {
   const u = (window.getAuthUser && window.getAuthUser()) || {};
   const isAdminEmail = (u.email || "") === "admin@sharedtable.com";
-  if (!getToken() || !isAdminEmail) {
+  const isAdmin = (u && (u.isAdmin === true || String(u.role || "").toLowerCase() === "admin" || isAdminEmail));
+  if (!getToken() || !isAdmin) {
     location.href = "login.html?redirect=" + encodeURIComponent("admin.html");
     return false;
   }
@@ -16,31 +48,31 @@ function mustBeAdmin() {
 }
 
 async function loadStats() {
-  const res = await window.authFetch("/api/admin/stats", { method: "GET" });
+  const res = await adminFetch("/api/admin/stats", { method: "GET" });
   if (!res.ok) throw new Error("stats");
   return res.json();
 }
 
 async function loadBookings() {
-  const res = await window.authFetch("/api/admin/bookings", { method: "GET" });
+  const res = await adminFetch("/api/admin/bookings", { method: "GET" });
   if (!res.ok) throw new Error("bookings");
   return res.json();
 }
 
 async function loadExperiences() {
-  const res = await window.authFetch("/api/admin/experiences", { method: "GET" });
+  const res = await adminFetch("/api/admin/experiences", { method: "GET" });
   if (!res.ok) throw new Error("experiences");
   return res.json();
 }
 
 async function loadUsers() {
-  const res = await window.authFetch("/api/admin/users", { method: "GET" });
+  const res = await adminFetch("/api/admin/users", { method: "GET" });
   if (!res.ok) throw new Error("users");
   return res.json();
 }
 
 async function toggleExperience(id) {
-  const res = await window.authFetch("/api/admin/experiences/" + encodeURIComponent(id) + "/toggle", {
+  const res = await adminFetch("/api/admin/experiences/" + encodeURIComponent(id) + "/toggle", {
     method: "PATCH"
   });
   if (!res.ok) {
@@ -52,7 +84,7 @@ async function toggleExperience(id) {
 }
 
 async function deleteExperience(id) {
-  const res = await window.authFetch("/api/experiences/" + encodeURIComponent(id), { method: "DELETE" });
+  const res = await window.authFetch("/api/experiences/" + encodeURIComponent(id), withOptionalAdminReasonHeaders({ method: "DELETE" }));
   if (!res.ok) {
     let msg = "Failed to delete experience";
     try { msg = (await res.json()).message || msg; } catch (_) {}
@@ -62,7 +94,7 @@ async function deleteExperience(id) {
 }
 
 async function deleteUser(id) {
-  const res = await window.authFetch("/api/admin/users/" + encodeURIComponent(id), { method: "DELETE" });
+  const res = await adminFetch("/api/admin/users/" + encodeURIComponent(id), { method: "DELETE" });
   if (!res.ok) {
     let msg = "Failed to delete user";
     try { msg = (await res.json()).message || msg; } catch (_) {}
@@ -222,6 +254,8 @@ window.adminCancelBooking = async function(id) {
 
 async function boot() {
   if (!mustBeAdmin()) return;
+
+  try { getAdminReason(); } catch (_) {}
 
   // basic skeleton if containers exist
   try {

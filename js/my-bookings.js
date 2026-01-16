@@ -46,6 +46,9 @@ function safeDate(d) {
 
 function fmtTripDate(dt) {
   try {
+    if (window.tstsFormatDateShort) return window.tstsFormatDateShort(dt);
+  } catch (_) {}
+  try {
     return dt.toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short" });
   } catch (_) {
     return dt.toDateString();

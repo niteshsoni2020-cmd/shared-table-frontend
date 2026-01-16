@@ -72,7 +72,81 @@
                         <textarea id="bio" rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none" placeholder="Share a bit about yourself..."></textarea>
                     </div>
 
-                    <div id="host-payment-section" class="pt-6 border-t border-gray-100 hidden">
+                    
+                    <div class="pt-6 border-t border-gray-100">
+                        <h3 class="text-lg font-bold mb-2 flex items-center gap-2">
+                            <i class="fas fa-user-shield text-orange-600"></i> Social Privacy
+                        </h3>
+                        <p class="text-sm text-gray-600 mb-4">
+                            The Shared Table Story is marketplace-first. Social is optional and privacy-preserving.
+                        </p>
+
+                        <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-3">
+                            <div class="flex items-start justify-between gap-4">
+                                <div>
+                                    <p class="font-semibold text-gray-900 text-sm">Direct Invites Only</p>
+                                    <p class="text-xs text-gray-600">Connections happen only through invites you send or approve.</p>
+                                </div>
+                                <div class="text-xs font-bold text-gray-400 select-none">LOCKED</div>
+                            </div>
+
+                            
+                            <div class="flex items-start justify-between gap-4">
+                                <div>
+                                    <p class="font-semibold text-gray-900 text-sm">Public Profile</p>
+                                    <p class="text-xs text-gray-600">If enabled, your photo and bio can appear in attendee lists and comments. Off keeps you private by default.</p>
+                                </div>
+                                <label class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+                                    <input type="checkbox" id="public-profile-toggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"/>
+                                    <span class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></span>
+                                </label>
+                            </div>
+
+                            <div class="pt-3 border-t border-gray-200">
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1" for="handle">Handle</label>
+                                <input id="handle" type="text" placeholder="Choose a handle (e.g. aarav)" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none" />
+                                <p class="text-[11px] text-gray-500 mt-1">Handles allow direct invites. Search is opt-in below.</p>
+                            </div>
+
+                            <div class="flex items-start justify-between gap-4">
+                                <div>
+                                    <p class="font-semibold text-gray-900 text-sm">Allow Handle Search</p>
+                                    <p class="text-xs text-gray-600">If enabled, others can connect to you by searching your handle.</p>
+                                </div>
+                                <label class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+                                    <input type="checkbox" id="allow-handle-search" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"/>
+                                    <span class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></span>
+                                </label>
+                            </div>
+
+                            <div class="flex items-start justify-between gap-4">
+                                <div>
+                                    <p class="font-semibold text-gray-900 text-sm">Share My Bookings To Friends</p>
+                                    <p class="text-xs text-gray-600">If enabled, your connections may see bookings you explicitly mark as shareable.</p>
+                                </div>
+                                <label class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+                                    <input type="checkbox" id="share-to-friends" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"/>
+                                    <span class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></span>
+                                </label>
+                            </div>
+
+
+
+                            <div class="flex items-start justify-between gap-4">
+                                <div>
+                                    <p class="font-semibold text-gray-900 text-sm">No Public Follower Graph / No Public Feed</p>
+                                    <p class="text-xs text-gray-600">We don’t run a public social network layer.</p>
+                                </div>
+                                <div class="text-xs font-bold text-gray-400 select-none">LOCKED</div>
+                            </div>
+
+                            <p class="text-[11px] text-gray-500 pt-2 border-t border-gray-200">
+                                
+                            </p>
+                        </div>
+                    </div>
+
+<div id="host-payment-section" class="pt-6 border-t border-gray-100 hidden">
                         <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
                             <i class="fas fa-concierge-bell text-orange-600"></i> Host Settings
                         </h3>
@@ -115,6 +189,9 @@
 
     <footer id="footer-placeholder"></footer>
     <script src="js/common.js?v=20251230_162600"></script>
-    <script src="js/profile.js?v=20251230_124959"></script>
+    <script src="js/profile.js?v=20260101_015513"></script>
+
+    
+
 </body>
 </html>

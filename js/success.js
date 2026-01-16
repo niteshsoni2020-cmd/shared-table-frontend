@@ -17,8 +17,8 @@ const copyFeedbackEl = document.getElementById("copy-feedback");
 
 // Parse URL params: bookingId, sessionId, (optionally) experienceId
 const urlParams = new URLSearchParams(window.location.search);
-const bookingId = urlParams.get("bookingId");
-const sessionId = urlParams.get("sessionId");
+const bookingId = urlParams.get("bookingId") || urlParams.get("booking_id");
+const sessionId = urlParams.get("sessionId") || urlParams.get("session_id");
 const experienceIdFromUrl = urlParams.get("experienceId"); // optional
 
 // Token for "my-bookings"
@@ -137,11 +137,17 @@ function populateBookingSummary(booking) {
   if (dateRaw) {
     try {
       const d = new Date(dateRaw);
-      const formatted = d.toLocaleDateString(undefined, {
-        year: "numeric",
-        month: "short",
-        day: "numeric"
-      });
+      let formatted = "";
+      try {
+        if (window.tstsFormatDateShort) formatted = window.tstsFormatDateShort(d);
+      } catch (_) {}
+      if (!formatted) {
+        formatted = d.toLocaleDateString(undefined, {
+          year: "numeric",
+          month: "short",
+          day: "numeric"
+        });
+      }
       successExpDateEl.textContent = `Date: ${formatted}`;
     } catch (e) {
       successExpDateEl.textContent = `Date: ${dateRaw}`;

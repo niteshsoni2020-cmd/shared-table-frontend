@@ -23,6 +23,19 @@
    ================================ */
 
 (function () {
+  (function ensureFontAwesome() {
+    try {
+      const id = "tsts-fontawesome";
+      if (document.getElementById(id)) return;
+      const link = document.createElement("link");
+      link.id = id;
+      link.rel = "stylesheet";
+      link.href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css";
+      link.referrerPolicy = "no-referrer";
+      document.head.appendChild(link);
+    } catch (_) {}
+  })();
+
   const isLocal = (location.hostname === "localhost" || location.hostname === "127.0.0.1");
 
   // Optional override for QA:
@@ -94,6 +107,43 @@
 
     return fetch(url, Object.assign({}, opts || {}, { headers }));
   };
+
+  function tstsParseDateLike(x) {
+    try {
+      if (!x) return null;
+      if (x instanceof Date) return isNaN(x.getTime()) ? null : x;
+      const s = String(x).trim();
+      if (!s) return null;
+      if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+        const d = new Date(s + "T00:00:00");
+        return isNaN(d.getTime()) ? null : d;
+      }
+      const d = new Date(s);
+      return isNaN(d.getTime()) ? null : d;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  window.tstsFormatDateShort = function (x) {
+    const d = tstsParseDateLike(x);
+    if (!d) return "";
+    try {
+      return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+    } catch (_) {
+      return d.toDateString();
+    }
+  };
+
+  window.tstsFormatDateWeekday = function (x) {
+    const d = tstsParseDateLike(x);
+    if (!d) return "";
+    try {
+      return d.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short", year: "numeric" });
+    } catch (_) {
+      return d.toDateString();
+    }
+  };
 })();
 
 // DOM bootstrap
@@ -112,8 +162,11 @@ function injectNavbar() {
   root.innerHTML = `
     <header class="bg-white shadow-sm sticky top-0 z-50">
       <div class="container mx-auto px-4 py-4 flex justify-between items-center">
-        <a href="index.html" class="text-2xl font-bold text-orange-600 flex items-center gap-2 font-serif">
-          <i class="fas fa-utensils"></i> The Shared Table Story
+        <a href="index.html" class="text-2xl font-bold text-orange-600 flex items-center gap-2 font-serif" aria-label="The Shared Table Story">
+          <span class="inline-flex items-center justify-center h-9 w-9 rounded-full bg-orange-50 border border-orange-100">
+            <i class="fas fa-utensils text-orange-600"></i>
+          </span>
+          <span>The Shared Table Story</span>
         </a>
 
         <nav class="hidden md:flex items-center space-x-8">
@@ -208,7 +261,12 @@ function applyAuthStateToNav() {
       </button>
       <div class="hidden group-hover:block absolute right-0 w-48 bg-white shadow-xl rounded-lg border border-gray-100 py-2 mt-2">
         <a href="my-bookings.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600">Dashboard</a>
+        <a href="bookmarks.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600">My Bookmarks</a>
+        <a href="connections.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600">Connections</a>
+        <a href="feed.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600">Friends Feed</a>
         <a href="profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600">My Profile</a>
+        <a href="policy.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600">Policy</a>
+        <a href="report.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600">Report</a>
         <button id="logout-btn" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">Logout</button>
       </div>
     </div>
@@ -216,7 +274,12 @@ function applyAuthStateToNav() {
 
   const userHtmlMobile = `
     <a href="my-bookings.html" class="block text-gray-700 hover:text-orange-600 font-medium py-2">Dashboard</a>
+    <a href="bookmarks.html" class="block text-gray-700 hover:text-orange-600 font-medium py-2">My Bookmarks</a>
+    <a href="connections.html" class="block text-gray-700 hover:text-orange-600 font-medium py-2">Connections</a>
+    <a href="feed.html" class="block text-gray-700 hover:text-orange-600 font-medium py-2">Friends Feed</a>
     <a href="profile.html" class="block text-gray-700 hover:text-orange-600 font-medium py-2">My Profile</a>
+    <a href="policy.html" class="block text-gray-700 hover:text-orange-600 font-medium py-2">Policy</a>
+    <a href="report.html" class="block text-gray-700 hover:text-orange-600 font-medium py-2">Report</a>
     <button id="logout-btn-mobile" class="block w-full text-left text-red-600 font-medium py-2">Logout</button>
   `;
 

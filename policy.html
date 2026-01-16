@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Policy – The Shared Table Story</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    h1, h2, h3, .font-serif { font-family: 'Playfair Display', serif; }
+  </style>
+  <link rel="manifest" href="manifest.json">
+</head>
+<body class="bg-gray-50 text-gray-900 flex flex-col min-h-screen">
+  <nav id="navbar-placeholder"></nav>
+
+  <main class="flex-grow container mx-auto px-4 py-10 max-w-3xl">
+    <h1 class="text-3xl font-bold mb-2">Policy</h1>
+    <p class="text-gray-600 mb-6">Current platform policy snapshot used for bookings and refunds.</p>
+
+    <div id="state-loading" class="text-center py-12">
+      <i class="fas fa-spinner fa-spin text-3xl text-orange-500"></i>
+    </div>
+
+    <div id="state-error" class="hidden text-center py-12">
+      <p class="text-red-600 font-bold">Unable to load policy.</p>
+      <button id="retry-btn" class="mt-4 px-6 py-2 rounded-xl bg-gray-900 text-white font-bold hover:bg-black transition">Retry</button>
+    </div>
+
+    <section id="content" class="hidden bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <p class="text-xs uppercase tracking-widest text-gray-500">Active policy</p>
+          <h2 id="policy-version" class="text-xl font-bold">—</h2>
+          <p id="policy-effective" class="text-sm text-gray-600 mt-1">—</p>
+        </div>
+      </div>
+
+      <div class="border-t border-gray-100 pt-4 space-y-3">
+        <div class="flex justify-between text-sm">
+          <span class="text-gray-600">Currency</span>
+          <span id="policy-currency" class="font-bold text-gray-900">—</span>
+        </div>
+        <div class="flex justify-between text-sm">
+          <span class="text-gray-600">Guest free cancellation window</span>
+          <span id="policy-free-cancel" class="font-bold text-gray-900">—</span>
+        </div>
+        <div class="flex justify-between text-sm">
+          <span class="text-gray-600">Guest max refund percent</span>
+          <span id="policy-guest-max" class="font-bold text-gray-900">—</span>
+        </div>
+        <div class="flex justify-between text-sm">
+          <span class="text-gray-600">Host refund percent</span>
+          <span id="policy-host" class="font-bold text-gray-900">—</span>
+        </div>
+      </div>
+
+      <p class="text-xs text-gray-500">This page is informational; the backend enforces the actual refund calculations.</p>
+    </section>
+  </main>
+
+  <footer id="footer-placeholder"></footer>
+
+  <script src="js/common.js?v=20251230_162600"></script>
+  <script src="js/policy.js?v=20260116_0003"></script>
+</body>
+</html>

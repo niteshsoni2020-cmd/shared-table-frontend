@@ -44,6 +44,10 @@
   const bsbInput = document.getElementById("bsb");
   const accountInput = document.getElementById("account-number");
   const vacationToggle = document.getElementById("vacation-mode");
+  const publicProfileToggle = document.getElementById("public-profile-toggle");
+  const handleInput = document.getElementById("handle");
+  const allowHandleSearchToggle = document.getElementById("allow-handle-search");
+  const shareToFriendsToggle = document.getElementById("share-to-friends");
 
   function setHostSectionEnabled(enabled) {
     if (!hostPaymentSection) return;
@@ -79,6 +83,10 @@
       if (nameInput) nameInput.value = user.name || "";
       if (emailInput) emailInput.value = user.email || "";
       if (bioInput) bioInput.value = user.bio || "";
+      try { if (publicProfileToggle) publicProfileToggle.checked = !!user.publicProfile; } catch (_) {}
+      try { if (handleInput) handleInput.value = user.handle || ""; } catch (_) {}
+      try { if (allowHandleSearchToggle) allowHandleSearchToggle.checked = !!user.allowHandleSearch; } catch (_) {}
+      try { if (shareToFriendsToggle) shareToFriendsToggle.checked = !!user.showExperiencesToFriends; } catch (_) {}
       if (profilePicPreview && user.profilePic) profilePicPreview.src = user.profilePic;
 
       // keep localStorage user in sync so navbar can reflect it everywhere
@@ -87,11 +95,15 @@
         name: user.name || prev.name,
         email: user.email || prev.email,
         bio: user.bio || prev.bio,
+        handle: (typeof user.handle === "string") ? user.handle : prev.handle,
+        allowHandleSearch: !!user.allowHandleSearch,
+        showExperiencesToFriends: !!user.showExperiencesToFriends,
+        publicProfile: !!user.publicProfile,
         profilePic: user.profilePic || prev.profilePic
       }));
       if (user.profilePic) syncNavAvatar(user.profilePic);
 
-      setHostSectionEnabled(false);
+      setHostSectionEnabled(!!user.isHost);
     } catch (_) {
       setHostSectionEnabled(false);
     }
@@ -105,6 +117,20 @@
       name: (nameInput && nameInput.value) || "",
       bio: (bioInput && bioInput.value) || ""
     };
+    try {
+      if (publicProfileToggle) updateData.publicProfile = !!publicProfileToggle.checked;
+    } catch (_) {}
+
+    try {
+      if (handleInput) {
+        const raw = String(handleInput.value || "").trim().toLowerCase();
+        // allow blank to clear
+        if (raw.length === 0) updateData.handle = "";
+        else updateData.handle = raw.slice(0, 32);
+      }
+    } catch (_) {}
+    try { if (allowHandleSearchToggle) updateData.allowHandleSearch = !!allowHandleSearchToggle.checked; } catch (_) {}
+    try { if (shareToFriendsToggle) updateData.showExperiencesToFriends = !!shareToFriendsToggle.checked; } catch (_) {}
     if (newProfilePicUrl) updateData.profilePic = newProfilePicUrl;
 
     const res = await window.authFetch("/api/auth/update", {
@@ -135,7 +161,11 @@
     const prev = getStoredUser();
     const merged = Object.assign({}, prev, {
       name: updateData.name || prev.name,
-      bio: updateData.bio || prev.bio
+      bio: updateData.bio || prev.bio,
+      handle: (typeof updateData.handle === "string") ? updateData.handle : prev.handle,
+      allowHandleSearch: (typeof updateData.allowHandleSearch === "undefined") ? prev.allowHandleSearch : !!updateData.allowHandleSearch,
+      showExperiencesToFriends: (typeof updateData.showExperiencesToFriends === "undefined") ? prev.showExperiencesToFriends : !!updateData.showExperiencesToFriends,
+      publicProfile: (typeof updateData.publicProfile === "undefined") ? prev.publicProfile : !!updateData.publicProfile
     });
     if (user && user.profilePic) merged.profilePic = user.profilePic;
     else if (newProfilePicUrl) merged.profilePic = newProfilePicUrl;

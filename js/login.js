@@ -102,6 +102,7 @@ async function handleLogin(e) {
         }
 
         if (window.setAuth) window.setAuth(data.token, data.user);
+        
 
         if (data.user && data.user.email === "admin@sharedtable.com") {
             window.location.href = "admin.html";
@@ -152,6 +153,7 @@ async function handleSignup(e) {
         showModal("Welcome Aboard! 🌏", "Your profile has been created successfully.", "success");
 
         if (window.setAuth) window.setAuth(data.token, data.user);
+        
 
         setTimeout(() => {
             window.location.href = "profile.html";

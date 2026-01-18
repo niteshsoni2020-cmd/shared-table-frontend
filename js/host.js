@@ -159,7 +159,7 @@ if (form) {
         throw new Error("Please select at least one Category (Culture, Food, or Nature).");
       }
 
-      // 3) BUILD PAYLOAD
+      // 3) BUILD PAYLOAD WITH VALIDATION
       const title = document.getElementById("title")?.value || "";
       const city = document.getElementById("city")?.value || "";
       const description = document.getElementById("description")?.value || "";
@@ -168,6 +168,16 @@ if (form) {
       const availableDaysRaw = document.getElementById("availableDays")?.value || "";
       const startDate = document.getElementById("startDate")?.value || "";
       const endDate = document.getElementById("endDate")?.value || "";
+
+      // Required field validation
+      if (!title.trim()) throw new Error("Experience title is required");
+      if (!city.trim()) throw new Error("City is required");
+      if (!description.trim()) throw new Error("Description is required");
+      if (!price || price <= 0) throw new Error("Price must be greater than 0");
+      if (!maxGuests || maxGuests <= 0) throw new Error("Max guests must be greater than 0");
+      if (!startDate) throw new Error("Start date is required");
+      if (!endDate) throw new Error("End date is required");
+      if (new Date(startDate) > new Date(endDate)) throw new Error("End date must be after start date");
 
       const experienceData = {
         title,

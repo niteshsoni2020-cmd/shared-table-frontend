@@ -22,6 +22,11 @@
   }
 
   function renderItem(item) {
+    const El = window.tstsEl;
+    const safeUrl = window.tstsSafeUrl;
+    const fallbackImg = "https://via.placeholder.com/400x250?text=No+Image";
+    const fallbackPic = "https://via.placeholder.com/40?text=U";
+
     const it = item || {};
     const guest = it.guest || {};
     const exp = it.experience || {};
@@ -29,43 +34,43 @@
     const when = window.tstsFormatDateShort ? window.tstsFormatDateShort(it.when) : String(it.when || "");
     const title = exp.title || "Experience";
     const expId = exp._id || exp.id || it.experienceId || "";
-    const img = exp.imageUrl || "https://via.placeholder.com/400x250";
+    const imgUrl = safeUrl(exp.imageUrl, fallbackImg);
 
     const guestName = guest.name || "Friend";
     const guestId = guest._id || guest.id || "";
-    const guestPic = guest.profilePic || "https://via.placeholder.com/40?text=U";
+    const guestPicUrl = safeUrl(guest.profilePic, fallbackPic);
     const handle = guest.handle ? ("@" + guest.handle) : "";
 
-    const row = document.createElement("div");
-    row.className = "bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden";
+    var expImg = El("img", { className: "w-full h-full object-cover" });
+    window.tstsSafeImg(expImg, imgUrl, fallbackImg);
 
-    row.innerHTML = `
-      <div class="flex flex-col sm:flex-row">
-        <a href="experience.html?id=${encodeURIComponent(expId)}" class="sm:w-56 h-40 sm:h-auto bg-gray-100 overflow-hidden">
-          <img src="${img}" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/400x250?text=No+Image'" />
-        </a>
-        <div class="flex-1 p-5">
-          <div class="flex items-start justify-between gap-4">
-            <div>
-              <a href="experience.html?id=${encodeURIComponent(expId)}" class="font-bold text-gray-900 hover:text-orange-600 transition">${title}</a>
-              <div class="text-xs text-gray-500 mt-1">${when ? ("Booked: " + when) : ""}</div>
-            </div>
-            <div class="text-xs text-gray-500">${exp.city || ""}</div>
-          </div>
+    var guestImg = El("img", { className: "h-10 w-10 rounded-full border border-gray-100 object-cover" });
+    window.tstsSafeImg(guestImg, guestPicUrl, fallbackPic);
 
-          <div class="mt-4 flex items-center justify-between gap-4">
-            <a href="public-profile.html?id=${encodeURIComponent(guestId)}" class="flex items-center gap-3 min-w-0">
-              <img src="${guestPic}" class="h-10 w-10 rounded-full border border-gray-100 object-cover" />
-              <div class="min-w-0">
-                <div class="text-sm font-bold text-gray-900 truncate">${guestName}</div>
-                <div class="text-xs text-gray-500 truncate">${handle}</div>
-              </div>
-            </a>
-            <a href="public-profile.html?id=${encodeURIComponent(guestId)}" class="text-sm font-bold text-orange-600 hover:underline">View profile</a>
-          </div>
-        </div>
-      </div>
-    `;
+    var titleLink = El("a", { href: "experience.html?id=" + encodeURIComponent(expId), className: "font-bold text-gray-900 hover:text-orange-600 transition", textContent: title });
+    var whenEl = El("div", { className: "text-xs text-gray-500 mt-1", textContent: when ? ("Booked: " + when) : "" });
+    var cityEl = El("div", { className: "text-xs text-gray-500", textContent: exp.city || "" });
+    var guestNameEl = El("div", { className: "text-sm font-bold text-gray-900 truncate", textContent: guestName });
+    var handleEl = El("div", { className: "text-xs text-gray-500 truncate", textContent: handle });
+
+    var row = El("div", { className: "bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden" }, [
+      El("div", { className: "flex flex-col sm:flex-row" }, [
+        El("a", { href: "experience.html?id=" + encodeURIComponent(expId), className: "sm:w-56 h-40 sm:h-auto bg-gray-100 overflow-hidden" }, [expImg]),
+        El("div", { className: "flex-1 p-5" }, [
+          El("div", { className: "flex items-start justify-between gap-4" }, [
+            El("div", {}, [titleLink, whenEl]),
+            cityEl
+          ]),
+          El("div", { className: "mt-4 flex items-center justify-between gap-4" }, [
+            El("a", { href: "public-profile.html?id=" + encodeURIComponent(guestId), className: "flex items-center gap-3 min-w-0" }, [
+              guestImg,
+              El("div", { className: "min-w-0" }, [guestNameEl, handleEl])
+            ]),
+            El("a", { href: "public-profile.html?id=" + encodeURIComponent(guestId), className: "text-sm font-bold text-orange-600 hover:underline", textContent: "View profile" })
+          ])
+        ])
+      ])
+    ]);
 
     return row;
   }
@@ -81,7 +86,7 @@
       const list = Array.isArray(data) ? data : [];
 
       if (!listEl) return;
-      listEl.innerHTML = "";
+      listEl.textContent = "";
 
       if (list.length === 0) {
         showOnly(emptyEl);

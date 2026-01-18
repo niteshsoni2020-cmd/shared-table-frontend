@@ -105,8 +105,12 @@ document.addEventListener("DOMContentLoaded", () => {
     
     // 1. Build Query & Fetch
     const fetchExperiences = async () => {
-        // UI Loading
-        experiencesGrid.innerHTML = `<div class="col-span-full text-center py-12"><i class="fas fa-spinner fa-spin text-3xl text-orange-500"></i></div>`;
+        // UI Loading - DOM-safe
+        experiencesGrid.textContent = "";
+        var spinnerWrap = window.tstsEl("div", { className: "col-span-full text-center py-12" }, [
+            window.tstsEl("i", { className: "fas fa-spinner fa-spin text-3xl text-orange-500" })
+        ]);
+        experiencesGrid.appendChild(spinnerWrap);
         noResultsEl.classList.add("hidden");
         updateActiveChips(); 
 
@@ -133,7 +137,8 @@ document.addEventListener("DOMContentLoaded", () => {
             console.error(err);
             experiencesGrid.classList.remove("hidden");
             noResultsEl.classList.add("hidden");
-            experiencesGrid.innerHTML = `<div class="col-span-full text-center text-red-500 py-12">Failed to load experiences.</div>`;
+            experiencesGrid.textContent = "";
+            experiencesGrid.appendChild(window.tstsEl("div", { className: "col-span-full text-center text-red-500 py-12", textContent: "Failed to load experiences." }));
         }
     };
 
@@ -190,7 +195,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // === RENDER LOGIC ===
     const renderExperiences = (experiences) => {
-        experiencesGrid.innerHTML = "";
+        const El = window.tstsEl;
+        const safeUrl = window.tstsSafeUrl;
+        const fallbackImg = "https://via.placeholder.com/400x300";
+        const fallbackHostPic = "https://via.placeholder.com/30";
+
+        experiencesGrid.textContent = "";
         if (!experiences || !experiences.length) {
             experiencesGrid.classList.add("hidden");
             noResultsEl.classList.remove("hidden");
@@ -199,32 +209,48 @@ document.addEventListener("DOMContentLoaded", () => {
         experiencesGrid.classList.remove("hidden");
         noResultsEl.classList.add("hidden");
 
-        experiences.forEach(exp => {
-            const img = exp.imageUrl || (exp.images && exp.images[0]) || "https://via.placeholder.com/400x300";
+        experiences.forEach(function(exp) {
+            const imgUrl = safeUrl(exp.imageUrl || (exp.images && exp.images[0]), fallbackImg);
             const price = exp.price || 0;
-            
-            const card = document.createElement("a");
-            card.href = `experience.html?id=${exp._id}`;
-            card.className = "group block bg-white rounded-xl shadow-sm hover:shadow-md transition overflow-hidden border border-gray-100 flex flex-col";
-            card.innerHTML = `
-                <div class="relative h-48 w-full overflow-hidden bg-gray-100">
-                    <img src="${img}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" onerror="this.src='https://via.placeholder.com/400?text=No+Image'"/>
-                    <div class="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md text-xs font-bold shadow-sm">$${price}</div>
-                    ${exp.isPaused ? '<div class="absolute inset-0 bg-black/50 flex items-center justify-center text-white font-bold">Paused</div>' : ''}
-                </div>
-                <div class="p-4 flex flex-col gap-2 flex-grow">
-                    <div class="flex items-center gap-2 mb-1">
-                        <img src="${exp.hostPic || 'https://via.placeholder.com/30'}" class="w-6 h-6 rounded-full border border-gray-100">
-                        <span class="text-xs text-gray-500 truncate">${exp.hostName || 'Local Host'}</span>
-                    </div>
-                    <h3 class="font-bold text-gray-900 mb-1 truncate">${exp.title}</h3>
-                    <p class="text-xs text-gray-500 flex items-center gap-1 mb-3"><i class="fas fa-map-marker-alt text-orange-500"></i> ${exp.city}</p>
-                    <div class="mt-auto pt-3 border-t border-gray-50 flex justify-between items-center">
-                        <div class="flex items-center text-xs text-yellow-500 gap-1"><i class="fas fa-star"></i> <span class="font-bold text-gray-700">${exp.averageRating ? exp.averageRating.toFixed(1) : 'New'}</span> <span class="text-gray-400">(${exp.reviewCount || 0})</span></div>
-                        <span class="text-xs text-orange-600 font-semibold group-hover:underline">View &rarr;</span>
-                    </div>
-                </div>
-            `;
+            const hostPicUrl = safeUrl(exp.hostPic, fallbackHostPic);
+
+            var imgEl = El("img", { className: "w-full h-full object-cover group-hover:scale-105 transition duration-500" });
+            window.tstsSafeImg(imgEl, imgUrl, fallbackImg);
+
+            var hostImgEl = El("img", { className: "w-6 h-6 rounded-full border border-gray-100" });
+            window.tstsSafeImg(hostImgEl, hostPicUrl, fallbackHostPic);
+
+            var imageContainer = El("div", { className: "relative h-48 w-full overflow-hidden bg-gray-100" }, [
+                imgEl,
+                El("div", { className: "absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md text-xs font-bold shadow-sm", textContent: "$" + price })
+            ]);
+
+            if (exp.isPaused) {
+                imageContainer.appendChild(El("div", { className: "absolute inset-0 bg-black/50 flex items-center justify-center text-white font-bold", textContent: "Paused" }));
+            }
+
+            var markerIcon = El("i", { className: "fas fa-map-marker-alt text-orange-500" });
+            var starIcon = El("i", { className: "fas fa-star" });
+
+            var card = El("a", { href: "experience.html?id=" + encodeURIComponent(exp._id || ""), className: "group block bg-white rounded-xl shadow-sm hover:shadow-md transition overflow-hidden border border-gray-100 flex flex-col" }, [
+                imageContainer,
+                El("div", { className: "p-4 flex flex-col gap-2 flex-grow" }, [
+                    El("div", { className: "flex items-center gap-2 mb-1" }, [
+                        hostImgEl,
+                        El("span", { className: "text-xs text-gray-500 truncate", textContent: exp.hostName || "Local Host" })
+                    ]),
+                    El("h3", { className: "font-bold text-gray-900 mb-1 truncate", textContent: exp.title || "" }),
+                    El("p", { className: "text-xs text-gray-500 flex items-center gap-1 mb-3" }, [markerIcon, " " + (exp.city || "")]),
+                    El("div", { className: "mt-auto pt-3 border-t border-gray-50 flex justify-between items-center" }, [
+                        El("div", { className: "flex items-center text-xs text-yellow-500 gap-1" }, [
+                            starIcon,
+                            El("span", { className: "font-bold text-gray-700", textContent: exp.averageRating ? exp.averageRating.toFixed(1) : "New" }),
+                            El("span", { className: "text-gray-400", textContent: "(" + (exp.reviewCount || 0) + ")" })
+                        ]),
+                        El("span", { className: "text-xs text-orange-600 font-semibold group-hover:underline", textContent: "View →" })
+                    ])
+                ])
+            ]);
             experiencesGrid.appendChild(card);
         });
     };
@@ -232,7 +258,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // === HELPER: ACTIVE CHIPS ===
     const updateActiveChips = () => {
         if (!activeFiltersBar) return;
-        activeFiltersBar.innerHTML = "";
+        activeFiltersBar.textContent = "";
         
         const addChip = (label) => {
             const span = document.createElement("span");

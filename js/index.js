@@ -39,24 +39,25 @@ function getToken() {
 
 
 function renderCollections() {
+    const El = window.tstsEl;
     const container = document.getElementById("collections-list");
     if (!container) return;
 
-    container.innerHTML = collectionsData.map(col => `
-        <div onclick="window.location.href='explore.html?q=${encodeURIComponent(col.searchQuery)}'" 
-             class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition cursor-pointer group flex flex-col justify-between h-full">
-            <div>
-                <div class="h-12 w-12 bg-gray-50 rounded-full flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition">
-                    ${col.icon}
-                </div>
-                <h3 class="text-lg font-bold text-gray-900 mb-2 group-hover:text-orange-600 transition">${col.title}</h3>
-                <p class="text-sm text-gray-500 leading-relaxed">${col.description}</p>
-            </div>
-            <div class="mt-6 flex items-center text-xs font-bold text-orange-600">
-                Browse Collection <span>→</span>
-            </div>
-        </div>
-    `).join("");
+    container.textContent = "";
+    collectionsData.forEach(function(col) {
+        var card = El("div", { 
+            className: "bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition cursor-pointer group flex flex-col justify-between h-full",
+            onclick: function() { window.location.href = "explore.html?q=" + encodeURIComponent(col.searchQuery); }
+        }, [
+            El("div", {}, [
+                El("div", { className: "h-12 w-12 bg-gray-50 rounded-full flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition", textContent: col.icon }),
+                El("h3", { className: "text-lg font-bold text-gray-900 mb-2 group-hover:text-orange-600 transition", textContent: col.title }),
+                El("p", { className: "text-sm text-gray-500 leading-relaxed", textContent: col.description })
+            ]),
+            El("div", { className: "mt-6 flex items-center text-xs font-bold text-orange-600", textContent: "Browse Collection →" })
+        ]);
+        container.appendChild(card);
+    });
 }
 
 // --- 3. RECOMMENDATIONS & DEALS ---
@@ -95,7 +96,10 @@ async function loadHomeRecommendations() {
     const recs = items.slice(0, 4);
     if (recs.length > 0) {
       section.classList.remove("hidden");
-      list.innerHTML = recs.map(exp => renderCard(exp)).join("");
+      list.textContent = "";
+      recs.forEach(function(exp) {
+        list.appendChild(renderCard(exp));
+      });
     }
   } catch(e) {
     console.error("Failed to load recommendations:", e);
@@ -103,34 +107,44 @@ async function loadHomeRecommendations() {
 }
 
 function renderCard(exp) {
-    let imgSrc = "https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=400&auto=format&fit=crop";
+    const El = window.tstsEl;
+    const fallbackImg = "https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=400&auto=format&fit=crop";
+    let imgSrc = fallbackImg;
     if (exp.imageUrl && exp.imageUrl.includes("cloudinary.com")) {
         imgSrc = exp.imageUrl.replace('/upload/', '/upload/w_400,h_300,c_fill,q_auto/');
     } else if (exp.imageUrl) {
-        imgSrc = exp.imageUrl;
+        imgSrc = window.tstsSafeUrl(exp.imageUrl, fallbackImg);
     }
 
     const avg = (exp && typeof exp.averageRating === 'number') ? exp.averageRating : 0;
-    const rating = avg > 0 ? `★ ${avg.toFixed(1)}` : "New";
+    const rating = avg > 0 ? "★ " + avg.toFixed(1) : "New";
+    const expId = (exp && (exp._id || exp.id)) || "";
+    const title = exp.title || "";
+    const city = exp.city || "";
+    const tag = (exp && Array.isArray(exp.tags) && exp.tags[0]) ? exp.tags[0] : "Experience";
+    const price = (exp && (typeof exp.price === 'number' || typeof exp.price === 'string')) ? String(exp.price) : "";
 
-    // ADDED: loading="lazy"
-    return `
-    <div onclick="window.location.href='experience.html?id=${(exp && (exp._id || exp.id)) || ''}'" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition cursor-pointer group">
-        <div class="h-48 bg-gray-200 relative overflow-hidden">
-            <img src="${imgSrc}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" loading="lazy">
-            <div class="absolute top-3 right-3 bg-white/90 backdrop-blur rounded-full px-2 py-1 text-xs font-bold shadow-sm">
-                ${rating}
-            </div>
-        </div>
-        <div class="p-4">
-            <h3 class="font-bold text-gray-900 mb-1 truncate">${exp.title}</h3>
-            <p class="text-xs text-gray-500 mb-3">${exp.city} • ${(exp && Array.isArray(exp.tags) && exp.tags[0]) ? exp.tags[0] : 'Experience'}</p>
-            <div class="flex justify-between items-center border-t border-gray-50 pt-3">
-                <span class="font-bold text-gray-900">${(exp && (typeof exp.price === 'number' || typeof exp.price === 'string')) ? exp.price : ''}</span>
-                <span class="text-xs text-orange-600 font-bold uppercase tracking-wide group-hover:underline">View</span>
-            </div>
-        </div>
-    </div>`;
+    var imgEl = El("img", { className: "w-full h-full object-cover group-hover:scale-105 transition duration-500", loading: "lazy" });
+    window.tstsSafeImg(imgEl, imgSrc, fallbackImg);
+
+    var card = El("div", {
+        className: "bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition cursor-pointer group",
+        onclick: function() { window.location.href = "experience.html?id=" + encodeURIComponent(expId); }
+    }, [
+        El("div", { className: "h-48 bg-gray-200 relative overflow-hidden" }, [
+            imgEl,
+            El("div", { className: "absolute top-3 right-3 bg-white/90 backdrop-blur rounded-full px-2 py-1 text-xs font-bold shadow-sm", textContent: rating })
+        ]),
+        El("div", { className: "p-4" }, [
+            El("h3", { className: "font-bold text-gray-900 mb-1 truncate", textContent: title }),
+            El("p", { className: "text-xs text-gray-500 mb-3", textContent: city + " • " + tag }),
+            El("div", { className: "flex justify-between items-center border-t border-gray-50 pt-3" }, [
+                El("span", { className: "font-bold text-gray-900", textContent: price }),
+                El("span", { className: "text-xs text-orange-600 font-bold uppercase tracking-wide group-hover:underline", textContent: "View" })
+            ])
+        ])
+    ]);
+    return card;
 }
 
 // --- INIT ---

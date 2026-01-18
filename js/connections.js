@@ -40,22 +40,24 @@
     if (which) which.classList.remove("hidden");
   }
 
-  function userRow(u) {
+  function userRowEl(u) {
+    const El = window.tstsEl;
     const user = u || {};
-    const pic = user.profilePic || "https://via.placeholder.com/40?text=U";
+    const pic = window.tstsSafeUrl(user.profilePic, "https://via.placeholder.com/40?text=U");
     const name = user.name || "User";
     const handle = user.handle ? ("@" + user.handle) : "";
     const id = user._id || user.id || "";
 
-    return `
-      <div class="flex items-center gap-3">
-        <img src="${pic}" class="h-10 w-10 rounded-full border border-gray-100 object-cover" />
-        <div class="min-w-0">
-          <div class="font-bold text-gray-900 truncate">${name}</div>
-          <div class="text-xs text-gray-500 truncate">${handle} ${id ? ("• " + id) : ""}</div>
-        </div>
-      </div>
-    `;
+    var imgEl = El("img", { className: "h-10 w-10 rounded-full border border-gray-100 object-cover" });
+    window.tstsSafeImg(imgEl, pic, "https://via.placeholder.com/40?text=U");
+
+    return El("div", { className: "flex items-center gap-3" }, [
+      imgEl,
+      El("div", { className: "min-w-0" }, [
+        El("div", { className: "font-bold text-gray-900 truncate", textContent: name }),
+        El("div", { className: "text-xs text-gray-500 truncate", textContent: handle + (id ? (" • " + id) : "") })
+      ])
+    ]);
   }
 
   async function post(path) {
@@ -76,24 +78,23 @@
       const list = Array.isArray(data) ? data : [];
 
       if (!reqList) return;
-      reqList.innerHTML = "";
+      reqList.textContent = "";
 
       if (list.length === 0) {
         showReq(reqEmpty);
         return;
       }
 
-      list.forEach((r) => {
-        const wrap = document.createElement("div");
-        wrap.className = "p-4 rounded-xl border border-gray-100 bg-gray-50 flex items-center justify-between gap-3";
-        wrap.innerHTML = `
-          ${userRow(r.from)}
-          <div class="flex items-center gap-2">
-            <button class="px-3 py-2 rounded-lg bg-gray-900 text-white text-xs font-bold hover:bg-black" data-action="accept" data-id="${r._id}">Accept</button>
-            <button class="px-3 py-2 rounded-lg border border-gray-200 bg-white text-xs font-bold hover:bg-gray-50" data-action="reject" data-id="${r._id}">Reject</button>
-            <button class="px-3 py-2 rounded-lg border border-red-200 bg-white text-xs font-bold text-red-600 hover:bg-red-50" data-action="block" data-id="${r._id}">Block</button>
-          </div>
-        `;
+      const El = window.tstsEl;
+      list.forEach(function(r) {
+        var wrap = El("div", { className: "p-4 rounded-xl border border-gray-100 bg-gray-50 flex items-center justify-between gap-3" }, [
+          userRowEl(r.from),
+          El("div", { className: "flex items-center gap-2" }, [
+            El("button", { className: "px-3 py-2 rounded-lg bg-gray-900 text-white text-xs font-bold hover:bg-black", "data-action": "accept", "data-id": r._id || "", textContent: "Accept" }),
+            El("button", { className: "px-3 py-2 rounded-lg border border-gray-200 bg-white text-xs font-bold hover:bg-gray-50", "data-action": "reject", "data-id": r._id || "", textContent: "Reject" }),
+            El("button", { className: "px-3 py-2 rounded-lg border border-red-200 bg-white text-xs font-bold text-red-600 hover:bg-red-50", "data-action": "block", "data-id": r._id || "", textContent: "Block" })
+          ])
+        ]);
         reqList.appendChild(wrap);
       });
 
@@ -117,23 +118,23 @@
       const list = Array.isArray(data) ? data : [];
 
       if (!connList) return;
-      connList.innerHTML = "";
+      connList.textContent = "";
 
       if (list.length === 0) {
         showConn(connEmpty);
         return;
       }
 
-      list.forEach((c) => {
-        const wrap = document.createElement("div");
-        wrap.className = "p-4 rounded-xl border border-gray-100 bg-white flex items-center justify-between gap-3";
-        wrap.innerHTML = `
-          ${userRow(c.user)}
-          <div class="flex items-center gap-2">
-            <a class="text-sm font-bold text-orange-600 hover:underline" href="public-profile.html?id=${encodeURIComponent((c.user && (c.user._id || c.user.id)) || "")}">View profile</a>
-            <button class="px-3 py-2 rounded-lg border border-red-200 bg-white text-xs font-bold text-red-600 hover:bg-red-50" data-action="remove" data-userid="${(c.user && (c.user._id || c.user.id)) || ""}">Remove</button>
-          </div>
-        `;
+      const El = window.tstsEl;
+      list.forEach(function(c) {
+        var userId = (c.user && (c.user._id || c.user.id)) || "";
+        var wrap = El("div", { className: "p-4 rounded-xl border border-gray-100 bg-white flex items-center justify-between gap-3" }, [
+          userRowEl(c.user),
+          El("div", { className: "flex items-center gap-2" }, [
+            El("a", { className: "text-sm font-bold text-orange-600 hover:underline", href: "public-profile.html?id=" + encodeURIComponent(userId), textContent: "View profile" }),
+            El("button", { className: "px-3 py-2 rounded-lg border border-red-200 bg-white text-xs font-bold text-red-600 hover:bg-red-50", "data-action": "remove", "data-userid": userId, textContent: "Remove" })
+          ])
+        ]);
         connList.appendChild(wrap);
       });
 

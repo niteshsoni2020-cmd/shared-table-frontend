@@ -35,8 +35,7 @@
     const el = document.getElementById(id);
     if (!el) return;
     const fallback = "https://via.placeholder.com/1200x700?text=No+Image";
-    el.src = url || fallback;
-    el.onerror = () => { el.src = fallback; };
+    window.tstsSafeImg(el, url, fallback);
   }
 
   function show(id) {
@@ -163,7 +162,7 @@
       ? e.timeSlots
       : ["18:00-20:00"];
 
-    timeSlotInput.innerHTML = "";
+    timeSlotInput.textContent = "";
     for (const s of slots) {
       const opt = document.createElement("option");
       opt.value = String(s);
@@ -270,6 +269,25 @@
     });
   }
 
+  function buildReviewCard(r) {
+    const El = window.tstsEl;
+    const rating = Math.max(0, Math.min(5, parseInt(r.rating, 10) || 0));
+    const when = r.date ? fmtDate(r.date) : "";
+    const name = r.authorName || "Guest";
+    const comment = (r.comment == null) ? "" : String(r.comment);
+
+    return El("div", { className: "bg-slate-50/70 border border-slate-200 rounded-2xl p-4" }, [
+      El("div", { className: "flex justify-between items-start gap-4" }, [
+        El("div", {}, [
+          El("div", { className: "font-bold text-slate-900", textContent: name }),
+          El("div", { className: "text-xs text-slate-500", textContent: when })
+        ]),
+        El("div", { className: "text-xs text-yellow-500", textContent: "★".repeat(rating) + "☆".repeat(5 - rating) })
+      ]),
+      El("p", { className: "text-sm text-slate-700 mt-3 italic", textContent: '"' + comment + '"' })
+    ]);
+  }
+
   async function loadReviews() {
     if (!reviewsSection || !reviewsList) return;
     try {
@@ -278,39 +296,29 @@
       const list = Array.isArray(data) ? data : [];
       if (!res.ok || list.length === 0) return;
 
-      reviewsList.innerHTML = list.slice(0, 8).map((r) => {
-        const rating = Math.max(0, Math.min(5, parseInt(r.rating, 10) || 0));
-        const when = r.date ? fmtDate(r.date) : "";
-        const name = r.authorName || "Guest";
-        const comment = (r.comment == null) ? "" : String(r.comment);
-        return `
-          <div class="bg-slate-50/70 border border-slate-200 rounded-2xl p-4">
-            <div class="flex justify-between items-start gap-4">
-              <div>
-                <div class="font-bold text-slate-900">${name}</div>
-                <div class="text-xs text-slate-500">${when}</div>
-              </div>
-              <div class="text-xs text-yellow-500">${"★".repeat(rating)}${"☆".repeat(5 - rating)}</div>
-            </div>
-            <p class="text-sm text-slate-700 mt-3 italic">"${comment}"</p>
-          </div>
-        `;
-      }).join("");
+      reviewsList.textContent = "";
+      list.slice(0, 8).forEach(function(r) {
+        reviewsList.appendChild(buildReviewCard(r));
+      });
 
       reviewsSection.classList.remove("hidden");
 
       if (featuredReviewContainer) {
         const top = list[0];
         if (top) {
+          const El = window.tstsEl;
           const rating = Math.max(0, Math.min(5, parseInt(top.rating, 10) || 0));
-          featuredReviewContainer.innerHTML = `
-            <p class="text-xs uppercase tracking-[0.18em] text-slate-500 mb-1">Featured review</p>
-            <div class="flex items-center justify-between gap-3">
-              <p class="font-semibold text-tsts-ink">${top.authorName || "Guest"}</p>
-              <p class="text-xs text-yellow-500">${"★".repeat(rating)}${"☆".repeat(5 - rating)}</p>
-            </div>
-            <p class="text-sm text-slate-700 mt-3 italic">"${String(top.comment || "")}"</p>
-          `;
+          featuredReviewContainer.textContent = "";
+          featuredReviewContainer.appendChild(
+            El("div", {}, [
+              El("p", { className: "text-xs uppercase tracking-[0.18em] text-slate-500 mb-1", textContent: "Featured review" }),
+              El("div", { className: "flex items-center justify-between gap-3" }, [
+                El("p", { className: "font-semibold text-tsts-ink", textContent: top.authorName || "Guest" }),
+                El("p", { className: "text-xs text-yellow-500", textContent: "★".repeat(rating) + "☆".repeat(5 - rating) })
+              ]),
+              El("p", { className: "text-sm text-slate-700 mt-3 italic", textContent: '"' + String(top.comment || "") + '"' })
+            ])
+          );
           featuredReviewContainer.classList.remove("hidden");
         }
       }
@@ -325,29 +333,50 @@
       const list = Array.isArray(data) ? data : [];
       if (!res.ok || list.length === 0) return;
 
-      similarGrid.innerHTML = "";
-      list.slice(0, 3).forEach((e) => {
+      const El = window.tstsEl;
+      const safeUrl = window.tstsSafeUrl;
+      const fallbackImg = "https://via.placeholder.com/400x300";
+
+      similarGrid.textContent = "";
+      list.slice(0, 3).forEach(function(e) {
         const id = e._id || e.id || "";
-        const img = e.imageUrl || (Array.isArray(e.images) ? e.images[0] : "") || "https://via.placeholder.com/400x300";
+        const imgUrl = safeUrl(e.imageUrl || (Array.isArray(e.images) ? e.images[0] : ""), fallbackImg);
         const price = (e.price == null) ? "" : String(e.price);
-        const a = document.createElement("a");
-        a.href = "experience.html?id=" + encodeURIComponent(id);
-        a.className = "group block bg-white rounded-xl shadow-sm hover:shadow-md transition overflow-hidden border border-gray-100 flex flex-col";
-        a.innerHTML = `
-          <div class="relative h-40 w-full overflow-hidden bg-gray-100">
-            <img src="${img}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" onerror="this.src='https://via.placeholder.com/400?text=No+Image'"/>
-            <div class="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md text-xs font-bold shadow-sm">$${price}</div>
-          </div>
-          <div class="p-4">
-            <div class="font-bold text-slate-900 truncate">${e.title || "Experience"}</div>
-            <div class="text-xs text-slate-500 mt-1">${e.city || ""}</div>
-          </div>
-        `;
+
+        var imgEl = El("img", { className: "w-full h-full object-cover group-hover:scale-105 transition duration-500" });
+        window.tstsSafeImg(imgEl, imgUrl, fallbackImg);
+
+        var a = El("a", { href: "experience.html?id=" + encodeURIComponent(id), className: "group block bg-white rounded-xl shadow-sm hover:shadow-md transition overflow-hidden border border-gray-100 flex flex-col" }, [
+          El("div", { className: "relative h-40 w-full overflow-hidden bg-gray-100" }, [
+            imgEl,
+            El("div", { className: "absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md text-xs font-bold shadow-sm", textContent: "$" + price })
+          ]),
+          El("div", { className: "p-4" }, [
+            El("div", { className: "font-bold text-slate-900 truncate", textContent: e.title || "Experience" }),
+            El("div", { className: "text-xs text-slate-500 mt-1", textContent: e.city || "" })
+          ])
+        ]);
         similarGrid.appendChild(a);
       });
 
       similarSection.classList.remove("hidden");
     } catch (_) {}
+  }
+
+  function buildCommentCard(c) {
+    const El = window.tstsEl;
+    const a = c.author || {};
+    const name = a ? (a.name || "User") : "User";
+    const when = c.createdAt ? fmtDate(c.createdAt) : "";
+    const text = String(c.text || "");
+
+    return El("div", { className: "bg-slate-50/70 border border-slate-200 rounded-2xl p-4" }, [
+      El("div", { className: "flex justify-between items-start gap-4" }, [
+        El("div", { className: "font-bold text-slate-900", textContent: name }),
+        El("div", { className: "text-xs text-slate-500", textContent: when })
+      ]),
+      El("p", { className: "text-sm text-slate-700 mt-2", textContent: text })
+    ]);
   }
 
   async function loadComments() {
@@ -372,21 +401,10 @@
       }
 
       const list = Array.isArray(data) ? data : [];
-      commentsList.innerHTML = list.map((c) => {
-        const a = c.author || {};
-        const name = a ? (a.name || "User") : "User";
-        const when = c.createdAt ? fmtDate(c.createdAt) : "";
-        const text = String(c.text || "");
-        return `
-          <div class="bg-slate-50/70 border border-slate-200 rounded-2xl p-4">
-            <div class="flex justify-between items-start gap-4">
-              <div class="font-bold text-slate-900">${name}</div>
-              <div class="text-xs text-slate-500">${when}</div>
-            </div>
-            <p class="text-sm text-slate-700 mt-2">${text}</p>
-          </div>
-        `;
-      }).join("");
+      commentsList.textContent = "";
+      list.forEach(function(c) {
+        commentsList.appendChild(buildCommentCard(c));
+      });
 
       commentsSection.classList.remove("hidden");
       if (commentHint) commentHint.textContent = "";

@@ -23,7 +23,7 @@
   function syncNavAvatar(url) {
     try {
       const img = document.getElementById("nav-user-pic");
-      if (img && url) img.src = url;
+      if (img && url) window.tstsSafeImg(img, url, "https://via.placeholder.com/40?text=U");
     } catch (_) {}
   }
 
@@ -87,7 +87,7 @@
       try { if (handleInput) handleInput.value = user.handle || ""; } catch (_) {}
       try { if (allowHandleSearchToggle) allowHandleSearchToggle.checked = !!user.allowHandleSearch; } catch (_) {}
       try { if (shareToFriendsToggle) shareToFriendsToggle.checked = !!user.showExperiencesToFriends; } catch (_) {}
-      if (profilePicPreview && user.profilePic) profilePicPreview.src = user.profilePic;
+      if (profilePicPreview && user.profilePic) window.tstsSafeImg(profilePicPreview, user.profilePic, "https://via.placeholder.com/150?text=User");
 
       // keep localStorage user in sync so navbar can reflect it everywhere
       const prev = getStoredUser();
@@ -247,7 +247,7 @@
         }
 
         // ensure preview matches final secure URL and nav sync happens even if API returns old shape
-        if (profilePicPreview) profilePicPreview.src = secureUrl;
+        if (profilePicPreview) window.tstsSafeImg(profilePicPreview, secureUrl, "https://via.placeholder.com/150?text=User");
         syncNavAvatar(secureUrl);
 
         uploadBtn.classList.add("hidden");

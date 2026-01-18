@@ -119,120 +119,165 @@ function $(id) { return document.getElementById(id); }
 function safe(v, fallback="") { return (v === null || v === undefined) ? fallback : v; }
 
 function renderStats(stats) {
+  const El = window.tstsEl;
   const el = $("stats");
   if (!el) return;
   const s = stats || {};
-  el.innerHTML = `
-    <div class="grid md:grid-cols-4 gap-4">
-      <div class="bg-white rounded-xl border border-gray-100 p-4"><div class="text-xs text-gray-500">Users</div><div class="text-2xl font-bold">${safe(s.users, 0)}</div></div>
-      <div class="bg-white rounded-xl border border-gray-100 p-4"><div class="text-xs text-gray-500">Experiences</div><div class="text-2xl font-bold">${safe(s.experiences, 0)}</div></div>
-      <div class="bg-white rounded-xl border border-gray-100 p-4"><div class="text-xs text-gray-500">Bookings</div><div class="text-2xl font-bold">${safe(s.bookings, 0)}</div></div>
-      <div class="bg-white rounded-xl border border-gray-100 p-4"><div class="text-xs text-gray-500">Revenue</div><div class="text-2xl font-bold">$${safe(s.revenue, 0)}</div></div>
-    </div>
-  `;
+  el.textContent = "";
+  
+  var grid = El("div", { className: "grid md:grid-cols-4 gap-4" }, [
+    El("div", { className: "bg-white rounded-xl border border-gray-100 p-4" }, [
+      El("div", { className: "text-xs text-gray-500", textContent: "Users" }),
+      El("div", { className: "text-2xl font-bold", textContent: String(safe(s.users, 0)) })
+    ]),
+    El("div", { className: "bg-white rounded-xl border border-gray-100 p-4" }, [
+      El("div", { className: "text-xs text-gray-500", textContent: "Experiences" }),
+      El("div", { className: "text-2xl font-bold", textContent: String(safe(s.experiences, 0)) })
+    ]),
+    El("div", { className: "bg-white rounded-xl border border-gray-100 p-4" }, [
+      El("div", { className: "text-xs text-gray-500", textContent: "Bookings" }),
+      El("div", { className: "text-2xl font-bold", textContent: String(safe(s.bookings, 0)) })
+    ]),
+    El("div", { className: "bg-white rounded-xl border border-gray-100 p-4" }, [
+      El("div", { className: "text-xs text-gray-500", textContent: "Revenue" }),
+      El("div", { className: "text-2xl font-bold", textContent: "$" + String(safe(s.revenue, 0)) })
+    ])
+  ]);
+  el.appendChild(grid);
 }
 
 function renderBookings(bookings) {
+  const El = window.tstsEl;
   const el = $("bookings");
   if (!el) return;
-  const rows = (Array.isArray(bookings) ? bookings : []).map(b => {
-    const id = b._id || b.id || "";
-    const title = b.experience?.title || b.experienceTitle || "Experience";
-    const guest = b.guestId?.name || b.guestName || "Guest";
-    const date = b.bookingDate ? new Date(b.bookingDate).toLocaleDateString("en-AU") : "—";
-    const status = b.status || "—";
-    return `
-      <tr class="border-t">
-        <td class="p-3 text-sm">${title}</td>
-        <td class="p-3 text-sm">${guest}</td>
-        <td class="p-3 text-sm">${date}</td>
-        <td class="p-3 text-sm">${status}</td>
-        <td class="p-3 text-sm text-right">
-          <button class="px-3 py-1 text-xs font-bold rounded border border-red-200 text-red-600 hover:bg-red-50"
-            onclick="adminCancelBooking('${id}')">Cancel</button>
-        </td>
-      </tr>
-    `;
-  }).join("");
+  el.textContent = "";
 
-  el.innerHTML = `
-    <div class="bg-white rounded-xl border border-gray-100 overflow-hidden">
-      <table class="w-full">
-        <thead class="bg-gray-50 text-xs text-gray-500">
-          <tr>
-            <th class="p-3 text-left">Experience</th>
-            <th class="p-3 text-left">Guest</th>
-            <th class="p-3 text-left">Date</th>
-            <th class="p-3 text-left">Status</th>
-            <th class="p-3 text-right">Action</th>
-          </tr>
-        </thead>
-        <tbody>${rows || `<tr><td class="p-6 text-center text-sm text-gray-500" colspan="5">No bookings.</td></tr>`}</tbody>
-      </table>
-    </div>
-  `;
+  var tbody = El("tbody", {});
+  var list = Array.isArray(bookings) ? bookings : [];
+  
+  if (list.length === 0) {
+    tbody.appendChild(El("tr", {}, [
+      El("td", { className: "p-6 text-center text-sm text-gray-500", colSpan: "5", textContent: "No bookings." })
+    ]));
+  } else {
+    list.forEach(function(b) {
+      var id = b._id || b.id || "";
+      var title = (b.experience && b.experience.title) || b.experienceTitle || "Experience";
+      var guest = (b.guestId && b.guestId.name) || b.guestName || "Guest";
+      var date = b.bookingDate ? new Date(b.bookingDate).toLocaleDateString("en-AU") : "—";
+      var status = b.status || "—";
+
+      var cancelBtn = El("button", { className: "px-3 py-1 text-xs font-bold rounded border border-red-200 text-red-600 hover:bg-red-50", textContent: "Cancel" });
+      cancelBtn.addEventListener("click", function() { window.adminCancelBooking(id); });
+
+      tbody.appendChild(El("tr", { className: "border-t" }, [
+        El("td", { className: "p-3 text-sm", textContent: title }),
+        El("td", { className: "p-3 text-sm", textContent: guest }),
+        El("td", { className: "p-3 text-sm", textContent: date }),
+        El("td", { className: "p-3 text-sm", textContent: status }),
+        El("td", { className: "p-3 text-sm text-right" }, [cancelBtn])
+      ]));
+    });
+  }
+
+  var table = El("table", { className: "w-full" }, [
+    El("thead", { className: "bg-gray-50 text-xs text-gray-500" }, [
+      El("tr", {}, [
+        El("th", { className: "p-3 text-left", textContent: "Experience" }),
+        El("th", { className: "p-3 text-left", textContent: "Guest" }),
+        El("th", { className: "p-3 text-left", textContent: "Date" }),
+        El("th", { className: "p-3 text-left", textContent: "Status" }),
+        El("th", { className: "p-3 text-right", textContent: "Action" })
+      ])
+    ]),
+    tbody
+  ]);
+
+  el.appendChild(El("div", { className: "bg-white rounded-xl border border-gray-100 overflow-hidden" }, [table]));
 }
 
 function renderExperiences(exps) {
+  const El = window.tstsEl;
   const el = $("experiences");
   if (!el) return;
-  const cards = (Array.isArray(exps) ? exps : []).map(e => {
-    const id = e._id || e.id || "";
-    const title = e.title || "Untitled";
-    const city = e.city || "—";
-    const active = (e.isActive !== undefined) ? !!e.isActive : true;
-    return `
-      <div class="bg-white rounded-xl border border-gray-100 p-4 flex items-center justify-between gap-4">
-        <div>
-          <div class="font-bold">${title}</div>
-          <div class="text-xs text-gray-500">${city}</div>
-        </div>
-        <div class="flex items-center gap-2">
-          <button class="px-3 py-1 text-xs font-bold rounded border ${active ? "border-gray-200 text-gray-700 hover:bg-gray-50" : "border-green-200 text-green-700 hover:bg-green-50"}"
-            onclick="adminToggleExperience('${id}')">${active ? "Disable" : "Enable"}</button>
-          <button class="px-3 py-1 text-xs font-bold rounded border border-red-200 text-red-600 hover:bg-red-50"
-            onclick="adminDeleteExperience('${id}')">Delete</button>
-        </div>
-      </div>
-    `;
-  }).join("");
+  el.textContent = "";
 
-  el.innerHTML = `<div class="space-y-3">${cards || `<div class="text-sm text-gray-500 text-center py-8">No experiences.</div>`}</div>`;
+  var list = Array.isArray(exps) ? exps : [];
+  var container = El("div", { className: "space-y-3" });
+
+  if (list.length === 0) {
+    container.appendChild(El("div", { className: "text-sm text-gray-500 text-center py-8", textContent: "No experiences." }));
+  } else {
+    list.forEach(function(e) {
+      var id = e._id || e.id || "";
+      var title = e.title || "Untitled";
+      var city = e.city || "—";
+      var active = (e.isActive !== undefined) ? !!e.isActive : true;
+
+      var toggleBtn = El("button", { 
+        className: "px-3 py-1 text-xs font-bold rounded border " + (active ? "border-gray-200 text-gray-700 hover:bg-gray-50" : "border-green-200 text-green-700 hover:bg-green-50"),
+        textContent: active ? "Disable" : "Enable"
+      });
+      toggleBtn.addEventListener("click", function() { window.adminToggleExperience(id); });
+
+      var deleteBtn = El("button", { className: "px-3 py-1 text-xs font-bold rounded border border-red-200 text-red-600 hover:bg-red-50", textContent: "Delete" });
+      deleteBtn.addEventListener("click", function() { window.adminDeleteExperience(id); });
+
+      container.appendChild(El("div", { className: "bg-white rounded-xl border border-gray-100 p-4 flex items-center justify-between gap-4" }, [
+        El("div", {}, [
+          El("div", { className: "font-bold", textContent: title }),
+          El("div", { className: "text-xs text-gray-500", textContent: city })
+        ]),
+        El("div", { className: "flex items-center gap-2" }, [toggleBtn, deleteBtn])
+      ]));
+    });
+  }
+
+  el.appendChild(container);
 }
 
 function renderUsers(users) {
+  const El = window.tstsEl;
   const el = $("users");
   if (!el) return;
-  const rows = (Array.isArray(users) ? users : []).map(u => {
-    const id = u._id || u.id || "";
-    const name = u.name || "—";
-    const email = u.email || "—";
-    return `
-      <tr class="border-t">
-        <td class="p-3 text-sm">${name}</td>
-        <td class="p-3 text-sm">${email}</td>
-        <td class="p-3 text-sm text-right">
-          <button class="px-3 py-1 text-xs font-bold rounded border border-red-200 text-red-600 hover:bg-red-50"
-            onclick="adminDeleteUser('${id}')">Delete</button>
-        </td>
-      </tr>
-    `;
-  }).join("");
+  el.textContent = "";
 
-  el.innerHTML = `
-    <div class="bg-white rounded-xl border border-gray-100 overflow-hidden">
-      <table class="w-full">
-        <thead class="bg-gray-50 text-xs text-gray-500">
-          <tr>
-            <th class="p-3 text-left">Name</th>
-            <th class="p-3 text-left">Email</th>
-            <th class="p-3 text-right">Action</th>
-          </tr>
-        </thead>
-        <tbody>${rows || `<tr><td class="p-6 text-center text-sm text-gray-500" colspan="3">No users.</td></tr>`}</tbody>
-      </table>
-    </div>
-  `;
+  var tbody = El("tbody", {});
+  var list = Array.isArray(users) ? users : [];
+
+  if (list.length === 0) {
+    tbody.appendChild(El("tr", {}, [
+      El("td", { className: "p-6 text-center text-sm text-gray-500", colSpan: "3", textContent: "No users." })
+    ]));
+  } else {
+    list.forEach(function(u) {
+      var id = u._id || u.id || "";
+      var name = u.name || "—";
+      var email = u.email || "—";
+
+      var deleteBtn = El("button", { className: "px-3 py-1 text-xs font-bold rounded border border-red-200 text-red-600 hover:bg-red-50", textContent: "Delete" });
+      deleteBtn.addEventListener("click", function() { window.adminDeleteUser(id); });
+
+      tbody.appendChild(El("tr", { className: "border-t" }, [
+        El("td", { className: "p-3 text-sm", textContent: name }),
+        El("td", { className: "p-3 text-sm", textContent: email }),
+        El("td", { className: "p-3 text-sm text-right" }, [deleteBtn])
+      ]));
+    });
+  }
+
+  var table = El("table", { className: "w-full" }, [
+    El("thead", { className: "bg-gray-50 text-xs text-gray-500" }, [
+      El("tr", {}, [
+        El("th", { className: "p-3 text-left", textContent: "Name" }),
+        El("th", { className: "p-3 text-left", textContent: "Email" }),
+        El("th", { className: "p-3 text-right", textContent: "Action" })
+      ])
+    ]),
+    tbody
+  ]);
+
+  el.appendChild(El("div", { className: "bg-white rounded-xl border border-gray-100 overflow-hidden" }, [table]));
 }
 
 // expose handlers used by onclick

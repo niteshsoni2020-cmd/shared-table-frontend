@@ -252,6 +252,34 @@ window.adminCancelBooking = async function(id) {
   try { await cancelBooking(id); await boot(); } catch (e) { alert(e.message || "Failed"); }
 };
 
+// Tab switching functionality
+window.switchTab = function(tabName) {
+  const views = ['dashboard', 'listings', 'users'];
+  views.forEach(view => {
+    const viewEl = document.getElementById('view-' + view);
+    if (viewEl) viewEl.classList.add('hidden');
+  });
+
+  views.forEach(view => {
+    const tabEl = document.getElementById('tab-' + view);
+    if (tabEl) {
+      tabEl.classList.remove('border-tsts-clay', 'text-tsts-clay', 'border-b-2');
+      tabEl.classList.add('border-transparent', 'text-gray-500');
+    }
+  });
+
+  const selectedView = document.getElementById('view-' + tabName);
+  if (selectedView) selectedView.classList.remove('hidden');
+
+  const selectedTab = document.getElementById('tab-' + tabName);
+  if (selectedTab) {
+    selectedTab.classList.remove('border-transparent', 'text-gray-500');
+    selectedTab.classList.add('border-tsts-clay', 'text-tsts-clay', 'border-b-2');
+  }
+
+  if (tabName === 'users') loadUsers();
+};
+
 async function boot() {
   if (!mustBeAdmin()) return;
 

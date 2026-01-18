@@ -479,18 +479,18 @@
           return;
         }
 
-        // normalize redirect keys
-        const nextUrl =
-          (data && (data.url || data.sessionUrl || data.checkoutUrl)) ||
-          "success.html";
-
-        location.href = nextUrl;
+        if (data && data.url) {
+          location.href = data.url;
+        } else {
+          location.href = "success.html";
+        }
       } catch (_) {
         alert("Booking failed");
         if (submitBtn) submitBtn.disabled = false;
       }
     });
   }
+
 
   loadExperience().catch(() => {
     alert("Unable to load experience.");

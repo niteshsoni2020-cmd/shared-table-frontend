@@ -88,16 +88,18 @@ async function loadHomeRecommendations() {
   if (!section || !list) return;
   const token = getToken();
   try {
-      const endpoint = token ? "/api/recommendations" : "/api/experiences?sort=rating_desc";
-      const res = await window.authFetch(endpoint, { method: "GET" });
-      const payload = await res.json();
-      const items = Array.isArray(payload) ? payload : (payload && payload.experiences) ? payload.experiences : (payload && payload.items) ? payload.items : [];
-      const recs = items.slice(0, 4);
-if (recs.length > 0) {
-          section.classList.remove("hidden");
-          list.innerHTML = recs.map(exp => renderCard(exp)).join("");
-      }
-  } catch (err) { console.error("Recs error", err); }
+    const endpoint = token ? "/api/recommendations" : "/api/experiences?sort=rating_desc";
+    const res = await window.authFetch(endpoint, { method: "GET" });
+    const payload = await res.json();
+    const items = Array.isArray(payload) ? payload : (payload && payload.experiences) ? payload.experiences : (payload && payload.items) ? payload.items : [];
+    const recs = items.slice(0, 4);
+    if (recs.length > 0) {
+      section.classList.remove("hidden");
+      list.innerHTML = recs.map(exp => renderCard(exp)).join("");
+    }
+  } catch(e) {
+    console.error("Failed to load recommendations:", e);
+  }
 }
 
 function renderCard(exp) {

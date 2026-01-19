@@ -1,23 +1,25 @@
 (function () {
-  function getToken() {
-    return (window.getAuthToken && window.getAuthToken()) || "";
-  }
+  const CLOUDINARY_URL = (window.CLOUDINARY_URL || "");
 
-  function redirectToLogin() {
-    const returnTo = encodeURIComponent(location.pathname + location.search);
-    location.href = "login.html?returnTo=" + returnTo;
-  }
+  const form = document.getElementById("profile-form");
+  const nameInput = document.getElementById("name");
+  const bioInput = document.getElementById("bio");
+  const handleInput = document.getElementById("handle");
+  const allowHandleSearchToggle = document.getElementById("allow-handle-search");
+  const shareToFriendsToggle = document.getElementById("share-to-friends");
 
-  function getStoredUser() {
-    try { return (window.getAuthUser && window.getAuthUser()) || {}; } catch (_) { return {}; }
-  }
+  const profilePicInput = document.getElementById("file-upload");
+  const profilePicPreview = document.getElementById("profile-pic-preview");
+  const uploadBtn = document.getElementById("upload-btn");
+  const uploadStatus = document.getElementById("upload-status");
 
-  function setStoredUser(nextUser) {
-    try {
-      const token = getToken();
-      if (window.setAuth) window.setAuth(token || "", nextUser || {});
-      /* enforced via common.js only */
-    } catch (_) {}
+  function setUploadStatus(kind, msg) {
+    if (!uploadStatus) return;
+    uploadStatus.textContent = msg || "";
+    uploadStatus.classList.remove("text-red-600", "text-green-600", "text-gray-500");
+    if (kind === "error") uploadStatus.classList.add("text-red-600");
+    else if (kind === "success") uploadStatus.classList.add("text-green-600");
+    else uploadStatus.classList.add("text-gray-500");
   }
 
   function syncNavAvatar(url) {
@@ -27,271 +29,150 @@
     } catch (_) {}
   }
 
-  const CLOUDINARY_URL = (window.CLOUDINARY_URL || "");
-
-  const form = document.getElementById("profile-form");
-  const nameInput = document.getElementById("name");
-  const emailInput = document.getElementById("email");
-  const bioInput = document.getElementById("bio");
-  const profilePicPreview = document.getElementById("profile-pic-preview");
-  const fileInput = document.getElementById("file-upload");
-  const uploadBtn = document.getElementById("upload-btn");
-  const uploadStatus = document.getElementById("upload-status");
-  const uploadSpinner = document.getElementById("upload-spinner");
-
-  const hostPaymentSection = document.getElementById("host-payment-section");
-  const bsbInput = document.getElementById("bsb");
-  const accountInput = document.getElementById("account-number");
-  const vacationToggle = document.getElementById("vacation-mode");
-  const publicProfileToggle = document.getElementById("public-profile-toggle");
-  const handleInput = document.getElementById("handle");
-  const allowHandleSearchToggle = document.getElementById("allow-handle-search");
-  const shareToFriendsToggle = document.getElementById("share-to-friends");
-
-  function setHostSectionEnabled(enabled) {
-    if (!hostPaymentSection) return;
-    if (enabled) {
-      hostPaymentSection.classList.remove("hidden");
-      return;
-    }
-    hostPaymentSection.classList.add("hidden");
-    if (bsbInput) bsbInput.value = "";
-    if (accountInput) accountInput.value = "";
-    if (vacationToggle) vacationToggle.checked = false;
+  function getStoredUser() {
+    try { return JSON.parse(localStorage.getItem("tsts_user") || "{}") || {}; } catch (_) { return {}; }
+  }
+  function setStoredUser(u) {
+    try { localStorage.setItem("tsts_user", JSON.stringify(u || {})); } catch (_) {}
   }
 
-  async function loadProfile() {
-    const token = getToken();
-    if (!token) return redirectToLogin();
-
+  async function loadMe() {
     try {
       const res = await window.authFetch("/api/auth/me", { method: "GET" });
+      if (!res.ok) return;
+      const payload = await res.json();
+      const user = (payload && payload.user) ? payload.user : payload;
 
-      if (res.status === 401 || res.status === 403) {
-        try {
-          if (window.clearAuth) window.clearAuth();
-          else { localStorage.removeItem("token"); localStorage.removeItem("user"); }
-        } catch (_) {}
-        return redirectToLogin();
-      }
-
-      if (!res.ok) throw new Error("Failed to load profile");
-      const data = await res.json();
-      const user = (data && data.user) ? data.user : data;
-
-      if (nameInput) nameInput.value = user.name || "";
-      if (emailInput) emailInput.value = user.email || "";
-      if (bioInput) bioInput.value = user.bio || "";
-      try { if (publicProfileToggle) publicProfileToggle.checked = !!user.publicProfile; } catch (_) {}
+      try { if (nameInput) nameInput.value = user.name || ""; } catch (_) {}
+      try { if (bioInput) bioInput.value = user.bio || ""; } catch (_) {}
       try { if (handleInput) handleInput.value = user.handle || ""; } catch (_) {}
       try { if (allowHandleSearchToggle) allowHandleSearchToggle.checked = !!user.allowHandleSearch; } catch (_) {}
       try { if (shareToFriendsToggle) shareToFriendsToggle.checked = !!user.showExperiencesToFriends; } catch (_) {}
+
       if (profilePicPreview && user.profilePic) window.tstsSafeImg(profilePicPreview, user.profilePic, "/assets/avatar-default.svg");
 
-      // keep localStorage user in sync so navbar can reflect it everywhere
       const prev = getStoredUser();
-      setStoredUser(Object.assign({}, prev, {
-        name: user.name || prev.name,
-        email: user.email || prev.email,
-        bio: user.bio || prev.bio,
-        handle: (typeof user.handle === "string") ? user.handle : prev.handle,
-        allowHandleSearch: !!user.allowHandleSearch,
-        showExperiencesToFriends: !!user.showExperiencesToFriends,
-        publicProfile: !!user.publicProfile,
-        profilePic: user.profilePic || prev.profilePic
-      }));
+      const merged = Object.assign({}, prev, user);
+      setStoredUser(merged);
       if (user.profilePic) syncNavAvatar(user.profilePic);
-
-      setHostSectionEnabled(!!user.isHost);
-    } catch (_) {
-      setHostSectionEnabled(false);
-    }
+    } catch (_) {}
   }
 
-  async function saveProfile(newProfilePicUrl) {
-    const token = getToken();
-    if (!token) return redirectToLogin();
-
-    const updateData = {
-      name: (nameInput && nameInput.value) || "",
-      bio: (bioInput && bioInput.value) || ""
-    };
-    try {
-      if (publicProfileToggle) updateData.publicProfile = !!publicProfileToggle.checked;
-    } catch (_) {}
-
-    try {
-      if (handleInput) {
-        const raw = String(handleInput.value || "").trim().toLowerCase();
-        // allow blank to clear
-        if (raw.length === 0) updateData.handle = "";
-        else updateData.handle = raw.slice(0, 32);
-      }
-    } catch (_) {}
-    try { if (allowHandleSearchToggle) updateData.allowHandleSearch = !!allowHandleSearchToggle.checked; } catch (_) {}
-    try { if (shareToFriendsToggle) updateData.showExperiencesToFriends = !!shareToFriendsToggle.checked; } catch (_) {}
-    if (newProfilePicUrl) updateData.profilePic = newProfilePicUrl;
-
-    const res = await window.authFetch("/api/auth/update", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(updateData)
-    });
-
-    if (res.status === 401 || res.status === 403) {
-      try {
-        if (window.clearAuth) window.clearAuth();
-        else { localStorage.removeItem("token"); localStorage.removeItem("user"); }
-      } catch (_) {}
-      return redirectToLogin();
+  async function getSignature() {
+    const res = await window.authFetch("/api/uploads/cloudinary-signature", { method: "POST" });
+    if (!res.ok) throw new Error("signature_failed");
+    const data = await res.json();
+    const need = ["timestamp", "signature", "apiKey", "cloudName", "folder"];
+    for (const k of need) {
+      if (!data || !data[k]) throw new Error("signature_bad_shape");
     }
-
-
-    const data = await res.json().catch(() => ({}));
-
-    if (!res.ok) {
-      let msg = "Failed to save settings.";
-      try { msg = (data && data.message) || msg; } catch (_) {}
-      throw new Error(msg);
-    }
-    const user = (data && data.user) ? data.user : data;
-
-    // update stored user so navbar + other pages get fresh avatar/name without refresh
-    const prev = getStoredUser();
-    const merged = Object.assign({}, prev, {
-      name: updateData.name || prev.name,
-      bio: updateData.bio || prev.bio,
-      handle: (typeof updateData.handle === "string") ? updateData.handle : prev.handle,
-      allowHandleSearch: (typeof updateData.allowHandleSearch === "undefined") ? prev.allowHandleSearch : !!updateData.allowHandleSearch,
-      showExperiencesToFriends: (typeof updateData.showExperiencesToFriends === "undefined") ? prev.showExperiencesToFriends : !!updateData.showExperiencesToFriends,
-      publicProfile: (typeof updateData.publicProfile === "undefined") ? prev.publicProfile : !!updateData.publicProfile
-    });
-    if (user && user.profilePic) merged.profilePic = user.profilePic;
-    else if (newProfilePicUrl) merged.profilePic = newProfilePicUrl;
-
-    setStoredUser(merged);
-    if (merged.profilePic) syncNavAvatar(merged.profilePic);
-
     return data;
   }
 
-  if (!getToken()) {
-    redirectToLogin();
-    return;
-  }
+  async function uploadImage(file) {
+    if (!CLOUDINARY_URL) throw new Error("upload_not_configured");
+    const sig = await getSignature();
 
-  document.addEventListener("DOMContentLoaded", () => {
-    loadProfile();
-  });
-
-  if (fileInput) {
-    fileInput.addEventListener("change", (e) => {
-      const file = e.target && e.target.files && e.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        if (profilePicPreview) profilePicPreview.src = ev.target.result;
+    return await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", CLOUDINARY_URL, true);
+      xhr.onload = () => {
+        try {
+          const r = JSON.parse(xhr.responseText || "{}");
+          const url = r.secure_url || r.url || "";
+          if (!url) return reject(new Error("upload_no_url"));
+          resolve(url);
+        } catch (e) {
+          reject(new Error("upload_parse_error"));
+        }
       };
-      reader.readAsDataURL(file);
+      xhr.onerror = () => reject(new Error("upload_network_error"));
 
-      if (uploadBtn) uploadBtn.classList.remove("hidden");
-      if (uploadStatus) {
-        uploadStatus.textContent = "Click 'Upload & Save' to confirm.";
-        uploadStatus.className = "text-xs text-gray-500 mt-1";
-      }
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("timestamp", String(sig.timestamp));
+      fd.append("signature", String(sig.signature));
+      fd.append("api_key", String(sig.apiKey));
+      fd.append("folder", String(sig.folder));
+      xhr.send(fd);
     });
   }
 
   if (uploadBtn) {
-    uploadBtn.addEventListener("click", async (e) => {
-      e.preventDefault();
-      const file = fileInput && fileInput.files && fileInput.files[0];
-      if (!file) return;
+    uploadBtn.addEventListener("click", async function () {
+      setUploadStatus("info", "");
 
-      if (uploadSpinner) uploadSpinner.classList.remove("hidden");
+      const f = profilePicInput && profilePicInput.files && profilePicInput.files[0];
+      if (!f) {
+        setUploadStatus("error", "Choose an image first.");
+        return;
+      }
+
       uploadBtn.disabled = true;
 
       try {
-        if (!CLOUDINARY_URL) throw new Error("Upload not configured");
+        setUploadStatus("info", "Uploading…");
 
-        // G3: Get signed upload parameters from backend
-        const sigRes = await window.authFetch("/api/uploads/cloudinary-signature", { method: "POST" });
-        if (!sigRes.ok) throw new Error("Failed to get upload signature");
-        const sigData = await sigRes.json();
-
-        const secureUrl = await new Promise((resolve, reject) => {
-          const xhr = new XMLHttpRequest();
-          xhr.open("POST", CLOUDINARY_URL, true);
-
-          xhr.onload = () => {
-            try {
-              if (xhr.status < 200 || xhr.status >= 300) return reject(new Error("Image upload failed"));
-              const data = JSON.parse(xhr.responseText || "{}");
-              if (!data || !data.secure_url) return reject(new Error("Image upload failed"));
-              return resolve(data.secure_url);
-            } catch (_) {
-              return reject(new Error("Image upload failed"));
-            }
-          };
-
-          xhr.onerror = () => reject(new Error("Image upload failed"));
-
-          const formData = new FormData();
-          formData.append("file", file);
-          formData.append("timestamp", sigData.timestamp);
-          formData.append("signature", sigData.signature);
-          formData.append("api_key", sigData.apiKey);
-          formData.append("folder", sigData.folder);
-          xhr.send(formData);
-        });
-
-        await saveProfile(secureUrl);
-
-        if (uploadStatus) {
-          uploadStatus.textContent = "Profile picture updated!";
-          uploadStatus.className = "text-xs text-green-600 mt-1 font-bold";
+        let secureUrl = "";
+        try {
+          secureUrl = await uploadImage(f);
+        } catch (_) {
+          // Accept-and-move-on behavior: do not feel broken; tell user cleanly.
+          setUploadStatus("error", "Image upload is temporarily unavailable. Please try again later.");
+          return;
         }
 
-        // ensure preview matches final secure URL and nav sync happens even if API returns old shape
+        const res = await window.authFetch("/api/auth/update", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ profilePic: secureUrl })
+        });
+
+        if (!res.ok) {
+          setUploadStatus("error", "Failed to save your profile picture.");
+          return;
+        }
+
         if (profilePicPreview) window.tstsSafeImg(profilePicPreview, secureUrl, "/assets/avatar-default.svg");
         syncNavAvatar(secureUrl);
 
-        uploadBtn.classList.add("hidden");
-      } catch (err) {
-        if (uploadStatus) {
-          uploadStatus.textContent = (err && err.message) || "Upload failed.";
-          uploadStatus.className = "text-xs text-red-600 mt-1 font-bold";
-        }
+        const prev = getStoredUser();
+        prev.profilePic = secureUrl;
+        setStoredUser(prev);
+
+        setUploadStatus("success", "Profile picture updated.");
+      } catch (_) {
+        setUploadStatus("error", "Something went wrong. Please try again.");
       } finally {
-        if (uploadSpinner) uploadSpinner.classList.add("hidden");
         uploadBtn.disabled = false;
       }
     });
   }
 
   if (form) {
-    form.addEventListener("submit", async (e) => {
+    form.addEventListener("submit", async function (e) {
       e.preventDefault();
-      const btn = form.querySelector('button[type="submit"]');
-      const originalText = btn ? btn.textContent : "";
+      const name = nameInput ? String(nameInput.value || "").trim() : "";
+      const bio = bioInput ? String(bioInput.value || "").trim() : "";
+      const handle = handleInput ? String(handleInput.value || "").trim() : "";
 
-      if (btn) {
-        btn.textContent = "Saving...";
-        btn.disabled = true;
-      }
+      const allowHandleSearch = !!(allowHandleSearchToggle && allowHandleSearchToggle.checked);
+      const showExperiencesToFriends = !!(shareToFriendsToggle && shareToFriendsToggle.checked);
 
       try {
-        await saveProfile();
-        alert("Profile settings saved!");
-      } catch (err) {
-        alert((err && err.message) || "Failed to save settings.");
-      } finally {
-        if (btn) {
-          btn.textContent = originalText || "Save Changes";
-          btn.disabled = false;
-        }
-      }
+        const res = await window.authFetch("/api/auth/update", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, bio, handle, allowHandleSearch, showExperiencesToFriends })
+        });
+
+        if (!res.ok) return;
+
+        setUploadStatus("success", "Profile updated.");
+        loadMe();
+      } catch (_) {}
     });
   }
+
+  loadMe();
 })();

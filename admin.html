@@ -45,13 +45,13 @@
 
       <div class="border-b border-gray-200 mb-8">
         <nav class="flex space-x-8">
-            <button onclick="switchTab('dashboard')" id="tab-dashboard" class="border-tsts-clay text-tsts-clay border-b-2 py-4 px-1 font-bold text-sm">
+            <button id="tab-dashboard" class="border-tsts-clay text-tsts-clay border-b-2 py-4 px-1 font-bold text-sm">
                 Dashboard
             </button>
-            <button onclick="switchTab('listings')" id="tab-listings" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 border-b-2 py-4 px-1 font-medium text-sm">
+            <button id="tab-listings" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 border-b-2 py-4 px-1 font-medium text-sm">
                 Manage Experiences
             </button>
-            <button onclick="switchTab('users')" id="tab-users" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 border-b-2 py-4 px-1 font-medium text-sm">
+            <button id="tab-users" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 border-b-2 py-4 px-1 font-medium text-sm">
                 Manage Users
             </button>
         </nav>
@@ -95,7 +95,7 @@
           <section class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
             <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
                 <div class="font-bold text-lg">All Listings</div>
-                <button onclick="loadListings()" class="text-sm text-orange-600 font-bold hover:underline">Refresh</button>
+                <button id="btn-refresh-listings" class="text-sm text-orange-600 font-bold hover:underline">Refresh</button>
             </div>
             <div class="overflow-x-auto">
               <table class="min-w-full text-left text-sm">
@@ -112,7 +112,7 @@
           <section class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
             <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
                 <div class="font-bold text-lg">All Users</div>
-                <button onclick="loadUsers()" class="text-sm text-orange-600 font-bold hover:underline">Refresh</button>
+                <button id="btn-refresh-users" class="text-sm text-orange-600 font-bold hover:underline">Refresh</button>
             </div>
             <div class="overflow-x-auto">
               <table class="min-w-full text-left text-sm">

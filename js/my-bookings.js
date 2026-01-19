@@ -9,6 +9,7 @@ const guestModal = document.getElementById("guest-modal");
 const reviewModal = document.getElementById("review-modal");
 
 const closeGuestBtn = document.getElementById("close-modal-btn");
+const reviewCancelBtn = document.getElementById("review-cancel-btn");
 const reviewForm = document.getElementById("review-form");
 
 let hostBookingsCache = []; // for modal lookup by booking id
@@ -402,6 +403,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Close guest modal
   if (closeGuestBtn) closeGuestBtn.addEventListener("click", closeGuestModal);
+
+  // Close review modal (cancel button)
+  if (reviewCancelBtn) reviewCancelBtn.addEventListener("click", closeReviewModal);
 
   // Click outside to close
   document.addEventListener("click", (e) => {

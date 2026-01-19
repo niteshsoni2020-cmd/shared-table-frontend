@@ -96,25 +96,20 @@ async function loadReviews() {
 
 async function loadHostExperiences() {
     if (!gridEl || !noExpEl) return;
-    const res = await window.authFetch(`/api/experiences`, { method: "GET" });
+    const params = new URLSearchParams();
+    params.set("hostId", userId);
+    const res = await window.authFetch(`/api/experiences?${params.toString()}`, { method: "GET" });
     const payload = await res.json().catch(() => null);
     const list = Array.isArray(payload) ? payload : (payload && Array.isArray(payload.experiences) ? payload.experiences : []);
-    const mine = (list || []).filter((exp) => {
-        try {
-            const e = exp || {};
-            const hid = e.hostId || (e.host && (e.host._id || e.host.id)) || e.hostUserId || "";
-            return hid && String(hid) === String(userId);
-        } catch (_) {
-            return false;
-        }
-    });
 
-    if (mine.length === 0) {
+    gridEl.textContent = "";
+    if (!res.ok || list.length === 0) {
         noExpEl.classList.remove('hidden');
         return;
     }
 
-    mine.forEach(exp => {
+    noExpEl.classList.add('hidden');
+    list.forEach(exp => {
         const card = createExperienceCard(exp);
         gridEl.appendChild(card);
     });

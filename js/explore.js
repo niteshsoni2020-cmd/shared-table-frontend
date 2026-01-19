@@ -13,6 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const elFilterBtn = document.getElementById("filter-btn");
     const elFilterPanel = document.getElementById("filter-panel");
     const elClearFilters = document.getElementById("clear-filters-btn");
+    const elClearFiltersEmpty = document.getElementById("clear-filters-empty-btn");
     const elApplyFilters = document.getElementById("apply-filters");
     const elSort = document.getElementById("sort-select");
 
@@ -278,6 +279,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (elFilterBtn) elFilterBtn.addEventListener("click", () => elFilterPanel.classList.toggle("hidden"));
     if (elApplyFilters) elApplyFilters.addEventListener("click", applyFilters);
     if (elClearFilters) elClearFilters.addEventListener("click", clearFilters);
+    if (elClearFiltersEmpty) elClearFiltersEmpty.addEventListener("click", clearFilters);
     
     if (elSearch) {
         elSearch.addEventListener("input", () => {

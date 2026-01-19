@@ -21,11 +21,11 @@
     <div class="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
       
       <div class="flex border-b border-gray-200 mb-8">
-        <button id="tab-login" onclick="toggleAuth('login')" class="flex-1 pb-3 font-bold text-orange-600 border-b-2 border-orange-600 transition-colors">Log In</button>
-        <button id="tab-signup" onclick="toggleAuth('signup')" class="flex-1 pb-3 font-medium text-gray-500 hover:text-gray-900 transition-colors">Sign Up</button>
+        <button id="tab-login" class="flex-1 pb-3 font-bold text-orange-600 border-b-2 border-orange-600 transition-colors">Log In</button>
+        <button id="tab-signup" class="flex-1 pb-3 font-medium text-gray-500 hover:text-gray-900 transition-colors">Sign Up</button>
       </div>
 
-      <form id="form-login" class="space-y-5" onsubmit="handleLogin(event)">
+      <form id="form-login" class="space-y-5">
         <div>
           <h2 class="text-2xl font-bold text-gray-900">Welcome Back</h2>
           <p class="text-sm text-gray-500 mt-1">Login to manage your bookings.</p>
@@ -35,13 +35,13 @@
         <input id="login-password" type="password" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-orange-100 transition" placeholder="Password" required />
         
         <div class="text-right">
-            <button type="button" onclick="handleForgotPassword(event)" class="text-xs text-orange-600 hover:underline font-bold">Forgot Password?</button>
+            <button id="btn-forgot-password" type="button" class="text-xs text-orange-600 hover:underline font-bold">Forgot Password?</button>
         </div>
 
         <button type="submit" class="w-full py-3 bg-gray-900 text-white font-bold rounded-xl hover:bg-black transition transform active:scale-95 shadow-lg">Log In</button>
       </form>
 
-      <form id="form-signup" class="space-y-5 hidden" onsubmit="handleSignup(event)">
+      <form id="form-signup" class="space-y-5 hidden">
         <div>
             <h2 class="text-2xl font-bold text-gray-900">Create Account</h2>
             <p class="text-sm text-gray-500 mt-1">Join our community of hosts & guests.</p>

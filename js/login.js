@@ -167,4 +167,20 @@ async function handleSignup(e) {
 }
 
 // --- 4. INIT ---
-// Inline handlers in login.html are the single source of truth.
+document.addEventListener("DOMContentLoaded", () => {
+    const tabLogin = document.getElementById("tab-login");
+    const tabSignup = document.getElementById("tab-signup");
+    const loginForm = document.getElementById("form-login");
+    const signupForm = document.getElementById("form-signup");
+    const forgotBtn = document.getElementById("btn-forgot-password");
+
+    if (tabLogin) tabLogin.addEventListener("click", () => toggleAuth("login"));
+    if (tabSignup) tabSignup.addEventListener("click", () => toggleAuth("signup"));
+    if (loginForm) loginForm.addEventListener("submit", handleLogin);
+    if (signupForm) signupForm.addEventListener("submit", handleSignup);
+    if (forgotBtn) forgotBtn.addEventListener("click", handleForgotPassword);
+
+    if (loginForm && signupForm && tabLogin && tabSignup) {
+        toggleAuth("login");
+    }
+});

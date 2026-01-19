@@ -118,188 +118,192 @@ function $(id) { return document.getElementById(id); }
 
 function safe(v, fallback="") { return (v === null || v === undefined) ? fallback : v; }
 
+function toNumberOrNull(v) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
+function formatDateValue(raw) {
+  const dt = raw ? new Date(raw) : null;
+  if (!dt || isNaN(dt.getTime())) return "—";
+  try { if (window.tstsFormatDateShort) return window.tstsFormatDateShort(dt); } catch (_) {}
+  try { return dt.toLocaleDateString("en-AU"); } catch (_) { return dt.toDateString(); }
+}
+
+function formatCurrencyValue(raw) {
+  const num = toNumberOrNull(raw);
+  return num === null ? "—" : "$" + String(num);
+}
+
 function renderStats(stats) {
-  const El = window.tstsEl;
-  const el = $("stats");
-  if (!el) return;
   const s = stats || {};
-  el.textContent = "";
-  
-  var grid = El("div", { className: "grid md:grid-cols-4 gap-4" }, [
-    El("div", { className: "bg-white rounded-xl border border-gray-100 p-4" }, [
-      El("div", { className: "text-xs text-gray-500", textContent: "Users" }),
-      El("div", { className: "text-2xl font-bold", textContent: String(safe(s.users, 0)) })
-    ]),
-    El("div", { className: "bg-white rounded-xl border border-gray-100 p-4" }, [
-      El("div", { className: "text-xs text-gray-500", textContent: "Experiences" }),
-      El("div", { className: "text-2xl font-bold", textContent: String(safe(s.experiences, 0)) })
-    ]),
-    El("div", { className: "bg-white rounded-xl border border-gray-100 p-4" }, [
-      El("div", { className: "text-xs text-gray-500", textContent: "Bookings" }),
-      El("div", { className: "text-2xl font-bold", textContent: String(safe(s.bookings, 0)) })
-    ]),
-    El("div", { className: "bg-white rounded-xl border border-gray-100 p-4" }, [
-      El("div", { className: "text-xs text-gray-500", textContent: "Revenue" }),
-      El("div", { className: "text-2xl font-bold", textContent: "$" + String(safe(s.revenue, 0)) })
-    ])
-  ]);
-  el.appendChild(grid);
+  const usersEl = $("stats-total-users");
+  const hostsEl = $("stats-total-hosts");
+  const bookingsEl = $("stats-total-bookings");
+  const revenueEl = $("stats-total-revenue");
+
+  const userCount = toNumberOrNull(s.userCount);
+  const hostCount = toNumberOrNull(s.hostCount);
+  const bookingCount = toNumberOrNull(s.bookingCount);
+  const revenue = toNumberOrNull(s.totalRevenue);
+
+  if (usersEl) usersEl.textContent = userCount === null ? "—" : String(userCount);
+  if (hostsEl) hostsEl.textContent = hostCount === null ? "—" : String(hostCount);
+  if (bookingsEl) bookingsEl.textContent = bookingCount === null ? "—" : String(bookingCount);
+  if (revenueEl) revenueEl.textContent = revenue === null ? "—" : "$" + String(revenue);
 }
 
 function renderBookings(bookings) {
   const El = window.tstsEl;
-  const el = $("bookings");
-  if (!el) return;
-  el.textContent = "";
+  const tbody = $("bookings-table-body");
+  const loadingEl = $("bookings-loading");
+  if (!tbody) return;
+  tbody.textContent = "";
+  if (loadingEl) loadingEl.classList.add("hidden");
 
-  var tbody = El("tbody", {});
   var list = Array.isArray(bookings) ? bookings : [];
-  
   if (list.length === 0) {
     tbody.appendChild(El("tr", {}, [
-      El("td", { className: "p-6 text-center text-sm text-gray-500", colSpan: "5", textContent: "No bookings." })
+      El("td", { className: "px-6 py-6 text-center text-sm text-slate-500", colSpan: "6", textContent: "No bookings." })
     ]));
-  } else {
-    list.forEach(function(b) {
-      var id = b._id || b.id || "";
-      var title = (b.experience && b.experience.title) || b.experienceTitle || "Experience";
-      var guest = (b.guestId && b.guestId.name) || b.guestName || "Guest";
-      var date = b.bookingDate ? new Date(b.bookingDate).toLocaleDateString("en-AU") : "—";
-      var status = b.status || "—";
-
-      var cancelBtn = El("button", { className: "px-3 py-1 text-xs font-bold rounded border border-red-200 text-red-600 hover:bg-red-50", textContent: "Cancel" });
-      cancelBtn.addEventListener("click", function() { window.adminCancelBooking(id); });
-
-      tbody.appendChild(El("tr", { className: "border-t" }, [
-        El("td", { className: "p-3 text-sm", textContent: title }),
-        El("td", { className: "p-3 text-sm", textContent: guest }),
-        El("td", { className: "p-3 text-sm", textContent: date }),
-        El("td", { className: "p-3 text-sm", textContent: status }),
-        El("td", { className: "p-3 text-sm text-right" }, [cancelBtn])
-      ]));
-    });
+    return;
   }
 
-  var table = El("table", { className: "w-full" }, [
-    El("thead", { className: "bg-gray-50 text-xs text-gray-500" }, [
-      El("tr", {}, [
-        El("th", { className: "p-3 text-left", textContent: "Experience" }),
-        El("th", { className: "p-3 text-left", textContent: "Guest" }),
-        El("th", { className: "p-3 text-left", textContent: "Date" }),
-        El("th", { className: "p-3 text-left", textContent: "Status" }),
-        El("th", { className: "p-3 text-right", textContent: "Action" })
-      ])
-    ]),
-    tbody
-  ]);
+  list.forEach(function(b) {
+    var id = b._id || b.id || "";
+    var exp = b.experience || {};
+    var title = exp.title || b.experienceTitle || "Experience";
+    var guest = (b.guestId && b.guestId.name) || (b.user && b.user.name) || b.guestName || "Guest";
+    var date = formatDateValue(b.bookingDate || b.experienceDate || b.date || b.createdAt);
+    var amount = formatCurrencyValue((b.pricing && b.pricing.totalPrice) || b.amountTotal || b.totalPrice || "");
+    var status = String(b.status || "—");
+    var isCancelled = status.toLowerCase().includes("cancel");
 
-  el.appendChild(El("div", { className: "bg-white rounded-xl border border-gray-100 overflow-hidden" }, [table]));
+    var actionEl = El("span", { className: "text-xs text-slate-400", textContent: "—" });
+    if (!isCancelled) {
+      var cancelBtn = El("button", { className: "px-3 py-1 text-xs font-bold rounded border border-red-200 text-red-600 hover:bg-red-50", textContent: "Cancel" });
+      cancelBtn.addEventListener("click", function() { handleCancelBooking(id); });
+      actionEl = cancelBtn;
+    }
+
+    tbody.appendChild(El("tr", { className: "border-t border-slate-100" }, [
+      El("td", { className: "px-6 py-4 text-sm text-slate-600", textContent: date }),
+      El("td", { className: "px-6 py-4 text-sm font-semibold text-slate-800", textContent: guest }),
+      El("td", { className: "px-6 py-4 text-sm text-slate-700", textContent: title }),
+      El("td", { className: "px-6 py-4 text-sm text-emerald-700 font-semibold", textContent: amount }),
+      El("td", { className: "px-6 py-4 text-sm text-slate-500", textContent: status }),
+      El("td", { className: "px-6 py-4 text-sm text-right" }, [actionEl])
+    ]));
+  });
 }
 
 function renderExperiences(exps) {
   const El = window.tstsEl;
-  const el = $("experiences");
-  if (!el) return;
-  el.textContent = "";
+  const tbody = $("listings-table-body");
+  if (!tbody) return;
+  tbody.textContent = "";
 
   var list = Array.isArray(exps) ? exps : [];
-  var container = El("div", { className: "space-y-3" });
-
   if (list.length === 0) {
-    container.appendChild(El("div", { className: "text-sm text-gray-500 text-center py-8", textContent: "No experiences." }));
-  } else {
-    list.forEach(function(e) {
-      var id = e._id || e.id || "";
-      var title = e.title || "Untitled";
-      var city = e.city || "—";
-      var active = (e.isActive !== undefined) ? !!e.isActive : true;
-
-      var toggleBtn = El("button", { 
-        className: "px-3 py-1 text-xs font-bold rounded border " + (active ? "border-gray-200 text-gray-700 hover:bg-gray-50" : "border-green-200 text-green-700 hover:bg-green-50"),
-        textContent: active ? "Disable" : "Enable"
-      });
-      toggleBtn.addEventListener("click", function() { window.adminToggleExperience(id); });
-
-      var deleteBtn = El("button", { className: "px-3 py-1 text-xs font-bold rounded border border-red-200 text-red-600 hover:bg-red-50", textContent: "Delete" });
-      deleteBtn.addEventListener("click", function() { window.adminDeleteExperience(id); });
-
-      container.appendChild(El("div", { className: "bg-white rounded-xl border border-gray-100 p-4 flex items-center justify-between gap-4" }, [
-        El("div", {}, [
-          El("div", { className: "font-bold", textContent: title }),
-          El("div", { className: "text-xs text-gray-500", textContent: city })
-        ]),
-        El("div", { className: "flex items-center gap-2" }, [toggleBtn, deleteBtn])
-      ]));
-    });
+    tbody.appendChild(El("tr", {}, [
+      El("td", { className: "px-6 py-6 text-center text-sm text-slate-500", colSpan: "6", textContent: "No listings." })
+    ]));
+    return;
   }
 
-  el.appendChild(container);
+  list.forEach(function(e) {
+    var id = e._id || e.id || "";
+    var title = e.title || "Untitled";
+    var host = e.hostName || "—";
+    var price = formatCurrencyValue(e.price);
+    var statusText = e.isDeleted ? "Deleted" : (e.isPaused ? "Paused" : "Active");
+
+    var imgUrl = (window.tstsSafeUrl && window.tstsSafeUrl(e.imageUrl || (Array.isArray(e.images) ? e.images[0] : ""), "/assets/experience-default.jpg")) || (e.imageUrl || "");
+    var imgEl = El("img", { className: "h-12 w-16 rounded-lg object-cover", alt: "Experience" });
+    if (window.tstsSafeImg) {
+      window.tstsSafeImg(imgEl, imgUrl, "/assets/experience-default.jpg");
+    } else {
+      imgEl.src = imgUrl;
+    }
+
+    var toggleLabel = e.isPaused ? "Resume" : "Pause";
+    var toggleBtn = El("button", { 
+      className: "px-3 py-1 text-xs font-bold rounded border " + (e.isPaused ? "border-green-200 text-green-700 hover:bg-green-50" : "border-gray-200 text-gray-700 hover:bg-gray-50"),
+      textContent: toggleLabel
+    });
+    toggleBtn.addEventListener("click", function() { handleToggleExperience(id); });
+
+    var deleteBtn = El("button", { className: "px-3 py-1 text-xs font-bold rounded border border-red-200 text-red-600 hover:bg-red-50", textContent: "Delete" });
+    deleteBtn.addEventListener("click", function() { handleDeleteExperience(id); });
+
+    tbody.appendChild(El("tr", { className: "border-t border-slate-100" }, [
+      El("td", { className: "px-6 py-4" }, [imgEl]),
+      El("td", { className: "px-6 py-4 text-sm font-semibold text-slate-800", textContent: title }),
+      El("td", { className: "px-6 py-4 text-sm text-slate-600", textContent: host }),
+      El("td", { className: "px-6 py-4 text-sm text-emerald-700 font-semibold", textContent: price }),
+      El("td", { className: "px-6 py-4 text-sm text-slate-500", textContent: statusText }),
+      El("td", { className: "px-6 py-4 text-sm text-right" }, [toggleBtn, El("span", { textContent: " " }), deleteBtn])
+    ]));
+  });
 }
 
 function renderUsers(users) {
   const El = window.tstsEl;
-  const el = $("users");
-  if (!el) return;
-  el.textContent = "";
+  const tbody = $("users-table-body");
+  if (!tbody) return;
+  tbody.textContent = "";
 
-  var tbody = El("tbody", {});
   var list = Array.isArray(users) ? users : [];
-
   if (list.length === 0) {
     tbody.appendChild(El("tr", {}, [
-      El("td", { className: "p-6 text-center text-sm text-gray-500", colSpan: "3", textContent: "No users." })
+      El("td", { className: "px-6 py-6 text-center text-sm text-slate-500", colSpan: "5", textContent: "No users." })
     ]));
-  } else {
-    list.forEach(function(u) {
-      var id = u._id || u.id || "";
-      var name = u.name || "—";
-      var email = u.email || "—";
-
-      var deleteBtn = El("button", { className: "px-3 py-1 text-xs font-bold rounded border border-red-200 text-red-600 hover:bg-red-50", textContent: "Delete" });
-      deleteBtn.addEventListener("click", function() { window.adminDeleteUser(id); });
-
-      tbody.appendChild(El("tr", { className: "border-t" }, [
-        El("td", { className: "p-3 text-sm", textContent: name }),
-        El("td", { className: "p-3 text-sm", textContent: email }),
-        El("td", { className: "p-3 text-sm text-right" }, [deleteBtn])
-      ]));
-    });
+    return;
   }
 
-  var table = El("table", { className: "w-full" }, [
-    El("thead", { className: "bg-gray-50 text-xs text-gray-500" }, [
-      El("tr", {}, [
-        El("th", { className: "p-3 text-left", textContent: "Name" }),
-        El("th", { className: "p-3 text-left", textContent: "Email" }),
-        El("th", { className: "p-3 text-right", textContent: "Action" })
-      ])
-    ]),
-    tbody
-  ]);
+  list.forEach(function(u) {
+    var id = u._id || u.id || "";
+    var name = u.name || "—";
+    var email = u.email || "—";
+    var role = u.role || (u.isAdmin ? "Admin" : "Guest");
+    var joined = formatDateValue(u.createdAt);
 
-  el.appendChild(El("div", { className: "bg-white rounded-xl border border-gray-100 overflow-hidden" }, [table]));
+    var deleteBtn = El("button", { className: "px-3 py-1 text-xs font-bold rounded border border-red-200 text-red-600 hover:bg-red-50", textContent: "Delete" });
+    deleteBtn.addEventListener("click", function() { handleDeleteUser(id); });
+
+    tbody.appendChild(El("tr", { className: "border-t border-slate-100" }, [
+      El("td", { className: "px-6 py-4 text-sm font-semibold text-slate-800", textContent: name }),
+      El("td", { className: "px-6 py-4 text-sm text-slate-600", textContent: email }),
+      El("td", { className: "px-6 py-4 text-sm text-slate-500", textContent: role }),
+      El("td", { className: "px-6 py-4 text-sm text-slate-500", textContent: joined }),
+      El("td", { className: "px-6 py-4 text-sm text-right" }, [deleteBtn])
+    ]));
+  });
 }
 
-// expose handlers used by onclick
-window.adminToggleExperience = async function(id) {
+// Local action handlers (no window.* exposure)
+async function handleToggleExperience(id) {
   try { await toggleExperience(id); await boot(); } catch (e) { alert(e.message || "Failed"); }
-};
-window.adminDeleteExperience = async function(id) {
+}
+async function handleDeleteExperience(id) {
   if (!confirm("Delete this experience?")) return;
   try { await deleteExperience(id); await boot(); } catch (e) { alert(e.message || "Failed"); }
-};
-window.adminDeleteUser = async function(id) {
+}
+async function handleDeleteUser(id) {
   if (!confirm("Delete this user?")) return;
   try { await deleteUser(id); await boot(); } catch (e) { alert(e.message || "Failed"); }
-};
-window.adminCancelBooking = async function(id) {
+}
+async function handleCancelBooking(id) {
   if (!confirm("Cancel this booking?")) return;
   try { await cancelBooking(id); await boot(); } catch (e) { alert(e.message || "Failed"); }
-};
+}
 
-// Tab switching functionality
-window.switchTab = function(tabName) {
+// Tab switching functionality (local, no window.* exposure)
+function switchTab(tabName) {
   const views = ['dashboard', 'listings', 'users'];
+  const activeClass = "border-tsts-clay text-tsts-clay border-b-2 py-4 px-1 font-bold text-sm";
+  const inactiveClass = "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 border-b-2 py-4 px-1 font-medium text-sm";
+
   views.forEach(view => {
     const viewEl = document.getElementById('view-' + view);
     if (viewEl) viewEl.classList.add('hidden');
@@ -307,28 +311,57 @@ window.switchTab = function(tabName) {
 
   views.forEach(view => {
     const tabEl = document.getElementById('tab-' + view);
-    if (tabEl) {
-      tabEl.classList.remove('border-tsts-clay', 'text-tsts-clay', 'border-b-2');
-      tabEl.classList.add('border-transparent', 'text-gray-500');
-    }
+    if (tabEl) tabEl.className = inactiveClass;
   });
 
   const selectedView = document.getElementById('view-' + tabName);
   if (selectedView) selectedView.classList.remove('hidden');
 
   const selectedTab = document.getElementById('tab-' + tabName);
-  if (selectedTab) {
-    selectedTab.classList.remove('border-transparent', 'text-gray-500');
-    selectedTab.classList.add('border-tsts-clay', 'text-tsts-clay', 'border-b-2');
-  }
+  if (selectedTab) selectedTab.className = activeClass;
 
-  if (tabName === 'users') loadUsers();
+  if (tabName === 'users') {
+    loadUsers().then(renderUsers).catch(() => renderUsers([]));
+  }
+  if (tabName === 'listings') {
+    loadExperiences().then(renderExperiences).catch(() => renderExperiences([]));
+  }
+  if (tabName === 'dashboard') {
+    Promise.all([
+      loadStats().catch(() => ({})),
+      loadBookings().catch(() => ([]))
+    ]).then(([stats, bookings]) => {
+      renderStats(stats);
+      renderBookings(bookings);
+    });
+  }
 };
+
+let __adminWired = false;
+
+function wireAdminEvents() {
+  if (__adminWired) return;
+  __adminWired = true;
+
+  const tabDashboard = $("tab-dashboard");
+  const tabListings = $("tab-listings");
+  const tabUsers = $("tab-users");
+  const refreshListings = $("btn-refresh-listings");
+  const refreshUsers = $("btn-refresh-users");
+
+  if (tabDashboard) tabDashboard.addEventListener("click", () => switchTab("dashboard"));
+  if (tabListings) tabListings.addEventListener("click", () => switchTab("listings"));
+  if (tabUsers) tabUsers.addEventListener("click", () => switchTab("users"));
+  if (refreshListings) refreshListings.addEventListener("click", () => loadExperiences().then(renderExperiences).catch(() => renderExperiences([])));
+  if (refreshUsers) refreshUsers.addEventListener("click", () => loadUsers().then(renderUsers).catch(() => renderUsers([])));
+}
 
 async function boot() {
   if (!mustBeAdmin()) return;
 
   try { getAdminReason(); } catch (_) {}
+
+  wireAdminEvents();
 
   // basic skeleton if containers exist
   try {

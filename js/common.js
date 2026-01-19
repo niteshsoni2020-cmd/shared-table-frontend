@@ -127,7 +127,7 @@ window.tstsSafeUrl = function(url, fallback) {
 
 window.tstsSafeImg = function(imgEl, url, fallback) {
   if (!imgEl) return;
-  const fb = fallback || "https://via.placeholder.com/400x300?text=No+Image";
+  const fb = fallback || "/assets/experience-default.jpg";
   const safeUrl = window.tstsSafeUrl(url, fb);
   imgEl.src = safeUrl || fb;
   imgEl.addEventListener("error", function() { imgEl.src = fb; }, { once: true });
@@ -186,7 +186,6 @@ window.tstsSafeMailto = function(email) {
   window.API_BASE = apiOrigin;
 // Cloudinary config (single-truth; used by profile.js)
   window.CLOUDINARY_URL = window.CLOUDINARY_URL || "https://api.cloudinary.com/v1_1/dkqf90k20/image/upload";
-  window.CLOUDINARY_PRESET = window.CLOUDINARY_PRESET || "unsigned_preset";
 
 
   window.setAuth = function (token, user) {
@@ -362,15 +361,10 @@ function injectFooter() {
     ])
   ]);
 
-  const emailInput = tstsEl("input", { type: "email", placeholder: "Email", className: "px-3 py-2 rounded-l-lg bg-gray-800 border-none text-white w-full" });
-  const goBtn = tstsEl("button", { className: "bg-orange-600 px-4 py-2 rounded-r-lg hover:bg-orange-700 transition" }, "Go");
-  const col4 = tstsEl("div", {}, [
-    tstsEl("h4", { className: "font-bold mb-4" }, "Join the Table"),
-    tstsEl("div", { className: "flex" }, [emailInput, goBtn])
-  ]);
-
-  const grid = tstsEl("div", { className: "container mx-auto px-4 grid md:grid-cols-4 gap-8" }, [col1, col2, col3, col4]);
-  const copyright = tstsEl("div", { className: "border-t border-gray-800 mt-12 pt-8 text-center text-gray-500 text-sm" }, "© 2026 The Shared Table Story. All rights reserved.");
+  const grid = tstsEl("div", { className: "container mx-auto px-4 grid md:grid-cols-3 gap-8" }, [col1, col2, col3]);
+  const companyInfo = tstsEl("p", { className: "text-gray-500 text-sm" }, "The Shared Table Story PTY LTD | 24 Balance Pl, Birtinya QLD 4575");
+  const copyrightText = "© " + new Date().getFullYear() + " The Shared Table Story. All rights reserved.";
+  const copyright = tstsEl("div", { className: "border-t border-gray-800 mt-12 pt-8 text-center text-gray-500 text-sm space-y-2" }, [tstsEl("p", {}, copyrightText), companyInfo]);
   const footer = tstsEl("footer", { className: "bg-gray-900 text-white py-12 mt-auto" }, [grid, copyright]);
   root.appendChild(footer);
 }
@@ -380,30 +374,27 @@ function applyAuthStateToNav() {
   const token = (window.getAuthToken && window.getAuthToken()) || "";
   if (!token) return;
 
-  // Desktop auth menu
+  // Desktop auth menu - click-toggle dropdown
   const desktopAuth = document.getElementById("auth-section-desktop");
   if (desktopAuth) {
     desktopAuth.textContent = "";
-    const userPic = tstsEl("img", { id: "nav-user-pic", src: "https://via.placeholder.com/40?text=U", className: "w-10 h-10 rounded-full border border-gray-200" });
-    const menuBtn = tstsEl("button", { className: "flex items-center gap-2 focus:outline-none" }, [userPic]);
+    const userPic = tstsEl("img", { id: "nav-user-pic", src: "/assets/avatar-default.svg", className: "w-10 h-10 rounded-full border border-gray-200" });
+    const menuBtn = tstsEl("button", { id: "nav-dropdown-btn", className: "flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 rounded-full" }, [userPic]);
     menuBtn.setAttribute("aria-label", "Account menu");
+    menuBtn.setAttribute("aria-expanded", "false");
 
     const menuLinks = [
       { href: "my-bookings.html", text: "Dashboard" },
-      { href: "bookmarks.html", text: "My Bookmarks" },
-      { href: "connections.html", text: "Connections" },
-      { href: "feed.html", text: "Friends Feed" },
-      { href: "profile.html", text: "My Profile" },
-      { href: "policy.html", text: "Policy" },
-      { href: "report.html", text: "Report" }
+      { href: "profile.html", text: "My Profile" }
     ];
     const dropdownItems = menuLinks.map(function(lnk) {
-      return tstsEl("a", { href: lnk.href, className: "block px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600" }, lnk.text);
+      return tstsEl("a", { href: lnk.href, className: "block px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition" }, lnk.text);
     });
-    const logoutBtn = tstsEl("button", { id: "logout-btn", className: "block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50" }, "Logout");
+    const logoutBtn = tstsEl("button", { id: "logout-btn", className: "block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition" }, "Logout");
     dropdownItems.push(logoutBtn);
-    const dropdown = tstsEl("div", { className: "hidden group-hover:block absolute right-0 w-48 bg-white shadow-xl rounded-lg border border-gray-100 py-2 mt-2" }, dropdownItems);
-    const wrapper = tstsEl("div", { className: "relative group" }, [menuBtn, dropdown]);
+    const dropdown = tstsEl("div", { id: "nav-dropdown", className: "hidden absolute right-0 w-48 bg-white shadow-xl rounded-lg border border-gray-100 py-2 mt-2 opacity-0 -translate-y-2 transition-all duration-200" }, dropdownItems);
+    dropdown.style.pointerEvents = "none";
+    const wrapper = tstsEl("div", { className: "relative" }, [menuBtn, dropdown]);
     desktopAuth.appendChild(wrapper);
   }
 
@@ -413,12 +404,7 @@ function applyAuthStateToNav() {
     mobileAuth.textContent = "";
     const mobileLinks = [
       { href: "my-bookings.html", text: "Dashboard" },
-      { href: "bookmarks.html", text: "My Bookmarks" },
-      { href: "connections.html", text: "Connections" },
-      { href: "feed.html", text: "Friends Feed" },
-      { href: "profile.html", text: "My Profile" },
-      { href: "policy.html", text: "Policy" },
-      { href: "report.html", text: "Report" }
+      { href: "profile.html", text: "My Profile" }
     ];
     mobileLinks.forEach(function(lnk) {
       mobileAuth.appendChild(tstsEl("a", { href: lnk.href, className: "block text-gray-700 hover:text-orange-600 font-medium py-2" }, lnk.text));
@@ -427,6 +413,7 @@ function applyAuthStateToNav() {
   }
 
   attachLogoutListeners();
+  initDropdownToggle();
   loadNavProfilePic();
 }
 
@@ -438,7 +425,64 @@ function initMobileMenu() {
   btn.addEventListener("click", () => menu.classList.toggle("hidden"));
 }
 
-// 5) LOGOUT
+// 5) DROPDOWN TOGGLE (click-based, polished)
+function initDropdownToggle() {
+  const btn = document.getElementById("nav-dropdown-btn");
+  const dropdown = document.getElementById("nav-dropdown");
+  if (!btn || !dropdown) return;
+
+  let isOpen = false;
+
+  const openDropdown = () => {
+    isOpen = true;
+    dropdown.classList.remove("hidden");
+    dropdown.style.pointerEvents = "auto";
+    setTimeout(() => {
+      dropdown.classList.remove("opacity-0", "-translate-y-2");
+      dropdown.classList.add("opacity-100", "translate-y-0");
+    }, 10);
+    btn.setAttribute("aria-expanded", "true");
+  };
+
+  const closeDropdown = () => {
+    if (!isOpen) return;
+    isOpen = false;
+    dropdown.classList.remove("opacity-100", "translate-y-0");
+    dropdown.classList.add("opacity-0", "-translate-y-2");
+    setTimeout(() => {
+      dropdown.classList.add("hidden");
+      dropdown.style.pointerEvents = "none";
+    }, 200);
+    btn.setAttribute("aria-expanded", "false");
+  };
+
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (isOpen) closeDropdown();
+    else openDropdown();
+  });
+
+  document.addEventListener("click", (e) => {
+    if (isOpen && !dropdown.contains(e.target) && !btn.contains(e.target)) {
+      closeDropdown();
+    }
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && isOpen) {
+      closeDropdown();
+      btn.focus();
+    }
+  });
+
+  dropdown.addEventListener("click", (e) => {
+    if (e.target.tagName === "A" || e.target.tagName === "BUTTON") {
+      closeDropdown();
+    }
+  });
+}
+
+// 6) LOGOUT
 function attachLogoutListeners() {
   const handleLogout = () => {
     try {
@@ -454,7 +498,7 @@ function attachLogoutListeners() {
   if (mobileBtn) mobileBtn.addEventListener("click", handleLogout);
 }
 
-// 6) NAV PROFILE PIC
+// 7) NAV PROFILE PIC
 async function loadNavProfilePic() {
   try {
     if (String(location.pathname || "").endsWith("/profile.html") || String(location.pathname || "").endsWith("profile.html")) return;
@@ -466,7 +510,7 @@ async function loadNavProfilePic() {
 
   try {
     const cached = (window.getAuthUser && window.getAuthUser()) || {};
-    if (cached && cached.profilePic) { window.tstsSafeImg(img, cached.profilePic, "https://via.placeholder.com/40?text=U"); return; }
+    if (cached && cached.profilePic) { window.tstsSafeImg(img, cached.profilePic, "/assets/avatar-default.svg"); return; }
 
     const res = await window.authFetch("/api/auth/me", { method: "GET" });
 
@@ -480,6 +524,6 @@ async function loadNavProfilePic() {
     if (!res.ok) return;
     const payload = await res.json();
     const u = (payload && payload.user) ? payload.user : payload;
-    if (u && u.profilePic) window.tstsSafeImg(img, u.profilePic, "https://via.placeholder.com/40?text=U");
+    if (u && u.profilePic) window.tstsSafeImg(img, u.profilePic, "/assets/avatar-default.svg");
   } catch (_) {}
 }

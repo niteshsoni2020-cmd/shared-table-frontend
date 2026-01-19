@@ -34,7 +34,7 @@
   function setImg(id, url) {
     const el = document.getElementById(id);
     if (!el) return;
-    const fallback = "https://via.placeholder.com/1200x700?text=No+Image";
+    const fallback = "/assets/experience-default.jpg";
     window.tstsSafeImg(el, url, fallback);
   }
 
@@ -335,7 +335,7 @@
 
       const El = window.tstsEl;
       const safeUrl = window.tstsSafeUrl;
-      const fallbackImg = "https://via.placeholder.com/400x300";
+      const fallbackImg = "/assets/experience-default.jpg";
 
       similarGrid.textContent = "";
       list.slice(0, 3).forEach(function(e) {

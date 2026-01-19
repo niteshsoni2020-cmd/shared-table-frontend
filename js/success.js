@@ -168,7 +168,7 @@ function populateBookingSummary(booking) {
     successExpGuestsEl.textContent = "Guests: —";
   }
 
-  window.tstsSafeImg(successExpImageEl, imageUrl, "https://via.placeholder.com/400x300?text=Experience");
+  window.tstsSafeImg(successExpImageEl, imageUrl, "/assets/experience-default.jpg");
   successExpImageEl.alt = title || "Experience image";
 
   // Generate viral invite link

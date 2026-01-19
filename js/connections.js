@@ -1,6 +1,5 @@
 (function () {
   const handleEl = document.getElementById("handle");
-  const targetUserIdEl = document.getElementById("targetUserId");
   const connectBtn = document.getElementById("connect-btn");
   const connectStatusEl = document.getElementById("connect-status");
 
@@ -43,19 +42,19 @@
   function userRowEl(u) {
     const El = window.tstsEl;
     const user = u || {};
-    const pic = window.tstsSafeUrl(user.profilePic, "https://via.placeholder.com/40?text=U");
+    const pic = window.tstsSafeUrl(user.profilePic, "/assets/avatar-default.svg");
     const name = user.name || "User";
     const handle = user.handle ? ("@" + user.handle) : "";
     const id = user._id || user.id || "";
 
     var imgEl = El("img", { className: "h-10 w-10 rounded-full border border-gray-100 object-cover" });
-    window.tstsSafeImg(imgEl, pic, "https://via.placeholder.com/40?text=U");
+    window.tstsSafeImg(imgEl, pic, "/assets/avatar-default.svg");
 
     return El("div", { className: "flex items-center gap-3" }, [
       imgEl,
       El("div", { className: "min-w-0" }, [
         El("div", { className: "font-bold text-gray-900 truncate", textContent: name }),
-        El("div", { className: "text-xs text-gray-500 truncate", textContent: handle + (id ? (" • " + id) : "") })
+        El("div", { className: "text-xs text-gray-500 truncate", textContent: handle })
       ])
     ]);
   }
@@ -150,11 +149,11 @@
   async function connect() {
     if (!requireAuth()) return;
 
-    const handle = handleEl ? String(handleEl.value || "").trim() : "";
-    const targetUserId = targetUserIdEl ? String(targetUserIdEl.value || "").trim() : "";
+    let handle = handleEl ? String(handleEl.value || "").trim() : "";
+    if (handle.startsWith("@")) handle = handle.substring(1);
 
-    if (!handle && !targetUserId) {
-      setText(connectStatusEl, "Enter a handle or user id.");
+    if (!handle) {
+      setText(connectStatusEl, "Enter a handle.");
       return;
     }
 
@@ -170,8 +169,7 @@
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          targetUserId: targetUserId || undefined,
-          handle: handle || undefined
+          handle: handle
         })
       });
 

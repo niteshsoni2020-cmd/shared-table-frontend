@@ -24,8 +24,8 @@
   function renderItem(item) {
     const El = window.tstsEl;
     const safeUrl = window.tstsSafeUrl;
-    const fallbackImg = "https://via.placeholder.com/400x250?text=No+Image";
-    const fallbackPic = "https://via.placeholder.com/40?text=U";
+    const fallbackImg = "/assets/experience-default.jpg";
+    const fallbackPic = "/assets/avatar-default.svg";
 
     const it = item || {};
     const guest = it.guest || {};

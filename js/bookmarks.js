@@ -18,7 +18,7 @@
   function card(exp) {
     const El = window.tstsEl;
     const e = exp || {};
-    const fallbackImg = "https://via.placeholder.com/400x300";
+    const fallbackImg = "/assets/experience-default.jpg";
     const imgUrl = window.tstsSafeUrl(e.imageUrl || (Array.isArray(e.images) ? e.images[0] : ""), fallbackImg);
     const price = (e.price == null) ? "" : String(e.price);
     const id = e._id || e.id || "";

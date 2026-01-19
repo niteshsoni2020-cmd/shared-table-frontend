@@ -112,7 +112,7 @@ async function loadTrips() {
 function renderTripCard(booking) {
   const El = window.tstsEl;
   const exp = booking && (booking.experience || booking.experienceDetails) || {};
-  const fallbackImg = "https://via.placeholder.com/150";
+  const fallbackImg = "/assets/experience-default.jpg";
   const imgUrl = window.tstsSafeUrl(exp.imageUrl || (Array.isArray(exp.images) && exp.images[0]) || booking.imageUrl, fallbackImg);
 
   const dt = safeDate(booking.bookingDate || booking.experienceDate || booking.date || booking.createdAt);

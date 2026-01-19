@@ -23,12 +23,11 @@
   function syncNavAvatar(url) {
     try {
       const img = document.getElementById("nav-user-pic");
-      if (img && url) window.tstsSafeImg(img, url, "https://via.placeholder.com/40?text=U");
+      if (img && url) window.tstsSafeImg(img, url, "/assets/avatar-default.svg");
     } catch (_) {}
   }
 
   const CLOUDINARY_URL = (window.CLOUDINARY_URL || "");
-  const CLOUDINARY_UPLOAD_PRESET = (window.CLOUDINARY_PRESET || "");
 
   const form = document.getElementById("profile-form");
   const nameInput = document.getElementById("name");
@@ -87,7 +86,7 @@
       try { if (handleInput) handleInput.value = user.handle || ""; } catch (_) {}
       try { if (allowHandleSearchToggle) allowHandleSearchToggle.checked = !!user.allowHandleSearch; } catch (_) {}
       try { if (shareToFriendsToggle) shareToFriendsToggle.checked = !!user.showExperiencesToFriends; } catch (_) {}
-      if (profilePicPreview && user.profilePic) window.tstsSafeImg(profilePicPreview, user.profilePic, "https://via.placeholder.com/150?text=User");
+      if (profilePicPreview && user.profilePic) window.tstsSafeImg(profilePicPreview, user.profilePic, "/assets/avatar-default.svg");
 
       // keep localStorage user in sync so navbar can reflect it everywhere
       const prev = getStoredUser();
@@ -214,7 +213,12 @@
       uploadBtn.disabled = true;
 
       try {
-        if (!CLOUDINARY_URL || !CLOUDINARY_UPLOAD_PRESET) throw new Error("Upload not configured");
+        if (!CLOUDINARY_URL) throw new Error("Upload not configured");
+
+        // G3: Get signed upload parameters from backend
+        const sigRes = await window.authFetch("/api/uploads/cloudinary-signature", { method: "POST" });
+        if (!sigRes.ok) throw new Error("Failed to get upload signature");
+        const sigData = await sigRes.json();
 
         const secureUrl = await new Promise((resolve, reject) => {
           const xhr = new XMLHttpRequest();
@@ -235,7 +239,10 @@
 
           const formData = new FormData();
           formData.append("file", file);
-          formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+          formData.append("timestamp", sigData.timestamp);
+          formData.append("signature", sigData.signature);
+          formData.append("api_key", sigData.apiKey);
+          formData.append("folder", sigData.folder);
           xhr.send(formData);
         });
 
@@ -247,7 +254,7 @@
         }
 
         // ensure preview matches final secure URL and nav sync happens even if API returns old shape
-        if (profilePicPreview) window.tstsSafeImg(profilePicPreview, secureUrl, "https://via.placeholder.com/150?text=User");
+        if (profilePicPreview) window.tstsSafeImg(profilePicPreview, secureUrl, "/assets/avatar-default.svg");
         syncNavAvatar(secureUrl);
 
         uploadBtn.classList.add("hidden");

@@ -7,9 +7,8 @@ const uploadPreview = document.getElementById("upload-preview");
 const uploadPlaceholder = document.getElementById("upload-placeholder");
 const submitBtn = document.getElementById("submit-btn");
 
-// Cloudinary Config (Unsigned)
+// Cloudinary Config
 const CLOUDINARY_URL = (window.CLOUDINARY_URL || "");
-const CLOUDINARY_UPLOAD_PRESET = (window.CLOUDINARY_PRESET || "");
 
 let isEditing = false;
 let editId = null;
@@ -119,12 +118,18 @@ if (form) {
     }
 
     try {
-      // 1) IMAGE UPLOAD (only when new file chosen)
+      // 1) IMAGE UPLOAD (only when new file chosen) - SIGNED UPLOAD
       let imageUrl = null;
 
       if (imageInput && imageInput.files && imageInput.files.length > 0) {
         const file = imageInput.files[0];
-        if (!CLOUDINARY_URL || !CLOUDINARY_UPLOAD_PRESET) throw new Error("Upload not configured");
+        if (!CLOUDINARY_URL) throw new Error("Upload not configured");
+
+        // Get signed upload parameters from backend
+        const sigRes = await window.authFetch("/api/uploads/cloudinary-signature", { method: "POST" });
+        if (!sigRes.ok) throw new Error("Failed to get upload signature");
+        const sigData = await sigRes.json();
+
         imageUrl = await new Promise((resolve, reject) => {
           const xhr = new XMLHttpRequest();
           xhr.open("POST", CLOUDINARY_URL, true);
@@ -145,7 +150,10 @@ if (form) {
 
           const formData = new FormData();
           formData.append("file", file);
-          formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+          formData.append("timestamp", sigData.timestamp);
+          formData.append("signature", sigData.signature);
+          formData.append("api_key", sigData.apiKey);
+          formData.append("folder", sigData.folder);
           xhr.send(formData);
         });
       }

@@ -36,7 +36,14 @@
       const tt = q.get("targetType");
       const tid = q.get("targetId");
       if (tt && targetTypeEl) targetTypeEl.value = String(tt);
-      if (tid && targetIdEl) targetIdEl.value = String(tid);
+      if (tid && targetIdEl) {
+        targetIdEl.value = String(tid);
+        targetIdEl.readOnly = true;
+        targetIdEl.classList.add("bg-gray-100", "cursor-not-allowed");
+      } else {
+        const helper = document.getElementById("targetId-helper");
+        if (helper) helper.classList.remove("hidden");
+      }
     } catch (_) {}
   }
 
@@ -51,7 +58,12 @@
       message: messageEl ? String(messageEl.value || "").trim() : ""
     };
 
-    if (!payload.targetType || !payload.targetId || !payload.category) {
+    if (!payload.targetId) {
+      setAlert("error", "Target ID must be provided via URL parameter.");
+      return;
+    }
+
+    if (!payload.targetType || !payload.category) {
       setAlert("error", "Please fill the required fields.");
       return;
     }

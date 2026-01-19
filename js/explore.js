@@ -197,8 +197,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const renderExperiences = (experiences) => {
         const El = window.tstsEl;
         const safeUrl = window.tstsSafeUrl;
-        const fallbackImg = "https://via.placeholder.com/400x300";
-        const fallbackHostPic = "https://via.placeholder.com/30";
+        const fallbackImg = "/assets/experience-default.jpg";
+        const fallbackHostPic = "/assets/avatar-default.svg";
 
         experiencesGrid.textContent = "";
         if (!experiences || !experiences.length) {

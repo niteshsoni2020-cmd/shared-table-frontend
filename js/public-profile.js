@@ -44,7 +44,7 @@ function renderProfile(profile) {
     const p = (profile && profile.user) ? profile.user : (profile || {});
 
     hostNameEl.textContent = p.name || "";
-    if (p.profilePic && hostPicEl) window.tstsSafeImg(hostPicEl, p.profilePic, "https://via.placeholder.com/150?text=Host");
+    if (p.profilePic && hostPicEl) window.tstsSafeImg(hostPicEl, p.profilePic, "/assets/avatar-default.svg");
     if (p.bio) hostBioEl.textContent = p.bio;
 
     hostRatingEl.textContent = "New";
@@ -123,7 +123,7 @@ async function loadHostExperiences() {
 function createExperienceCard(exp) {
     const El = window.tstsEl;
     const safeUrl = window.tstsSafeUrl;
-    const fallbackImg = "https://via.placeholder.com/400x300";
+    const fallbackImg = "/assets/experience-default.jpg";
     const imgUrl = safeUrl(exp.imageUrl || (exp.images && exp.images[0]), fallbackImg);
     const safeId = exp._id || exp.id;
 

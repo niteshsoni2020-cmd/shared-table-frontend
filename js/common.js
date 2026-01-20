@@ -547,11 +547,11 @@ function injectNavbar() {
   const root = document.getElementById("navbar-placeholder");
   if (!root) return;
 
-  const logoIcon = tstsEl("span", { className: "inline-flex items-center justify-center h-9 w-9 rounded-full bg-orange-50 border border-orange-100" }, [
-    tstsEl("i", { className: "fas fa-utensils text-orange-600" })
+  const logoBadge = tstsEl("span", { className: "inline-flex items-center justify-center h-9 w-9 rounded-full bg-orange-50 border border-orange-100" }, [
+    tstsEl("img", { src: "/assets/logo-mark.png", alt: "The Shared Table Story", className: "h-7 w-7 object-contain" })
   ]);
-  const logoText = tstsEl("span", {}, "The Shared Table Story");
-  const logo = tstsEl("a", { href: "index.html", className: "text-2xl font-bold text-orange-600 flex items-center gap-2 font-serif" }, [logoIcon, logoText]);
+  const logoText = tstsEl("span", { className: "leading-none" }, "The Shared Table Story");
+  const logo = tstsEl("a", { href: "index.html", className: "text-2xl font-bold text-orange-600 flex items-center gap-2 font-serif" }, [logoBadge, logoText]);
   logo.setAttribute("aria-label", "The Shared Table Story");
 
   const navHome = tstsEl("a", { href: "index.html", className: "text-gray-600 hover:text-orange-600 font-medium transition" }, "Home");

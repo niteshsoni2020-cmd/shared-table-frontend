@@ -3,9 +3,30 @@
   var token = (window.getAuthToken && window.getAuthToken()) || "";
   if (!token) {
     var returnTo = encodeURIComponent(location.pathname + location.search);
-    location.href = "login.html?returnTo=" + returnTo;
+    location.replace("login.html?returnTo=" + returnTo);
     return;
   }
+
+  // No-flash gate: keep body hidden until token is verified (or unhide if verify not possible)
+  (function(){
+    function unmask(){ try{ document.documentElement.removeAttribute("data-auth-pending"); }catch(e){} }
+    try{
+      if (!window.authFetch) { unmask(); return; }
+      window.authFetch("/api/auth/me", { method: "GET" }).then(function(res){
+        if (res && (res.status === 401 || res.status === 403)) {
+          if (window.clearAuth) window.clearAuth();
+          var rt = encodeURIComponent(location.pathname + location.search);
+          location.replace("login.html?returnTo=" + rt);
+          return;
+        }
+        unmask();
+      }).catch(function(){
+        unmask();
+      });
+    } catch (e) {
+      unmask();
+    }
+  })();
 
   const form = document.getElementById("create-experience-form");
   const titleInput = document.getElementById("title");

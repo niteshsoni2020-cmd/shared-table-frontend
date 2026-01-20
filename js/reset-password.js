@@ -21,21 +21,80 @@
     alertEl.textContent = String(msg || "");
   }
 
-  function fillFromUrl() {
+  let urlEmail = "";
+  let urlToken = "";
+  function parseUrlParams() {
+    let email = "";
+    let token = "";
+
     try {
-      const q = new URLSearchParams(location.search);
-      const email = q.get("email");
-      const token = q.get("token");
-      if (email && emailEl) emailEl.value = String(email);
-      if (token && tokenEl) tokenEl.value = String(token);
+      const rawHash = (location.hash || "");
+      const hash = rawHash.startsWith("#") ? rawHash.slice(1) : rawHash;
+      const h = new URLSearchParams(hash || "");
+      const ht = h.get("token");
+      const he = h.get("email");
+      if (ht) token = String(ht);
+      if (he) email = String(he);
     } catch (_) {}
+
+    try {
+      const q = new URLSearchParams(location.search || "");
+      const se = q.get("email");
+      const st = q.get("token");
+      if (!email && se) email = String(se);
+      if (!token && st) token = String(st);
+    } catch (_) {}
+
+    return { email, token };
   }
+
+function scrubUrlToken() {
+  try {
+    const u = new URL(location.href);
+    if (u.searchParams.has("token")) {
+      u.searchParams.delete("token");
+      const clean = u.pathname + (u.searchParams.toString() ? ("?" + u.searchParams.toString()) : "") + u.hash;
+      history.replaceState({}, document.title, clean);
+    }
+  } catch (_) {}
+  try {
+    if (location.hash && String(location.hash).toLowerCase().includes("token=")) {
+      history.replaceState({}, document.title, location.pathname + location.search);
+    }
+  } catch (_) {}
+}
+
+function setSubmitEnabled(enabled) {
+  if (!submitBtn) return;
+  submitBtn.disabled = !enabled;
+  if (!enabled) {
+    submitBtn.classList.add("opacity-60", "cursor-not-allowed");
+  } else {
+    submitBtn.classList.remove("opacity-60", "cursor-not-allowed");
+  }
+}
+
+function fillFromUrl() {
+  try {
+    const p = parseUrlParams();
+    urlEmail = p.email ? String(p.email) : "";
+    urlToken = p.token ? String(p.token) : "";
+    if (urlEmail && emailEl) emailEl.value = String(urlEmail);
+    if (!urlToken) {
+      setAlert("error", "This reset link is incomplete or expired. Please request a new password reset link and try again.");
+      setSubmitEnabled(false);
+      return;
+    }
+    setSubmitEnabled(true);
+    scrubUrlToken();
+  } catch (_) {}
+}
 
   async function submit(e) {
     e.preventDefault();
 
     const email = (emailEl && emailEl.value) ? String(emailEl.value).trim() : "";
-    const token = (tokenEl && tokenEl.value) ? String(tokenEl.value).trim() : "";
+    const token = (tokenEl && tokenEl.value) ? String(tokenEl.value).trim() : (urlToken ? String(urlToken).trim() : "");
     const newPassword = (newPasswordEl && newPasswordEl.value) ? String(newPasswordEl.value) : "";
     const confirmPassword = (confirmPasswordEl && confirmPasswordEl.value) ? String(confirmPasswordEl.value) : "";
 

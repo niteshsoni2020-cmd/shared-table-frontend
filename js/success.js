@@ -130,7 +130,7 @@ function populateBookingSummary(booking) {
     experience.imageUrl ||
     (experience.images && experience.images[0]) ||
     booking.imageUrl ||
-    "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1200&q=80";
+    "/assets/experience-default.jpg";
 
   successExpTitleEl.textContent = title;
 

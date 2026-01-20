@@ -108,7 +108,7 @@ async function loadHomeRecommendations() {
 
 function renderCard(exp) {
     const El = window.tstsEl;
-    const fallbackImg = "https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=400&auto=format&fit=crop";
+    const fallbackImg = "/assets/experience-default.jpg";
     let imgSrc = fallbackImg;
     if (exp.imageUrl && exp.imageUrl.includes("cloudinary.com")) {
         imgSrc = exp.imageUrl.replace('/upload/', '/upload/w_400,h_300,c_fill,q_auto/');

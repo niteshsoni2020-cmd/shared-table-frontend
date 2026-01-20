@@ -7,9 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
-    <script>
-        if (!localStorage.getItem('token')) window.location.href = 'login.html';
-    </script>
 <link rel="manifest" href="manifest.json">
 </head>
 <body class="bg-gray-50 text-gray-900 flex flex-col min-h-screen">
@@ -23,13 +20,13 @@
         <form id="create-experience-form" class="bg-white p-8 rounded-xl shadow-sm border border-gray-100 space-y-6">
             
             <div>
-                <label class="block text-sm font-bold text-gray-700 mb-1">Experience Title</label>
+                <label class="block text-sm font-bold text-gray-700 mb-1" for="title">Experience Title</label>
                 <input type="text" id="title" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none" placeholder="e.g., Sunset Diwali Feast" required>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Categories (Select all that apply)</label>
+                    <span class="block text-sm font-bold text-gray-700 mb-2">Categories (Select all that apply)</span>
                     <div class="space-y-2 bg-gray-50 p-3 rounded-lg border border-gray-200">
                         <label class="flex items-center space-x-2">
                             <input type="checkbox" name="tags" value="Culture" class="form-checkbox text-orange-600 h-4 w-4">
@@ -47,49 +44,49 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-1">City</label>
+                    <label class="block text-sm font-bold text-gray-700 mb-1" for="city">City</label>
                     <input type="text" id="city" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none" placeholder="e.g. Melbourne" required>
                 </div>
             </div>
 
             <div>
-                <label class="block text-sm font-bold text-gray-700 mb-1">The Story (Description)</label>
+                <label class="block text-sm font-bold text-gray-700 mb-1" for="description">The Story (Description)</label>
                 <textarea id="description" rows="5" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none" placeholder="What will guests do? What makes this special?" required></textarea>
             </div>
 
             <div class="grid grid-cols-3 gap-4">
                 <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-1">Price (AUD)</label>
+                    <label class="block text-sm font-bold text-gray-700 mb-1" for="price">Price (AUD)</label>
                     <input type="number" id="price" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none" placeholder="85" required>
                 </div>
                 <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-1">Max Guests</label>
+                    <label class="block text-sm font-bold text-gray-700 mb-1" for="maxGuests">Max Guests</label>
                     <input type="number" id="maxGuests" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none" placeholder="6" required>
                 </div>
                 <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-1">Days</label>
+                    <label class="block text-sm font-bold text-gray-700 mb-1" for="availableDays">Days</label>
                     <input type="text" id="availableDays" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none" placeholder="Fri, Sat" value="Fri, Sat, Sun">
                 </div>
             </div>
 
             <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-1">Start Date</label>
+                    <label class="block text-sm font-bold text-gray-700 mb-1" for="startDate">Start Date</label>
                     <input type="date" id="startDate" class="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none" required>
                 </div>
                 <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-1">End Date</label>
+                    <label class="block text-sm font-bold text-gray-700 mb-1" for="endDate">End Date</label>
                     <input type="date" id="endDate" class="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none" required>
                 </div>
             </div>
 
             <div>
-                <label class="block text-sm font-bold text-gray-700 mb-1">Start Time</label>
+                <label class="block text-sm font-bold text-gray-700 mb-1" for="startTime">Start Time</label>
                 <input type="time" id="startTime" class="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none" required>
             </div>
 
             <div>
-                <label class="block text-sm font-bold text-gray-700 mb-2">Cover Photo</label>
+                <span class="block text-sm font-bold text-gray-700 mb-2">Cover Photo</span>
                 <div class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:bg-gray-50 transition cursor-pointer relative">
                     <input type="file" id="imageInput" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*">
                     <div id="upload-placeholder">

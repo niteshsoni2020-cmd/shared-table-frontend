@@ -5,13 +5,15 @@ function getToken() {
   return (window.getAuthToken && window.getAuthToken()) || "";
 }
 
-function getAdminReason() {
+async function getAdminReason() {
   let r = "";
   try { r = String(sessionStorage.getItem("admin_reason") || ""); } catch (_) { r = ""; }
   r = r.trim();
   if (r.length >= 5) return r;
-  try { r = String(prompt("Admin reason (required)", "") || ""); } catch (_) { r = ""; }
-  r = r.trim();
+  try {
+    r = await window.tstsPrompt("Admin reason (required)", "", { minLength: 5, placeholder: "Enter reason for this action..." });
+    r = String(r || "").trim();
+  } catch (_) { r = ""; }
   if (r.length < 5) return "";
   try { sessionStorage.setItem("admin_reason", r); } catch (_) {}
   return r;
@@ -30,7 +32,7 @@ async function adminFetch(path, opts) {
   if (!path.startsWith("/api/admin/")) {
     return window.authFetch(path, withOptionalAdminReasonHeaders(opts));
   }
-  const reason = getAdminReason();
+  const reason = await getAdminReason();
   if (!reason) throw new Error("Admin reason required");
   const headers = Object.assign({}, (opts && opts.headers) || {}, { "X-Admin-Reason": reason });
   return window.authFetch(path, Object.assign({}, opts || {}, { headers }));
@@ -283,19 +285,22 @@ function renderUsers(users) {
 
 // Local action handlers (no window.* exposure)
 async function handleToggleExperience(id) {
-  try { await toggleExperience(id); await boot(); } catch (e) { alert(e.message || "Failed"); }
+  try { await toggleExperience(id); await boot(); } catch (e) { window.tstsNotify(e.message || "Failed", "error"); }
 }
 async function handleDeleteExperience(id) {
-  if (!confirm("Delete this experience?")) return;
-  try { await deleteExperience(id); await boot(); } catch (e) { alert(e.message || "Failed"); }
+  var confirmed = await window.tstsConfirm("Delete this experience?", { destructive: true, confirmText: "Delete" });
+  if (!confirmed) return;
+  try { await deleteExperience(id); await boot(); } catch (e) { window.tstsNotify(e.message || "Failed", "error"); }
 }
 async function handleDeleteUser(id) {
-  if (!confirm("Delete this user?")) return;
-  try { await deleteUser(id); await boot(); } catch (e) { alert(e.message || "Failed"); }
+  var confirmed = await window.tstsConfirm("Delete this user?", { destructive: true, confirmText: "Delete" });
+  if (!confirmed) return;
+  try { await deleteUser(id); await boot(); } catch (e) { window.tstsNotify(e.message || "Failed", "error"); }
 }
 async function handleCancelBooking(id) {
-  if (!confirm("Cancel this booking?")) return;
-  try { await cancelBooking(id); await boot(); } catch (e) { alert(e.message || "Failed"); }
+  var confirmed = await window.tstsConfirm("Cancel this booking?", { destructive: true, confirmText: "Cancel Booking" });
+  if (!confirmed) return;
+  try { await cancelBooking(id); await boot(); } catch (e) { window.tstsNotify(e.message || "Failed", "error"); }
 }
 
 // Tab switching functionality (local, no window.* exposure)
@@ -377,7 +382,7 @@ async function boot() {
     renderExperiences(exps);
     renderUsers(users);
   } catch (e) {
-    alert("Admin load failed.");
+    window.tstsNotify("Admin load failed.", "error");
   }
 }
 

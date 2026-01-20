@@ -20,7 +20,7 @@
   async function af(path, opts) {
     // STRICT: single truth must come from common.js
     if (window.authFetch == null) {
-      alert("App bootstrap error: common.js not loaded.");
+      window.tstsNotify("App bootstrap error: common.js not loaded.", "error");
       throw new Error("authFetch missing");
     }
     return window.authFetch(path, opts);
@@ -91,7 +91,7 @@
 
   async function loadExperience() {
     if (!experienceId) {
-      alert("Missing experience id.");
+      window.tstsNotify("Missing experience id.", "error");
       location.href = "explore.html";
       return;
     }
@@ -103,7 +103,7 @@
       return redirectToLogin();
     }
     if (!res.ok) {
-      alert("Experience not found.");
+      window.tstsNotify("Experience not found.", "error");
       location.href = "explore.html";
       return;
     }
@@ -111,7 +111,7 @@
     const raw = await res.json();
     exp = normalizeExperience(raw);
     if (!exp) {
-      alert("Experience not found.");
+      window.tstsNotify("Experience not found.", "error");
       location.href = "explore.html";
       return;
     }
@@ -237,7 +237,7 @@
         if (msg.includes("removed")) setBookmarkUI(false);
         else if (msg.includes("added")) setBookmarkUI(true);
       } catch (e) {
-        alert((e && e.message) ? e.message : "Bookmark failed");
+        window.tstsNotify((e && e.message) ? e.message : "Bookmark failed", "error");
       }
     });
   }
@@ -264,7 +264,7 @@
         if (!res.ok) throw new Error((data && data.message) ? data.message : "Like failed");
         setLikeUI(!!data.liked, data.count);
       } catch (e) {
-        alert((e && e.message) ? e.message : "Like failed");
+        window.tstsNotify((e && e.message) ? e.message : "Like failed", "error");
       }
     });
   }
@@ -425,7 +425,7 @@
             if (commentText) commentText.value = "";
             loadComments().catch(() => {});
           } catch (err) {
-            alert((err && err.message) ? err.message : "Comment failed");
+            window.tstsNotify((err && err.message) ? err.message : "Comment failed", "error");
           }
         }, { once: true });
       }
@@ -442,7 +442,7 @@
       if (!getToken()) return redirectToLogin();
 
       if (termsBox && !termsBox.checked) {
-        alert("Please accept the cancellation policy.");
+        window.tstsNotify("Please accept the cancellation policy.", "warning");
         return;
       }
 
@@ -451,7 +451,7 @@
       try {
         const policyVer = activePolicyVersion || (await loadPolicyVersion());
         if (!policyVer) {
-          alert("Unable to load policy. Please try again.");
+          window.tstsNotify("Unable to load policy. Please try again.", "error");
           if (submitBtn) submitBtn.disabled = false;
           return;
         }
@@ -461,12 +461,12 @@
         const bookingDate = String((dateInput && dateInput.value) || "").trim();
 
         if (!bookingDate) {
-          alert("Please select a date.");
+          window.tstsNotify("Please select a date.", "warning");
           if (submitBtn) submitBtn.disabled = false;
           return;
         }
         if (!timeSlot) {
-          alert("Please select a time slot.");
+          window.tstsNotify("Please select a time slot.", "warning");
           if (submitBtn) submitBtn.disabled = false;
           return;
         }
@@ -492,7 +492,7 @@
 
         if (!res.ok) {
           const msg = (data && data.message) ? String(data.message) : "Booking failed";
-          alert(msg);
+          window.tstsNotify(msg, "error");
           if (submitBtn) submitBtn.disabled = false;
           return;
         }
@@ -503,7 +503,7 @@
           location.href = "success.html";
         }
       } catch (_) {
-        alert("Booking failed");
+        window.tstsNotify("Booking failed", "error");
         if (submitBtn) submitBtn.disabled = false;
       }
     });
@@ -511,7 +511,7 @@
 
 
   loadExperience().catch(() => {
-    alert("Unable to load experience.");
+    window.tstsNotify("Unable to load experience.", "error");
     location.href = "explore.html";
   });
 })();

@@ -34,7 +34,7 @@
                 <div class="relative group">
                     <img id="profile-pic-preview" 
                          src="/assets/avatar-default.svg" 
-                         alt="Profile" 
+                         alt="Your profile picture" 
                          class="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg">
                     
                     <div id="upload-spinner" class="hidden absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
@@ -48,7 +48,7 @@
                     </label>
                     <input id="file-upload" type="file" class="hidden" accept="image/*">
                     
-                    <button id="upload-btn" class="hidden bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-orange-700 transition">
+                    <button id="upload-btn" type="button" class="hidden bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-orange-700 transition">
                         Upload & Save
                     </button>
                     <p id="upload-status" class="text-xs text-gray-500 mt-1"></p>
@@ -140,10 +140,7 @@
                                 <div class="text-xs font-bold text-gray-400 select-none">LOCKED</div>
                             </div>
 
-                            <p class="text-[11px] text-gray-500 pt-2 border-t border-gray-200">
-                                
-                            </p>
-                        </div>
+                                                    </div>
                     </div>
 
 <div id="host-payment-section" class="pt-6 border-t border-gray-100 hidden">

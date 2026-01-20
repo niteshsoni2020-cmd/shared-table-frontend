@@ -147,6 +147,258 @@ window.tstsSafeMailto = function(email) {
   return "mailto:" + trimmed;
 };
 
+// WS-FE-07: Branded toast notification (replaces alert())
+(function() {
+  var toastContainer = null;
+
+  function ensureContainer() {
+    if (toastContainer && document.body.contains(toastContainer)) return toastContainer;
+    toastContainer = window.tstsEl("div", {
+      id: "tsts-toast-container",
+      className: "fixed bottom-4 right-4 z-[9999] flex flex-col gap-2 pointer-events-none"
+    });
+    document.body.appendChild(toastContainer);
+    return toastContainer;
+  }
+
+  window.tstsNotify = function(msg, type) {
+    var t = String(type || "info").toLowerCase();
+    var colors = {
+      success: "bg-green-600 text-white",
+      error: "bg-red-600 text-white",
+      warning: "bg-amber-500 text-white",
+      info: "bg-gray-800 text-white"
+    };
+    var icons = {
+      success: "fa-check-circle",
+      error: "fa-exclamation-circle",
+      warning: "fa-exclamation-triangle",
+      info: "fa-info-circle"
+    };
+    var colorClass = colors[t] || colors.info;
+    var iconClass = icons[t] || icons.info;
+
+    var container = ensureContainer();
+
+    var icon = window.tstsEl("i", { className: "fas " + iconClass + " text-lg flex-shrink-0" });
+    var text = window.tstsEl("span", { className: "text-sm font-medium" }, String(msg || ""));
+    var closeBtn = window.tstsEl("button", {
+      className: "ml-2 text-white/80 hover:text-white transition flex-shrink-0",
+      type: "button"
+    }, [window.tstsEl("i", { className: "fas fa-times" })]);
+    closeBtn.setAttribute("aria-label", "Close");
+
+    var toast = window.tstsEl("div", {
+      className: colorClass + " px-4 py-3 rounded-xl shadow-lg flex items-center gap-3 pointer-events-auto transform translate-x-full opacity-0 transition-all duration-300 max-w-sm"
+    }, [icon, text, closeBtn]);
+
+    container.appendChild(toast);
+
+    // Animate in
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
+        toast.classList.remove("translate-x-full", "opacity-0");
+        toast.classList.add("translate-x-0", "opacity-100");
+      });
+    });
+
+    var dismiss = function() {
+      toast.classList.remove("translate-x-0", "opacity-100");
+      toast.classList.add("translate-x-full", "opacity-0");
+      setTimeout(function() {
+        if (toast.parentNode) toast.parentNode.removeChild(toast);
+      }, 300);
+    };
+
+    closeBtn.addEventListener("click", dismiss);
+    setTimeout(dismiss, 5000);
+  };
+})();
+
+// WS-FE-08: Branded confirmation modal (replaces confirm())
+window.tstsConfirm = function(msg, opts) {
+  return new Promise(function(resolve) {
+    var options = opts || {};
+    var confirmText = options.confirmText || "Confirm";
+    var cancelText = options.cancelText || "Cancel";
+    var isDestructive = options.destructive === true;
+
+    var overlay = window.tstsEl("div", {
+      className: "fixed inset-0 bg-black/50 z-[9998] flex items-center justify-center p-4 opacity-0 transition-opacity duration-200"
+    });
+
+    var icon = window.tstsEl("div", {
+      className: "w-12 h-12 rounded-full flex items-center justify-center mb-4 " + (isDestructive ? "bg-red-100" : "bg-orange-100")
+    }, [
+      window.tstsEl("i", { className: "fas fa-question text-xl " + (isDestructive ? "text-red-600" : "text-orange-600") })
+    ]);
+
+    var message = window.tstsEl("p", { className: "text-gray-700 text-center mb-6" }, String(msg || "Are you sure?"));
+
+    var cancelBtn = window.tstsEl("button", {
+      className: "flex-1 px-4 py-2.5 rounded-lg border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 transition",
+      type: "button"
+    }, cancelText);
+
+    var confirmBtn = window.tstsEl("button", {
+      className: "flex-1 px-4 py-2.5 rounded-lg font-medium transition " + (isDestructive ? "bg-red-600 text-white hover:bg-red-700" : "bg-gray-900 text-white hover:bg-black"),
+      type: "button"
+    }, confirmText);
+
+    var buttons = window.tstsEl("div", { className: "flex gap-3" }, [cancelBtn, confirmBtn]);
+
+    var modal = window.tstsEl("div", {
+      className: "bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 transform scale-95 opacity-0 transition-all duration-200"
+    }, [icon, message, buttons]);
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    // Animate in
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
+        overlay.classList.remove("opacity-0");
+        overlay.classList.add("opacity-100");
+        modal.classList.remove("scale-95", "opacity-0");
+        modal.classList.add("scale-100", "opacity-100");
+      });
+    });
+
+    var cleanup = function(result) {
+      overlay.classList.remove("opacity-100");
+      overlay.classList.add("opacity-0");
+      modal.classList.remove("scale-100", "opacity-100");
+      modal.classList.add("scale-95", "opacity-0");
+      setTimeout(function() {
+        if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+        resolve(result);
+      }, 200);
+    };
+
+    cancelBtn.addEventListener("click", function() { cleanup(false); });
+    confirmBtn.addEventListener("click", function() { cleanup(true); });
+    overlay.addEventListener("click", function(e) {
+      if (e.target === overlay) cleanup(false);
+    });
+    document.addEventListener("keydown", function handler(e) {
+      if (e.key === "Escape") {
+        document.removeEventListener("keydown", handler);
+        cleanup(false);
+      }
+    });
+
+    // Focus trap
+    confirmBtn.focus();
+  });
+};
+
+// WS-FE-09: Branded prompt modal (replaces prompt())
+window.tstsPrompt = function(msg, defaultValue, opts) {
+  return new Promise(function(resolve) {
+    var options = opts || {};
+    var confirmText = options.confirmText || "Submit";
+    var cancelText = options.cancelText || "Cancel";
+    var placeholder = options.placeholder || "";
+    var minLength = options.minLength || 0;
+
+    var overlay = window.tstsEl("div", {
+      className: "fixed inset-0 bg-black/50 z-[9998] flex items-center justify-center p-4 opacity-0 transition-opacity duration-200"
+    });
+
+    var icon = window.tstsEl("div", {
+      className: "w-12 h-12 rounded-full flex items-center justify-center mb-4 bg-orange-100"
+    }, [
+      window.tstsEl("i", { className: "fas fa-pencil-alt text-xl text-orange-600" })
+    ]);
+
+    var message = window.tstsEl("p", { className: "text-gray-700 text-center mb-4" }, String(msg || "Enter value:"));
+
+    var input = window.tstsEl("input", {
+      type: "text",
+      className: "w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-100 focus:border-orange-400 outline-none transition mb-2",
+      placeholder: placeholder,
+      value: String(defaultValue || "")
+    });
+
+    var errorEl = window.tstsEl("p", { className: "text-red-500 text-xs mb-4 h-4" });
+
+    var cancelBtn = window.tstsEl("button", {
+      className: "flex-1 px-4 py-2.5 rounded-lg border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 transition",
+      type: "button"
+    }, cancelText);
+
+    var submitBtn = window.tstsEl("button", {
+      className: "flex-1 px-4 py-2.5 rounded-lg bg-gray-900 text-white font-medium hover:bg-black transition",
+      type: "button"
+    }, confirmText);
+
+    var buttons = window.tstsEl("div", { className: "flex gap-3" }, [cancelBtn, submitBtn]);
+
+    var modal = window.tstsEl("div", {
+      className: "bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 transform scale-95 opacity-0 transition-all duration-200"
+    }, [icon, message, input, errorEl, buttons]);
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    // Animate in
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
+        overlay.classList.remove("opacity-0");
+        overlay.classList.add("opacity-100");
+        modal.classList.remove("scale-95", "opacity-0");
+        modal.classList.add("scale-100", "opacity-100");
+      });
+    });
+
+    var cleanup = function(result) {
+      overlay.classList.remove("opacity-100");
+      overlay.classList.add("opacity-0");
+      modal.classList.remove("scale-100", "opacity-100");
+      modal.classList.add("scale-95", "opacity-0");
+      setTimeout(function() {
+        if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+        resolve(result);
+      }, 200);
+    };
+
+    var validate = function() {
+      var val = String(input.value || "").trim();
+      if (minLength > 0 && val.length < minLength) {
+        errorEl.textContent = "Must be at least " + minLength + " characters";
+        return null;
+      }
+      errorEl.textContent = "";
+      return val;
+    };
+
+    cancelBtn.addEventListener("click", function() { cleanup(null); });
+    submitBtn.addEventListener("click", function() {
+      var val = validate();
+      if (val !== null) cleanup(val);
+    });
+    input.addEventListener("keydown", function(e) {
+      if (e.key === "Enter") {
+        var val = validate();
+        if (val !== null) cleanup(val);
+      }
+    });
+    overlay.addEventListener("click", function(e) {
+      if (e.target === overlay) cleanup(null);
+    });
+    document.addEventListener("keydown", function handler(e) {
+      if (e.key === "Escape") {
+        document.removeEventListener("keydown", handler);
+        cleanup(null);
+      }
+    });
+
+    // Focus input
+    input.focus();
+    input.select();
+  });
+};
+
 // WS-FE-04: Dev guard - throws if helpers are missing (catches load order issues)
 (function() {
   var isDev = (location.hostname === "localhost" || location.hostname === "127.0.0.1");

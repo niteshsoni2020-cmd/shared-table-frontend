@@ -3,7 +3,9 @@
 
 // --- Modal fallback (prevents login breaking if modal component isn't loaded) ---
 window.showModal = window.showModal || function (title, message, type) {
-  alert(String(title || "") + "\n\n" + String(message || ""));
+  var t = String(type || "info").toLowerCase();
+  var notifyType = (t === "error") ? "error" : (t === "success") ? "success" : "info";
+  window.tstsNotify(String(title || "") + ": " + String(message || ""), notifyType);
 };
 
 async function handleForgotPassword(e) {
@@ -129,7 +131,18 @@ async function handleSignup(e) {
     const name = document.getElementById("signup-name").value;
     const email = document.getElementById("signup-email").value;
     const password = document.getElementById("signup-password").value;
+    const confirmPassword = document.getElementById("signup-confirm-password").value;
     const termsAgreed = document.getElementById("signup-terms").checked;
+
+    if (password !== confirmPassword) {
+        showModal("Password Mismatch", "Passwords do not match. Please re-enter your password.", "error");
+        return;
+    }
+
+    if (password.length < 8) {
+        showModal("Password Too Short", "Password must be at least 8 characters long.", "error");
+        return;
+    }
 
     if (!termsAgreed) {
         showModal("Terms Required", "You must agree to the Terms of Service to create an account.", "error");

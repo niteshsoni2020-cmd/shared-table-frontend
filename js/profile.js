@@ -30,10 +30,10 @@
   }
 
   function getStoredUser() {
-    try { return JSON.parse(localStorage.getItem("tsts_user") || "{}") || {}; } catch (_) { return {}; }
+    try { return JSON.parse(localStorage.getItem("user") || "{}") || {}; } catch (_) { return {}; }
   }
   function setStoredUser(u) {
-    try { localStorage.setItem("tsts_user", JSON.stringify(u || {})); } catch (_) {}
+    try { localStorage.setItem("user", JSON.stringify(u || {})); } catch (_) {}
   }
 
   async function loadMe() {
@@ -166,7 +166,10 @@
           body: JSON.stringify({ name, bio, handle, allowHandleSearch, showExperiencesToFriends })
         });
 
-        if (!res.ok) return;
+        if (!res.ok) {
+          setUploadStatus("error", "Failed to save profile. Please try again.");
+          return;
+        }
 
         setUploadStatus("success", "Profile updated.");
         loadMe();

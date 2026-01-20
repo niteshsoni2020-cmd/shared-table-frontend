@@ -190,9 +190,9 @@ async function submitReview(e) {
   if (!requireAuthOrRedirect()) return;
 
   const submitBtn = e.target.querySelector('button[type="submit"]');
-  const originalText = submitBtn ? submitBtn.innerText : "";
+  const originalText = submitBtn ? submitBtn.textContent : "";
 
-  if (submitBtn) { submitBtn.innerText = "Posting..."; submitBtn.disabled = true; }
+  if (submitBtn) { submitBtn.textContent = "Posting..."; submitBtn.disabled = true; }
 
   const bookingId = (document.getElementById("review-booking-id") || {}).value || "";
   const expId = (document.getElementById("review-exp-id") || {}).value || "";
@@ -215,16 +215,16 @@ async function submitReview(e) {
     const data = await res.json().catch(() => ({}));
 
     if (res.ok) {
-      alert("Review posted successfully! Thank you.");
+      window.tstsNotify("Review posted successfully! Thank you.", "success");
       if (reviewModal) reviewModal.classList.add("hidden");
       e.target.reset();
     } else {
-      alert(data.message || "Failed to post review.");
+      window.tstsNotify(data.message || "Failed to post review.", "error");
     }
   } catch (_) {
-    alert("Network error.");
+    window.tstsNotify("Network error.", "error");
   } finally {
-    if (submitBtn) { submitBtn.innerText = originalText; submitBtn.disabled = false; }
+    if (submitBtn) { submitBtn.textContent = originalText; submitBtn.disabled = false; }
   }
 }
 
@@ -232,7 +232,8 @@ async function submitReview(e) {
 
 async function cancelBooking(id) {
   if (!id) return;
-  if (!confirm("Are you sure? Refund policies apply.")) return;
+  var confirmed = await window.tstsConfirm("Are you sure? Refund policies apply.", { destructive: true, confirmText: "Cancel Booking" });
+  if (!confirmed) return;
 
   try {
     const res = await window.authFetch(`/api/bookings/${id}/cancel`, { method: "POST" });
@@ -240,13 +241,13 @@ async function cancelBooking(id) {
 
     if (res.ok) {
       const amount = (data && data.refund && data.refund.amount) ? data.refund.amount : "";
-      alert(amount !== "" ? `Cancelled. Refund: $${amount}` : "Cancelled.");
+      window.tstsNotify(amount !== "" ? "Cancelled. Refund: $" + amount : "Cancelled.", "success");
       loadTrips();
     } else {
-      alert("Error: " + (data.message || "Unable to cancel."));
+      window.tstsNotify("Error: " + (data.message || "Unable to cancel."), "error");
     }
   } catch (_) {
-    alert("Network error.");
+    window.tstsNotify("Network error.", "error");
   }
 }
 

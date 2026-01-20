@@ -29,7 +29,7 @@
         <p class="text-xs text-gray-500 mt-1">Enter the user's handle to send a connection request.</p>
       </div>
       <div class="mt-4 flex items-center gap-3">
-        <button id="connect-btn" class="px-6 py-3 rounded-xl bg-gray-900 text-white font-bold hover:bg-black transition">Connect</button>
+        <button id="connect-btn" type="button" class="px-6 py-3 rounded-xl bg-gray-900 text-white font-bold hover:bg-black transition">Connect</button>
         <p id="connect-status" class="text-sm text-gray-600"></p>
       </div>
     </section>
@@ -38,7 +38,7 @@
       <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
         <div class="flex items-center justify-between gap-4 mb-4">
           <h2 class="text-xl font-bold">Incoming requests</h2>
-          <button id="refresh-requests" class="text-sm font-bold text-orange-600 hover:underline">Refresh</button>
+          <button id="refresh-requests" type="button" class="text-sm font-bold text-orange-600 hover:underline">Refresh</button>
         </div>
         <div id="requests-loading" class="text-center py-8"><i class="fas fa-spinner fa-spin text-2xl text-orange-500"></i></div>
         <div id="requests-empty" class="hidden text-center py-8 text-gray-500">No pending requests.</div>
@@ -48,7 +48,7 @@
       <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
         <div class="flex items-center justify-between gap-4 mb-4">
           <h2 class="text-xl font-bold">Your connections</h2>
-          <button id="refresh-connections" class="text-sm font-bold text-orange-600 hover:underline">Refresh</button>
+          <button id="refresh-connections" type="button" class="text-sm font-bold text-orange-600 hover:underline">Refresh</button>
         </div>
         <div id="connections-loading" class="text-center py-8"><i class="fas fa-spinner fa-spin text-2xl text-orange-500"></i></div>
         <div id="connections-empty" class="hidden text-center py-8 text-gray-500">No connections yet.</div>

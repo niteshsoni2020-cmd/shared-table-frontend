@@ -45,15 +45,15 @@
                     </div>
                 </div>
                 <div class="flex gap-2">
-                    <button id="clear-filters-btn" class="px-4 py-3 bg-gray-100 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-200 transition flex items-center gap-2 whitespace-nowrap"><i class="fas fa-times"></i> Clear</button>
-                    <button id="filter-btn" class="px-6 py-3 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition flex items-center justify-center gap-2 whitespace-nowrap"><i class="fas fa-sliders-h"></i> Filters</button>
+                    <button id="clear-filters-btn" type="button" class="px-4 py-3 bg-gray-100 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-200 transition flex items-center gap-2 whitespace-nowrap"><i class="fas fa-times"></i> Clear</button>
+                    <button id="filter-btn" type="button" class="px-6 py-3 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition flex items-center justify-center gap-2 whitespace-nowrap"><i class="fas fa-sliders-h"></i> Filters</button>
                 </div>
             </div>
 
             <div id="filter-panel" class="hidden mt-1 p-6 bg-gray-50 rounded-xl border border-gray-200 transition-all duration-300 shadow-inner">
                 <div class="flex flex-col md:flex-row gap-8 items-start">
                     <div class="w-full md:w-1/2">
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-4">Price Range</label>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-4" for="price-slider">Price Range</label>
                         <div id="price-slider" class="mb-4 mx-2"></div>
                         <div class="flex justify-between text-sm font-medium text-gray-700">
                             <span id="price-min-label">$0</span>
@@ -62,7 +62,7 @@
                         <input type="hidden" id="min-price" /><input type="hidden" id="max-price" />
                     </div>
                     <div class="w-full md:w-1/4">
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Sort By</label>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-2" for="sort-select">Sort By</label>
                         <div class="relative">
                             <select id="sort-select" class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-orange-500 appearance-none cursor-pointer">
                                 <option value="">Recommended</option>
@@ -73,7 +73,7 @@
                         </div>
                     </div>
                     <div class="w-full md:w-1/4 flex items-end">
-                        <button id="apply-filters" class="w-full bg-orange-600 text-white px-6 py-2.5 rounded-lg font-bold hover:bg-orange-700 transition shadow-sm">Apply</button>
+                        <button id="apply-filters" type="button" class="w-full bg-orange-600 text-white px-6 py-2.5 rounded-lg font-bold hover:bg-orange-700 transition shadow-sm">Apply</button>
                     </div>
                 </div>
             </div>
@@ -81,16 +81,16 @@
             <div id="active-filters-bar" class="flex flex-wrap gap-2 text-xs"></div>
 
             <div class="flex gap-2 mt-4 overflow-x-auto pb-2 scrollbar-hide" id="category-chips">
-                <button class="filter-chip active px-4 py-2 bg-gray-900 text-white rounded-full text-sm font-medium whitespace-nowrap transition border border-transparent" data-category="all">
+                <button type="button" class="filter-chip active px-4 py-2 bg-gray-900 text-white rounded-full text-sm font-medium whitespace-nowrap transition border border-transparent" data-category="all">
                     All Stories
                 </button>
-                <button class="filter-chip px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-full text-sm font-medium whitespace-nowrap hover:border-orange-500 transition" data-category="Culture">
+                <button type="button" class="filter-chip px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-full text-sm font-medium whitespace-nowrap hover:border-orange-500 transition" data-category="Culture">
                     <i class="fas fa-globe mr-1"></i> Culture & Festivals
                 </button>
-                <button class="filter-chip px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-full text-sm font-medium whitespace-nowrap hover:border-orange-500 transition" data-category="Food">
+                <button type="button" class="filter-chip px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-full text-sm font-medium whitespace-nowrap hover:border-orange-500 transition" data-category="Food">
                     <i class="fas fa-utensils mr-1"></i> Food & Dining
                 </button>
-                <button class="filter-chip px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-full text-sm font-medium whitespace-nowrap hover:border-orange-500 transition" data-category="Nature">
+                <button type="button" class="filter-chip px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-full text-sm font-medium whitespace-nowrap hover:border-orange-500 transition" data-category="Nature">
                     <i class="fas fa-tree mr-1"></i> Nature & Tours
                 </button>
             </div>
@@ -105,7 +105,7 @@
             <div class="text-6xl mb-4 opacity-50">🍂</div>
             <h3 class="text-xl font-bold text-gray-900 mb-2">No experiences found</h3>
             <p class="text-gray-500 mb-8">Try adjusting your filters.</p>
-            <button id="clear-filters-empty-btn" class="text-orange-600 font-bold hover:underline">Clear all filters</button>
+            <button id="clear-filters-empty-btn" type="button" class="text-orange-600 font-bold hover:underline">Clear all filters</button>
         </div>
     </div>
 

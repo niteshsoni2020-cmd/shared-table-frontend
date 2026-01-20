@@ -97,8 +97,8 @@ document.addEventListener("DOMContentLoaded", () => {
         elPriceSlider.noUiSlider.on('update', function (values) {
             filterState.minPrice = Math.round(values[0]);
             filterState.maxPrice = Math.round(values[1]);
-            if (elPriceMinLabel) elPriceMinLabel.innerText = `$${filterState.minPrice}`;
-            if (elPriceMaxLabel) elPriceMaxLabel.innerText = `$${filterState.maxPrice}+`;
+            if (elPriceMinLabel) elPriceMinLabel.textContent = `$${filterState.minPrice}`;
+            if (elPriceMaxLabel) elPriceMaxLabel.textContent = `$${filterState.maxPrice}+`;
         });
     }
 
@@ -135,7 +135,6 @@ document.addEventListener("DOMContentLoaded", () => {
             if (window.TSTS_DEALS_UI_MODE) tstsSetDealsBanner("");
             renderExperiences(out);
         } catch (err) {
-            console.error(err);
             experiencesGrid.classList.remove("hidden");
             noResultsEl.classList.add("hidden");
             experiencesGrid.textContent = "";
@@ -264,7 +263,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const addChip = (label) => {
             const span = document.createElement("span");
             span.className = "px-2 py-1 bg-orange-50 text-orange-700 rounded-full border border-orange-100 text-xs font-bold";
-            span.innerText = label;
+            span.textContent = label;
             activeFiltersBar.appendChild(span);
         };
 

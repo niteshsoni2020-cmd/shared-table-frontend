@@ -35,7 +35,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!res.ok) throw new Error("Host not found");
         renderProfile(data);
     } catch (err) {
-        console.error(err);
         showError();
     }
 });

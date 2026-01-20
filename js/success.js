@@ -185,7 +185,7 @@ function populateBookingSummary(booking) {
 
 // Generate invite link and update UI
 function generateInviteLink(expId, booking) {
-  const baseUrl = "https://www.thesharedtablestory.com/experience.html";
+  const baseUrl = window.location.origin + "/experience.html";
   if (!inviteLinkInputEl) return;
 
   // Try to guess user name from localStorage or booking
@@ -229,7 +229,7 @@ async function handleCopyInvite() {
       }, 2500);
     }
   } catch (err) {
-    console.error("Failed to copy invite link:", err);
+    // Clipboard copy failed silently
   }
 }
 
@@ -256,8 +256,7 @@ async function initSuccessPage() {
     // 4) Show success state
     showSuccess();
   } catch (err) {
-    console.error(err);
-    showError(err.message || "We couldn’t confirm this booking. Please try again.");
+    showError(err.message || "We couldn't confirm this booking. Please try again.");
   }
 }
 

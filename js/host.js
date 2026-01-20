@@ -1,4 +1,12 @@
 (function () {
+  // Auth guard: redirect to login if not authenticated
+  var token = (window.getAuthToken && window.getAuthToken()) || "";
+  if (!token) {
+    var returnTo = encodeURIComponent(location.pathname + location.search);
+    location.href = "login.html?returnTo=" + returnTo;
+    return;
+  }
+
   const form = document.getElementById("create-experience-form");
   const titleInput = document.getElementById("title");
   const descriptionInput = document.getElementById("description");
@@ -130,7 +138,7 @@
       if (priceInput) priceInput.value = exp.price != null ? String(exp.price) : "";
       if (dateInput) dateInput.value = (exp.date || exp.experienceDate || "").slice(0, 10);
       if (timeInput) timeInput.value = exp.time || "";
-      if (locationInput) locationInput.value = exp.location || "";
+      if (locationInput) locationInput.value = exp.city || exp.location || "";
 
       if (existingImageUrl) setPreview(existingImageUrl);
 
@@ -165,9 +173,9 @@
         const price = priceInput ? safeNum(priceInput.value) : null;
         const date = dateInput ? String(dateInput.value || "").trim() : "";
         const time = timeInput ? String(timeInput.value || "").trim() : "";
-        const location = locationInput ? String(locationInput.value || "").trim() : "";
+        const city = locationInput ? String(locationInput.value || "").trim() : "";
 
-        if (!title || !description || price == null || !date || !time || !location) {
+        if (!title || !description || price == null || !date || !time || !city) {
           showNotice("error", "Please fill all required fields.");
           return;
         }
@@ -194,7 +202,7 @@
           price,
           date,
           time,
-          location
+          city
         };
         if (imageUrl) body.imageUrl = imageUrl;
 

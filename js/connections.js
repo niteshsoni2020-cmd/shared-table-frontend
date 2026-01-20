@@ -201,12 +201,13 @@
 
     try {
       if (action === "remove") {
-        if (!confirm("Remove this connection?")) return;
+        var confirmed = await window.tstsConfirm("Remove this connection?", { destructive: true, confirmText: "Remove" });
+        if (!confirmed) return;
         await post("/api/social/connections/" + encodeURIComponent(userId) + "/remove");
         await loadConnections();
       }
     } catch (err) {
-      alert((err && err.message) ? err.message : "Action failed");
+      window.tstsNotify((err && err.message) ? err.message : "Action failed", "error");
     }
   }
 
@@ -221,13 +222,14 @@
       if (action === "accept") await post("/api/social/requests/" + encodeURIComponent(id) + "/accept");
       if (action === "reject") await post("/api/social/requests/" + encodeURIComponent(id) + "/reject");
       if (action === "block") {
-        if (!confirm("Block this user?")) return;
+        var confirmed = await window.tstsConfirm("Block this user?", { destructive: true, confirmText: "Block" });
+        if (!confirmed) return;
         await post("/api/social/requests/" + encodeURIComponent(id) + "/block");
       }
       await loadRequests();
       await loadConnections();
     } catch (err) {
-      alert((err && err.message) ? err.message : "Action failed");
+      window.tstsNotify((err && err.message) ? err.message : "Action failed", "error");
     }
   }
 

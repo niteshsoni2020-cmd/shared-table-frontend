@@ -29,6 +29,7 @@
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
         h1, h2, h3, .serif { font-family: 'Playfair Display', serif; }
     </style>
+    <link rel="manifest" href="manifest.json">
 </head>
 <body class="bg-white text-gray-900 flex flex-col min-h-screen">
 
@@ -37,7 +38,7 @@
     <section class="relative h-[85vh] flex items-center justify-center overflow-hidden">
         <div class="absolute inset-0 bg-black/40 z-10"></div>
         <img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?q=80&w=2070&auto=format&fit=crop" 
-             alt="Friends sharing a moment" class="absolute inset-0 w-full h-full object-cover">
+             alt="Friends sharing a moment around a table" class="absolute inset-0 w-full h-full object-cover">
         
         <div class="relative z-20 text-center text-white px-4 max-w-4xl mx-auto">
             <h1 class="text-4xl md:text-6xl font-bold mb-6 leading-tight serif">
@@ -69,7 +70,7 @@
                 <a href="explore.html?category=Culture" class="group relative rounded-2xl overflow-hidden shadow-lg h-96 block">
                     <div class="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition z-10"></div>
                     <img src="https://images.unsplash.com/photo-1550050638-34c9c825f952?q=80&w=800&auto=format&fit=crop" 
-                         alt="Culture" class="w-full h-full object-cover group-hover:scale-105 transition duration-700">
+                         alt="Culture and festivals experience" class="w-full h-full object-cover group-hover:scale-105 transition duration-700">
                     <div class="absolute bottom-0 left-0 p-8 z-20 text-white">
                         <h3 class="text-2xl font-bold serif mb-2">Culture & Festivals</h3>
                         <p class="text-sm opacity-90 font-light">Rituals, heritage, and celebrations.</p>
@@ -79,7 +80,7 @@
                 <a href="explore.html?category=Food" class="group relative rounded-2xl overflow-hidden shadow-lg h-96 block">
                     <div class="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition z-10"></div>
                     <img src="https://images.unsplash.com/photo-1543353071-873f17a7a088?q=80&w=800&auto=format&fit=crop" 
-                         alt="Food" class="w-full h-full object-cover group-hover:scale-105 transition duration-700">
+                         alt="Food and dining experience" class="w-full h-full object-cover group-hover:scale-105 transition duration-700">
                     <div class="absolute bottom-0 left-0 p-8 z-20 text-white">
                         <h3 class="text-2xl font-bold serif mb-2">Food & Dining</h3>
                         <p class="text-sm opacity-90 font-light">Authentic meals at a shared table.</p>
@@ -89,7 +90,7 @@
                 <a href="explore.html?category=Nature" class="group relative rounded-2xl overflow-hidden shadow-lg h-96 block">
                     <div class="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition z-10"></div>
                     <img src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=800&auto=format&fit=crop" 
-                         alt="Nature" class="w-full h-full object-cover group-hover:scale-105 transition duration-700">
+                         alt="Nature and tours experience" class="w-full h-full object-cover group-hover:scale-105 transition duration-700">
                     <div class="absolute bottom-0 left-0 p-8 z-20 text-white">
                         <h3 class="text-2xl font-bold serif mb-2">Nature & Tours</h3>
                         <p class="text-sm opacity-90 font-light">Walks, landscapes, and outdoor stories.</p>
@@ -97,6 +98,27 @@
                 </a>
 
             </div>
+        </div>
+    </section>
+
+    <section class="py-12 px-4 bg-white">
+        <div class="max-w-7xl mx-auto">
+            <p id="max-discount-banner" class="text-center text-sm text-orange-600 font-medium mb-8"></p>
+            <div class="text-center mb-10">
+                <h2 class="text-3xl font-bold mb-4 serif text-gray-900">Curated Collections</h2>
+                <p class="text-gray-600 max-w-2xl mx-auto">Hand-picked experiences for every type of traveller.</p>
+            </div>
+            <div id="collections-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"></div>
+        </div>
+    </section>
+
+    <section id="home-recommend" class="hidden py-12 px-4 bg-gray-50">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-10">
+                <h2 class="text-3xl font-bold mb-4 serif text-gray-900">Recommended For You</h2>
+                <p class="text-gray-600 max-w-2xl mx-auto">Based on your interests and past experiences.</p>
+            </div>
+            <div id="home-recommend-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"></div>
         </div>
     </section>
 
@@ -133,7 +155,7 @@
         <div class="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center">
             <div class="order-2 md:order-1">
                 <img src="https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=2070&auto=format&fit=crop" 
-                     class="rounded-2xl shadow-xl w-full object-cover h-[400px]" alt="Community gathering">
+                     class="rounded-2xl shadow-xl w-full object-cover h-[400px]" alt="Community gathering at a shared table">
             </div>
             <div class="order-1 md:order-2">
                 <h2 class="text-3xl font-bold mb-6 serif">More Than Just A Meal</h2>
@@ -166,7 +188,7 @@
 
     <footer id="footer-placeholder"></footer>
 
-    <script src="js/common.js"></script>
-    <script src="js/index.js"></script>
+    <script src="js/common.js?v=20260120"></script>
+    <script src="js/index.js?v=20260120"></script>
 </body>
 </html>

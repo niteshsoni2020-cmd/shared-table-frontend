@@ -87,9 +87,30 @@
       }
 
       async function verifyEmail() {
+        if (!window.authFetch) {
+          showError("Verification service is not available right now. Please refresh and try again.");
+          return;
+        }
         const params = new URLSearchParams(window.location.search);
         const email = params.get("email");
-        const token = params.get("token");
+        try {
+  if (!location.hash || location.hash.indexOf("token=") === -1) {
+    if (sessionStorage.getItem("tsts_verify_email_success") === "1") {
+      try { sessionStorage.removeItem("tsts_verify_email_success"); } catch (e) {}
+      showSuccess();
+      return;
+    }
+  }
+} catch (e) {}
+
+var token = "";
+        try {
+          var h = String(window.location.hash || "");
+          if (h.startsWith("#")) h = h.slice(1);
+          var hp = new URLSearchParams(h);
+          token = String(hp.get("token") || "");
+        } catch (e) { token = ""; }
+        if (!token) token = String(params.get("token") || "");
 
         if (!email || !token) {
           showError("Missing verification details. Please check your email link.");
@@ -97,13 +118,20 @@
         }
 
         try {
-          const res = await window.authFetch("/api/auth/verify-email?email=" + encodeURIComponent(email) + "&token=" + encodeURIComponent(token), {
-            method: "GET"
+          const res = await window.authFetch("/api/auth/verify-email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: String(email || ""), token: String(token || "") })
           });
 
           const data = await res.json().catch(() => ({}));
 
           if (res.ok) {
+        try {
+          var clean = "verify-email.html";
+          history.replaceState(null, "", clean);
+        } catch (e) {}
+            try { sessionStorage.setItem("tsts_verify_email_success", "1"); } catch (e) {}
             showSuccess();
           } else {
             showError((data && data.message) || "Verification failed. The link may have expired.");

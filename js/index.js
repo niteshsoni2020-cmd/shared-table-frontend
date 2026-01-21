@@ -1,63 +1,81 @@
 // js/index.js
 
-// --- 1. DATA: CURATED COLLECTIONS ---
-const collectionsData = [
-  {
-    id: "solo-traveller-friendly",
-    title: "Solo Friendly",
-    description: "Intimate tables where you'll feel like family, not a stranger.",
-    icon: "🧭",
-    searchQuery: "solo"
-  },
-  {
-    id: "date-night",
-    title: "Date Night",
-    description: "Candlelit dinners and cozy homes perfect for conversation.",
-    icon: "💫",
-    searchQuery: "romantic"
-  },
-  {
-    id: "budget-eats",
-    title: "Budget Eats",
-    description: "Affordable home-cooked meals rich in flavor and stories.",
-    icon: "🍲",
-    searchQuery: "budget"
-  },
-  {
-    id: "family-and-friends",
-    title: "Family Tables",
-    description: "Experiences where kids and groups are welcomed with open arms.",
-    icon: "👨‍👩‍👧‍👦",
-    searchQuery: "family"
-  }
-];
-
-// --- 2. RENDER LOGIC ---
 function getToken() {
   try { return (window.getAuthToken && window.getAuthToken()) || ""; } catch (_) { return ""; }
 }
 
+async function loadHomeCurations() {
+  const section = document.getElementById("home-curations");
+  const list = document.getElementById("home-curations-list");
+  if (!section || !list) return;
 
-function renderCollections() {
-    const El = window.tstsEl;
-    const container = document.getElementById("collections-list");
-    if (!container) return;
+  const token = getToken();
+  if (!token) return;
 
-    container.textContent = "";
-    collectionsData.forEach(function(col) {
-        var card = El("div", { 
-            className: "bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition cursor-pointer group flex flex-col justify-between h-full",
-            onclick: function() { window.location.href = "explore.html?q=" + encodeURIComponent(col.searchQuery); }
-        }, [
-            El("div", {}, [
-                El("div", { className: "h-12 w-12 bg-gray-50 rounded-full flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition", textContent: col.icon }),
-                El("h3", { className: "text-lg font-bold text-gray-900 mb-2 group-hover:text-orange-600 transition", textContent: col.title }),
-                El("p", { className: "text-sm text-gray-500 leading-relaxed", textContent: col.description })
-            ]),
-            El("div", { className: "mt-6 flex items-center text-xs font-bold text-orange-600", textContent: "Browse Collection →" })
-        ]);
-        container.appendChild(card);
-    });
+  try {
+    const res = await window.authFetch("/api/curations", { method: "GET" });
+    if (!res || res.ok !== true) return;
+
+    const payload = await res.json();
+    const collections = payload && Array.isArray(payload.collections) ? payload.collections : [];
+    if (collections.length <= 0) return;
+
+    section.classList.remove("hidden");
+
+    const top3 = collections.slice(0, 3);
+    list.textContent = "";
+
+    top3.forEach((c) => list.appendChild(renderCurationTile(c)));
+
+    list.appendChild(renderExploreMoreTile());
+  } catch (_) {
+    return;
+  }
+}
+
+function renderCurationTile(c) {
+  const El = window.tstsEl;
+  const filters = (c && c.filters && typeof c.filters === "object") ? c.filters : {};
+  const href = buildExploreHref(filters);
+
+  const title = String((c && c.title) || "").trim();
+  const subtitle = String((c && c.subtitle) || "").trim();
+
+  return El("a", {
+    href,
+    className: "bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition cursor-pointer group flex flex-col justify-between h-full"
+  }, [
+    El("div", {}, [
+      El("h3", { className: "text-xl font-bold serif text-gray-900", textContent: title || "Explore" }),
+      subtitle ? El("p", { className: "text-gray-600 text-sm mt-2", textContent: subtitle }) : El("div", {})
+    ]),
+    El("div", { className: "mt-6 flex items-center text-sm font-bold text-orange-600", textContent: "Browse →" })
+  ]);
+}
+
+function renderExploreMoreTile() {
+  const El = window.tstsEl;
+  return El("a", {
+    href: "explore.html",
+    className: "bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition cursor-pointer group flex flex-col justify-between h-full"
+  }, [
+    El("div", {}, [
+      El("h3", { className: "text-xl font-bold serif text-gray-900", textContent: "Explore more experiences →" }),
+      El("p", { className: "text-gray-600 text-sm mt-2", textContent: "See everything available right now." })
+    ]),
+    El("div", { className: "mt-6 flex items-center text-sm font-bold text-orange-600", textContent: "Explore →" })
+  ]);
+}
+
+function buildExploreHref(filters) {
+  const p = new URLSearchParams();
+  if (filters.q) p.set("q", String(filters.q));
+  if (filters.city) p.set("city", String(filters.city));
+  if (filters.category) p.set("category", String(filters.category));
+  if (filters.minPrice != null) p.set("minPrice", String(filters.minPrice));
+  if (filters.maxPrice != null) p.set("maxPrice", String(filters.maxPrice));
+  if (filters.date) p.set("date", String(filters.date));
+  return "explore.html?" + p.toString();
 }
 
 // --- 3. RECOMMENDATIONS & DEALS ---
@@ -149,7 +167,7 @@ function renderCard(exp) {
 
 // --- INIT ---
 document.addEventListener("DOMContentLoaded", () => {
-  renderCollections();
   updateMaxDiscountBanner();
   loadHomeRecommendations();
+  loadHomeCurations();
 });

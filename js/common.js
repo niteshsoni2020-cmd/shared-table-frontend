@@ -484,7 +484,13 @@ window.tstsPrompt = function(msg, defaultValue, opts) {
 
     // If caller passes a full URL, do not rewrite it.
     if (/^https?:\/\//i.test(raw)) {
-      return fetch(raw, Object.assign({}, opts || {}, { headers }));
+      const controller = new AbortController();
+      const t = setTimeout(() => controller.abort(), 15000);
+      try {
+        return await fetch(raw, Object.assign({}, opts || {}, { headers, signal: controller.signal }));
+      } finally {
+        clearTimeout(t);
+      }
     }
 
     const normalized = raw.startsWith("/") ? raw : ("/" + raw);
@@ -493,7 +499,14 @@ window.tstsPrompt = function(msg, defaultValue, opts) {
     const base = String(window.API_BASE || "").replace(/\/$/, "");
     const url = base + apiPath;
 
-    return fetch(url, Object.assign({}, opts || {}, { headers }));
+    const controller = new AbortController();
+    const t = setTimeout(() => controller.abort(), 15000);
+
+    try {
+      return await fetch(url, Object.assign({}, opts || {}, { headers, signal: controller.signal }));
+    } finally {
+      clearTimeout(t);
+    }
   };
 
   function tstsParseDateLike(x) {

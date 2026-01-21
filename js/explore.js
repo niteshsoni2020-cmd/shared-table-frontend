@@ -26,6 +26,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const experiencesGrid = document.getElementById("experiences-grid");
     const noResultsEl = document.getElementById("no-results");
 
+    const elExploreCurations = document.getElementById("explore-curations");
+    const elExploreCurationsList = document.getElementById("explore-curations-list");
+
     if (!experiencesGrid) return;
 
     // === UNIFIED STATE ===
@@ -57,6 +60,97 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function tstsSetDealsBanner(_) {
         return;
+    }
+
+    function escapeHtml(s) {
+      return String(s || "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    async function loadExploreCurations() {
+      if (!elExploreCurations || !elExploreCurationsList) return;
+
+      let token = "";
+      try { token = (window.getAuthToken && window.getAuthToken()) || ""; } catch (_) {}
+      if (!token) return;
+
+      try {
+        const res = await window.authFetch("/api/curations", { method: "GET" });
+        if (!res || res.ok !== true) return;
+
+        const payload = await res.json();
+        const collections = payload && Array.isArray(payload.collections) ? payload.collections : [];
+        if (collections.length <= 0) return;
+
+        elExploreCurations.classList.remove("hidden");
+        elExploreCurationsList.textContent = "";
+
+        collections.slice(0, 3).forEach((c) => {
+          const a = document.createElement("a");
+          a.className = "bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition cursor-pointer group flex flex-col justify-between h-full";
+          a.href = (function() {
+            const p = new URLSearchParams();
+            if (c.filters && c.filters.q) p.set("q", String(c.filters.q));
+            if (c.filters && c.filters.city) p.set("city", String(c.filters.city));
+            if (c.filters && c.filters.category) p.set("category", String(c.filters.category));
+            if (c.filters && c.filters.minPrice != null) p.set("minPrice", String(c.filters.minPrice));
+            if (c.filters && c.filters.maxPrice != null) p.set("maxPrice", String(c.filters.maxPrice));
+            if (c.filters && c.filters.date) p.set("date", String(c.filters.date));
+            return "explore.html?" + p.toString();
+          })();
+
+          const title = String(c.title || "").trim();
+          const subtitle = String(c.subtitle || "").trim();
+
+          const titleDiv = document.createElement("div");
+          const h3 = document.createElement("h3");
+          h3.className = "text-xl font-bold serif text-gray-900";
+          h3.textContent = title || "Explore";
+          titleDiv.appendChild(h3);
+          if (subtitle) {
+            const pSub = document.createElement("p");
+            pSub.className = "text-gray-600 text-sm mt-2";
+            pSub.textContent = subtitle;
+            titleDiv.appendChild(pSub);
+          }
+          a.appendChild(titleDiv);
+
+          const browseDiv = document.createElement("div");
+          browseDiv.className = "mt-6 flex items-center text-sm font-bold text-orange-600";
+          browseDiv.textContent = "Browse \u2192";
+          a.appendChild(browseDiv);
+
+          elExploreCurationsList.appendChild(a);
+        });
+
+        const more = document.createElement("a");
+        more.className = "bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition cursor-pointer group flex flex-col justify-between h-full";
+        more.href = "explore.html";
+
+        const moreTitleDiv = document.createElement("div");
+        const moreH3 = document.createElement("h3");
+        moreH3.className = "text-xl font-bold serif text-gray-900";
+        moreH3.textContent = "Explore more experiences \u2192";
+        moreTitleDiv.appendChild(moreH3);
+        const morePSub = document.createElement("p");
+        morePSub.className = "text-gray-600 text-sm mt-2";
+        morePSub.textContent = "See everything available right now.";
+        moreTitleDiv.appendChild(morePSub);
+        more.appendChild(moreTitleDiv);
+
+        const moreBrowseDiv = document.createElement("div");
+        moreBrowseDiv.className = "mt-6 flex items-center text-sm font-bold text-orange-600";
+        moreBrowseDiv.textContent = "Explore \u2192";
+        more.appendChild(moreBrowseDiv);
+
+        elExploreCurationsList.appendChild(more);
+      } catch (_) {
+        return;
+      }
     }
 
     // === URL PARAM HANDLER ===
@@ -310,5 +404,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // INITIAL LOAD
+    loadExploreCurations();
     fetchExperiences();
 });

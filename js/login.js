@@ -174,7 +174,7 @@ async function handleSignup(e) {
         const data = await res.json().catch(() => ({}));
 
         if (!res.ok) {
-            showModal("Signup Failed", (data && data.message) || "Please try again.", "error");
+            showModal("Sign up failed", (data && data.message) || "Please try again.", "error");
             return;
         }
 

@@ -34,7 +34,7 @@
           <p class="text-sm text-gray-500 mt-1">Login to manage your bookings.</p>
         </div>
 
-        <input id="login-email" type="email" autocomplete="email" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-orange-100 transition" placeholder="Email Address" required />
+        <input id="login-email" type="email" maxlength="254" autocomplete="email" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-orange-100 transition" placeholder="Email Address" required />
         <input id="login-password" type="password" autocomplete="current-password" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-orange-100 transition" placeholder="Password" required />
         
         <div class="text-right">
@@ -50,10 +50,10 @@
             <p class="text-sm text-gray-500 mt-1">Join our community of hosts & guests.</p>
         </div>
         
-        <input id="signup-name" type="text" autocomplete="name" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-orange-100 transition" placeholder="Full Name" required />
-        <input id="signup-email" type="email" autocomplete="email" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-orange-100 transition" placeholder="Email Address" required />
-        <input id="signup-password" type="password" autocomplete="new-password" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-orange-100 transition" placeholder="Create Password" minlength="8" required />
-        <input id="signup-confirm-password" type="password" autocomplete="new-password" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-orange-100 transition" placeholder="Confirm Password" minlength="8" required />
+        <input id="signup-name" type="text" maxlength="100" autocomplete="name" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-orange-100 transition" placeholder="Full Name" required />
+        <input id="signup-email" type="email" maxlength="254" autocomplete="email" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-orange-100 transition" placeholder="Email Address" required />
+        <input id="signup-password" type="password" maxlength="128" autocomplete="new-password" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-orange-100 transition" placeholder="Create Password" minlength="8" required />
+        <input id="signup-confirm-password" type="password" maxlength="128" autocomplete="new-password" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-orange-100 transition" placeholder="Confirm Password" minlength="8" required />
 
         <div class="bg-orange-50 p-3 rounded-lg border border-orange-100 h-24 overflow-y-auto text-[11px] text-gray-600 leading-relaxed">
             <strong>Terms & Waiver:</strong> By signing up, I acknowledge that "The Shared Table Story" is a marketplace. I assume all risks associated with experiences (food, travel, etc.) and release the platform from liability. I agree to the Privacy Policy.

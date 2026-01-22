@@ -115,7 +115,22 @@ async function handleLogin(e) {
         const redirect = params.get("redirect");
         const returnTo = params.get("returnTo");
         const rawTarget = redirect || returnTo || "index.html";
-        const target = safeRedirectTarget(rawTarget);
+        let target = safeRedirectTarget(rawTarget);
+        const allowed = new Set([
+            "index.html",
+            "admin.html",
+            "profile.html",
+            "host.html",
+            "explore.html",
+            "feed.html",
+            "connections.html",
+            "bookmarks.html",
+            "my-bookings.html",
+            "experience.html",
+            "reset-password.html",
+            "login.html"
+        ]);
+        if (!allowed.has(target)) target = "profile.html";
         window.location.href = target;
 
     } catch (err) {
@@ -153,7 +168,7 @@ async function handleSignup(e) {
         const res = await window.authFetch("/api/auth/register", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name, email, password, termsAgreed: true })
+            body: JSON.stringify({ name, email, password, confirmPassword, termsAgreed: true })
         });
 
         const data = await res.json().catch(() => ({}));

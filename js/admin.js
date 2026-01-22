@@ -38,15 +38,37 @@ async function adminFetch(path, opts) {
   return window.authFetch(path, Object.assign({}, opts || {}, { headers }));
 }
 
-function mustBeAdmin() {
-  const u = (window.getAuthUser && window.getAuthUser()) || {};
-  const isAdminEmail = (u.email || "") === "admin@sharedtable.com";
-  const isAdmin = (u && (u.isAdmin === true || String(u.role || "").toLowerCase() === "admin" || isAdminEmail));
-  if (!getToken() || !isAdmin) {
+async function mustBeAdmin() {
+  const token = getToken();
+  if (!token) {
     location.href = "login.html?redirect=" + encodeURIComponent("admin.html");
     return false;
   }
-  return true;
+  try {
+    const res = await window.authFetch("/api/auth/me", { method: "GET" });
+    if (!res.ok) {
+      location.href = "login.html?redirect=" + encodeURIComponent("admin.html");
+      return false;
+    }
+    const data = await res.json().catch(() => ({}));
+    const u = (data && data.user) ? data.user : {};
+    if (u && u.isAdmin === true) {
+      return true;
+    }
+    const role = String((u && u.role) || "").toLowerCase();
+    if (role === "admin") {
+      return true;
+    }
+    document.body.replaceChildren();
+    const denied = document.createElement("div");
+    denied.className = "min-h-screen flex items-center justify-center";
+    denied.textContent = "Access denied";
+    document.body.replaceChildren(denied);
+    return false;
+  } catch (_) {
+    location.href = "login.html?redirect=" + encodeURIComponent("admin.html");
+    return false;
+  }
 }
 
 async function loadStats() {
@@ -362,7 +384,7 @@ function wireAdminEvents() {
 }
 
 async function boot() {
-  if (!mustBeAdmin()) return;
+  if (!(await mustBeAdmin())) return;
 
   try { getAdminReason(); } catch (_) {}
 

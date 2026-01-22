@@ -749,7 +749,15 @@ function initDropdownToggle() {
 
 // 6) LOGOUT
 function attachLogoutListeners() {
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      const res = await window.authFetch("/api/auth/logout", { method: "POST" });
+      if (!res.ok) {
+        try { console.warn("Logout revoke failed", res.status); } catch (_) {}
+      }
+    } catch (_) {
+      try { console.warn("Logout revoke failed", "network"); } catch (_) {}
+    }
     try {
       localStorage.removeItem("token");
       localStorage.removeItem("user");

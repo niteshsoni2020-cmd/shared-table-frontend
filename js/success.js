@@ -188,17 +188,10 @@ function generateInviteLink(expId, booking) {
   const baseUrl = window.location.origin + "/experience.html";
   if (!inviteLinkInputEl) return;
 
-  // Try to guess user name from localStorage or booking
-  let userName =
-    localStorage.getItem("userName") ||
-    (booking && booking.userName) ||
-    (booking && booking.user && booking.user.name) ||
-    "a friend";
-
-  // Normalize for URL param, but keep full text for param (encoded)
+  // Use experience ID only - no PII in URL
   const inviteUrl = expId
-    ? `${baseUrl}?id=${encodeURIComponent(expId)}&invitedBy=${encodeURIComponent(userName)}`
-    : `${baseUrl}?invitedBy=${encodeURIComponent(userName)}`;
+    ? `${baseUrl}?id=${encodeURIComponent(expId)}`
+    : baseUrl;
 
   inviteLinkInputEl.value = inviteUrl;
 }
@@ -244,16 +237,30 @@ async function initSuccessPage() {
   showLoading();
 
   try {
-    // 1) Verify with backend
+    // 1) Verify with backend (works without auth via sessionId proof)
     await verifyBooking(bookingId, sessionId);
 
-    // 2) Get booking details for logged in user
-    const booking = await fetchBookingDetails(bookingId);
+    // 2) Try to get booking details if logged in
+    if (token) {
+      try {
+        const booking = await fetchBookingDetails(bookingId);
+        populateBookingSummary(booking);
+      } catch (_) {
+        // Show generic success if details unavailable
+        successExpTitleEl.textContent = "Your experience is booked!";
+        successExpDateEl.textContent = "Check your email for details";
+        successExpGuestsEl.textContent = "";
+        if (inviteLinkInputEl) inviteLinkInputEl.value = window.location.origin + "/explore.html";
+      }
+    } else {
+      // Not logged in - show generic confirmation
+      successExpTitleEl.textContent = "Booking confirmed!";
+      successExpDateEl.textContent = "Please log in to view full details";
+      successExpGuestsEl.textContent = "";
+      if (inviteLinkInputEl) inviteLinkInputEl.value = window.location.origin + "/explore.html";
+    }
 
-    // 3) Populate UI
-    populateBookingSummary(booking);
-
-    // 4) Show success state
+    // 3) Show success state
     showSuccess();
   } catch (err) {
     showError(err.message || "We couldn't confirm this booking. Please try again.");

@@ -46,7 +46,7 @@ function renderCurationTile(c) {
     className: "bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition cursor-pointer group flex flex-col justify-between h-full"
   }, [
     El("div", {}, [
-      El("h3", { className: "text-xl font-bold serif text-gray-900", textContent: title || "Explore" }),
+      El("h3", { className: "text-xl font-bold font-serif text-gray-900", textContent: title || "Explore" }),
       subtitle ? El("p", { className: "text-gray-600 text-sm mt-2", textContent: subtitle }) : El("div", {})
     ]),
     El("div", { className: "mt-6 flex items-center text-sm font-bold text-orange-600", textContent: "Browse →" })
@@ -60,7 +60,7 @@ function renderExploreMoreTile() {
     className: "bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition cursor-pointer group flex flex-col justify-between h-full"
   }, [
     El("div", {}, [
-      El("h3", { className: "text-xl font-bold serif text-gray-900", textContent: "Explore more experiences →" }),
+      El("h3", { className: "text-xl font-bold font-serif text-gray-900", textContent: "Explore more experiences →" }),
       El("p", { className: "text-gray-600 text-sm mt-2", textContent: "See everything available right now." })
     ]),
     El("div", { className: "mt-6 flex items-center text-sm font-bold text-orange-600", textContent: "Explore →" })

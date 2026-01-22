@@ -1,4 +1,8 @@
-/* TSTS Design System (single source of truth) */
+/* TSTS Design System (DEPRECATED - not currently linked in any HTML pages)
+ * The project currently uses Tailwind CDN for styling.
+ * This file is preserved for reference and potential future consolidation.
+ * DO NOT rely on these styles without explicitly linking this file.
+ */
 
 :root{
   /* Typography - Standardize on Plus Jakarta Sans + Playfair Display */

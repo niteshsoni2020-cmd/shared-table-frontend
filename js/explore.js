@@ -108,7 +108,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
           const titleDiv = document.createElement("div");
           const h3 = document.createElement("h3");
-          h3.className = "text-xl font-bold serif text-gray-900";
+          h3.className = "text-xl font-bold font-serif text-gray-900";
           h3.textContent = title || "Explore";
           titleDiv.appendChild(h3);
           if (subtitle) {
@@ -133,7 +133,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const moreTitleDiv = document.createElement("div");
         const moreH3 = document.createElement("h3");
-        moreH3.className = "text-xl font-bold serif text-gray-900";
+        moreH3.className = "text-xl font-bold font-serif text-gray-900";
         moreH3.textContent = "Explore more experiences \u2192";
         moreTitleDiv.appendChild(moreH3);
         const morePSub = document.createElement("p");

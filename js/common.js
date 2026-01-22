@@ -622,7 +622,9 @@ function injectFooter() {
     tstsEl("h4", { className: "font-bold mb-4" }, "Support"),
     tstsEl("ul", { className: "space-y-2 text-gray-400 text-sm" }, [
       tstsEl("li", {}, [tstsEl("a", { href: "terms.html", className: "hover:text-white transition" }, "Terms of Service")]),
-      tstsEl("li", {}, [tstsEl("a", { href: "privacy.html", className: "hover:text-white transition" }, "Privacy Policy")])
+      tstsEl("li", {}, [tstsEl("a", { href: "privacy.html", className: "hover:text-white transition" }, "Privacy Policy")]),
+      tstsEl("li", {}, [tstsEl("a", { href: "policy.html", className: "hover:text-white transition" }, "Cancellation Policy")]),
+      tstsEl("li", {}, [tstsEl("a", { href: "report.html", className: "hover:text-white transition" }, "Report an Issue")])
     ])
   ]);
 
@@ -650,7 +652,9 @@ function applyAuthStateToNav() {
 
     const menuLinks = [
       { href: "my-bookings.html", text: "Dashboard" },
-      { href: "profile.html", text: "My Profile" }
+      { href: "profile.html", text: "My Profile" },
+      { href: "bookmarks.html", text: "Bookmarks" },
+      { href: "connections.html", text: "Connections" }
     ];
     const dropdownItems = menuLinks.map(function(lnk) {
       return tstsEl("a", { href: lnk.href, className: "block px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition" }, lnk.text);

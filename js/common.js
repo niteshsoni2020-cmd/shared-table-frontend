@@ -440,28 +440,70 @@ window.tstsPrompt = function(msg, defaultValue, opts) {
   window.CLOUDINARY_URL = window.CLOUDINARY_URL || "https://api.cloudinary.com/v1_1/dkqf90k20/image/upload";
 
 
-  window.setAuth = function (token, user) {
+  // === SEC-002: Cookie-based auth (no localStorage tokens) ===
+  // CSRF token is in cookie (non-HttpOnly) - read directly for double-submit pattern
+  // This ensures CSRF works across tabs (cookies are shared, sessionStorage is not)
+  
+  const CSRF_COOKIE_NAME = window.__TSTS_CSRF_COOKIE__ || "tsts_csrf";
+  
+  // SEC-002: Response unwrapper helper for normalized { ok, data } responses
+  window.tstsUnwrap = function(payload) {
+    if (payload && payload.data !== undefined) return payload.data;
+    return payload;
+  };
+  
+  // Get CSRF token directly from cookie (double-submit pattern)
+  // Cookie is non-HttpOnly so JS can read it
+  function __getCsrfToken() {
     try {
-      // token: set when truthy, otherwise clear
-      if (token) localStorage.setItem("token", token);
-      else localStorage.removeItem("token");
+      const cookies = String(document.cookie || "");
+      const parts = cookies.split(";");
+      for (let i = 0; i < parts.length; i++) {
+        const part = parts[i].trim();
+        if (part.startsWith(CSRF_COOKIE_NAME + "=")) {
+          return decodeURIComponent(part.slice(CSRF_COOKIE_NAME.length + 1));
+        }
+      }
+      return "";
+    } catch (_) { return ""; }
+  }
 
-      // user: set when provided (non-null), otherwise clear
-      if (user != null) localStorage.setItem("user", JSON.stringify(user));
-      else localStorage.removeItem("user");
+  // SEC-002: setAuth now handles user data (no auth token in localStorage)
+  // CSRF token is managed by cookie - no need to store separately
+  window.setAuth = function (csrfToken, user) {
+    try {
+      // user: store in localStorage for UI display (non-sensitive)
+      if (user != null) localStorage.setItem("tsts_user", JSON.stringify(user));
+      else localStorage.removeItem("tsts_user");
+      
+      // Clean up legacy keys
+      try { localStorage.removeItem("token"); } catch (_) {}
+      try { localStorage.removeItem("user"); } catch (_) {}
     } catch (_) {}
   };
 
+  // Deprecated: auth token is now in HttpOnly cookie, not accessible to JS
   window.getAuthToken = function () {
-    try { return localStorage.getItem("token") || ""; } catch (_) { return ""; }
+    return ""; // Token is in HttpOnly cookie, not accessible
   };
 
+  // FE-019: Clear all auth state on logout
+  // Note: CSRF cookie is cleared by backend on logout, not by frontend
   window.clearAuth = function () {
-    try { localStorage.removeItem("token"); localStorage.removeItem("user"); } catch (_) {}
+    try {
+      localStorage.removeItem("tsts_user");
+      // Clean up legacy keys
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+    } catch (_) {}
   };
 
   window.getAuthUser = function () {
-    try { return JSON.parse(localStorage.getItem("user") || "{}"); } catch (_) { return {}; }
+    try {
+      const newUser = localStorage.getItem("tsts_user");
+      if (newUser) return JSON.parse(newUser);
+      return {};
+    } catch (_) { return {}; }
   };
 
   function normalizePath(path) {
@@ -470,16 +512,25 @@ window.tstsPrompt = function(msg, defaultValue, opts) {
     if (!path.startsWith("/")) return "/" + path;
     return path;
   }
+  
+  // SEC-002: authFetch uses credentials: "include" for cookie auth
+  // SEC-035: Add CSRF header on state-changing requests
+  // GUARD: 401 Interceptor with redirect loop guard
   window.authFetch = async function (path, opts) {
-    const token = window.getAuthToken();
     const headers = Object.assign({}, (opts && opts.headers) || {});
     const method = (opts && opts.method) ? String(opts.method).toUpperCase() : "GET";
 
-    if (token) headers["Authorization"] = `Bearer ${token}`;
-    if (!headers["Content-Type"] && method !== "GET") headers["Content-Type"] = "application/json";
+    // SEC-035: Add CSRF token on state-changing requests
+    if (method !== "GET" && method !== "HEAD" && method !== "OPTIONS") {
+      const csrfToken = __getCsrfToken();
+      if (csrfToken) headers["X-CSRF-Token"] = csrfToken;
+    }
+    
+    // RF-05: Do NOT set Content-Type when body is FormData (breaks multipart boundary)
+    const body = opts && opts.body;
+    const isFormData = (typeof FormData !== "undefined" && body instanceof FormData);
+    if (!headers["Content-Type"] && method !== "GET" && !isFormData) headers["Content-Type"] = "application/json";
 
-    // Single rule:
-    // - Accept "/api/..." or "api/..." or "/..." and always route to API_BASE
     const raw = String(path || "");
 
     // If caller passes a full URL, do not rewrite it.
@@ -487,7 +538,7 @@ window.tstsPrompt = function(msg, defaultValue, opts) {
       const controller = new AbortController();
       const t = setTimeout(() => controller.abort(), 15000);
       try {
-        return await fetch(raw, Object.assign({}, opts || {}, { headers, signal: controller.signal }));
+        return await fetch(raw, Object.assign({}, opts || {}, { headers, credentials: "include", signal: controller.signal }));
       } finally {
         clearTimeout(t);
       }
@@ -503,7 +554,12 @@ window.tstsPrompt = function(msg, defaultValue, opts) {
     const t = setTimeout(() => controller.abort(), 15000);
 
     try {
-      return await fetch(url, Object.assign({}, opts || {}, { headers, signal: controller.signal }));
+      const response = await fetch(url, Object.assign({}, opts || {}, { headers, credentials: "include", signal: controller.signal }));
+      
+      // RF-03: Remove redirect logic from authFetch - tstsRequireAuth is the ONLY redirect authority
+      // This prevents double-redirects and ensures returnTo is always preserved
+
+      return response;
     } finally {
       clearTimeout(t);
     }
@@ -637,9 +693,20 @@ function injectFooter() {
 }
 
 // 3) AUTH STATE IN NAV - DOM-safe construction
+// RF-04: Gate auth UI by CSRF cookie ONLY (not localStorage - that can be stale)
 function applyAuthStateToNav() {
-  const token = (window.getAuthToken && window.getAuthToken()) || "";
-  if (!token) return;
+  // Cookie auth: check if CSRF cookie exists (indicates logged-in state)
+  const csrfCookie = (function() {
+    try {
+      const cookies = String(document.cookie || "");
+      return cookies.indexOf("tsts_csrf=") >= 0;
+    } catch (_) { return false; }
+  })();
+  // RF-04: If no CSRF cookie, treat as logged out and clear stale localStorage
+  if (!csrfCookie) {
+    try { window.clearAuth(); } catch (_) {}
+    return;
+  }
 
   // Desktop auth menu - click-toggle dropdown
   const desktopAuth = document.getElementById("auth-section-desktop");
@@ -781,9 +848,15 @@ async function loadNavProfilePic() {
     if (String(location.pathname || "").endsWith("/profile.html") || String(location.pathname || "").endsWith("profile.html")) return;
   } catch (_) {}
 
-  const token = (window.getAuthToken && window.getAuthToken()) || "";
+  // SEC-002: Cookie auth - check if user is logged in via CSRF cookie or stored user
+  const csrfCookie = (function() {
+    try {
+      const cookies = String(document.cookie || "");
+      return cookies.indexOf("tsts_csrf=") >= 0;
+    } catch (_) { return false; }
+  })();
   const img = document.getElementById("nav-user-pic");
-  if (!token || !img) return;
+  if (!csrfCookie || !img) return;
 
   try {
     const cached = (window.getAuthUser && window.getAuthUser()) || {};
@@ -800,7 +873,25 @@ async function loadNavProfilePic() {
 
     if (!res.ok) return;
     const payload = await res.json();
-    const u = (payload && payload.user) ? payload.user : payload;
+    const u = (payload && (payload.data && payload.data.user)) ? payload.data.user : ((payload && payload.user) ? payload.user : payload);
     if (u && u.profilePic) window.tstsSafeImg(img, u.profilePic, "/assets/avatar-default.svg");
   } catch (_) {}
 }
+
+// === SEC-AUTH-GUARD: Single auth guard for protected pages (cookie auth) ===
+// Use this at top of protected page JS to verify auth via /api/auth/me
+window.tstsRequireAuth = function (opts) {
+  const o = opts || {};
+  const returnTo = String(o.returnTo || (location.pathname + location.search) || "");
+  const loginUrl = String(o.loginUrl || "login.html");
+  const q = "returnTo=" + encodeURIComponent(returnTo);
+
+  function go() { location.replace(loginUrl + (loginUrl.indexOf("?") >= 0 ? "&" : "?") + q); }
+
+  try {
+    if (!window.authFetch) { go(); return; }
+    window.authFetch("/api/auth/me", { method: "GET", on401: "redirect" })
+      .then(function (res) { if (!res || !res.ok) go(); })
+      .catch(function () { go(); });
+  } catch (_) { go(); }
+};

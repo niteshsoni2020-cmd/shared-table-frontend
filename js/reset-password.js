@@ -40,9 +40,23 @@
     try {
       const q = new URLSearchParams(location.search || "");
       const se = q.get("email");
-      const st = q.get("token");
       if (!email && se) email = String(se);
-      if (!token && st) token = String(st);
+    } catch (_) {}
+
+    try {
+      if (token) {
+        const u = new URL(location.href);
+        if (u.hash) {
+          const hh = u.hash.startsWith("#") ? u.hash.slice(1) : u.hash;
+          const qs = new URLSearchParams(hh || "");
+          if (qs.has("token")) {
+            qs.delete("token");
+            const nh = qs.toString();
+            u.hash = nh ? ("#" + nh) : "";
+            history.replaceState(null, "", u.toString());
+          }
+        }
+      }
     } catch (_) {}
 
     return { email, token };
@@ -57,11 +71,7 @@ function scrubUrlToken() {
       history.replaceState({}, document.title, clean);
     }
   } catch (_) {}
-  try {
-    if (location.hash && String(location.hash).toLowerCase().includes("token=")) {
-      history.replaceState({}, document.title, location.pathname + location.search);
-    }
-  } catch (_) {}
+
 }
 
 function setSubmitEnabled(enabled) {

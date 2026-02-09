@@ -1,7 +1,7 @@
 // Frontend/js/explore.js
 
 // 🔴 CONFIG
-const ENDPOINT = window.__TSTS_RUNTIME__.apiBase.replace(/\/$/, "") + "/api/experiences"; 
+const ENDPOINT = "/api/experiences";
 
 document.addEventListener("DOMContentLoaded", () => {
     // === DOM ELEMENTS ===

@@ -1,32 +1,12 @@
 (function () {
-  // Auth guard: redirect to login if not authenticated
-  var token = (window.getAuthToken && window.getAuthToken()) || "";
-  if (!token) {
-    var returnTo = encodeURIComponent(location.pathname + location.search);
-    location.replace("login.html?returnTo=" + returnTo);
-    return;
+  function unmaskAuthGate() {
+    try { document.documentElement.removeAttribute("data-auth-pending"); } catch (_) {}
   }
 
-  // No-flash gate: keep body hidden until token is verified (or unhide if verify not possible)
-  (function(){
-    function unmask(){ try{ document.documentElement.removeAttribute("data-auth-pending"); }catch(e){} }
-    try{
-      if (!window.authFetch) { unmask(); return; }
-      window.authFetch("/api/auth/me", { method: "GET" }).then(function(res){
-        if (res && (res.status === 401 || res.status === 403)) {
-          if (window.clearAuth) window.clearAuth();
-          var rt = encodeURIComponent(location.pathname + location.search);
-          location.replace("login.html?returnTo=" + rt);
-          return;
-        }
-        unmask();
-      }).catch(function(){
-        unmask();
-      });
-    } catch (e) {
-      unmask();
-    }
-  })();
+  function redirectToLogin() {
+    var returnTo = encodeURIComponent(location.pathname + location.search);
+    location.replace("login.html?returnTo=" + returnTo);
+  }
 
   const form = document.getElementById("create-experience-form");
   const titleInput = document.getElementById("title");
@@ -77,13 +57,34 @@
     if (el) el.classList.add("hidden");
   }
 
-  function requireAuth() {
-    const token = (window.getAuthToken && window.getAuthToken()) || "";
-    if (!token) {
-      showNotice("error", "Please log in to host an experience.");
+  async function requireAuth() {
+    try {
+      if (!window.authFetch) {
+        redirectToLogin();
+        return false;
+      }
+      const hasCsrfCookie = (function () {
+        try { return String(document.cookie || "").indexOf("tsts_csrf=") >= 0; } catch (_) { return false; }
+      })();
+      if (!hasCsrfCookie) {
+        redirectToLogin();
+        return false;
+      }
+      const res = await window.authFetch("/api/auth/me", { method: "GET" });
+      if (res && (res.status === 401 || res.status === 403)) {
+        if (window.clearAuth) window.clearAuth();
+        redirectToLogin();
+        return false;
+      }
+      if (!res || !res.ok) {
+        showNotice("error", "Unable to verify your session. Please refresh and try again.");
+        return false;
+      }
+      return true;
+    } catch (_) {
+      showNotice("error", "Unable to verify your session. Please refresh and try again.");
       return false;
     }
-    return true;
   }
 
   function safeNum(v) {
@@ -184,7 +185,7 @@
       e.preventDefault();
       hideNotice();
 
-      if (!requireAuth()) return;
+      if (!(await requireAuth())) return;
 
       if (submitBtn) submitBtn.disabled = true;
 
@@ -253,5 +254,15 @@
     });
   }
 
-  loadEditMode();
+  (async function initHostPage() {
+    const ok = await requireAuth();
+    if (!ok) {
+      unmaskAuthGate();
+      return;
+    }
+    await loadEditMode();
+    unmaskAuthGate();
+  })().catch(function () {
+    unmaskAuthGate();
+  });
 })();

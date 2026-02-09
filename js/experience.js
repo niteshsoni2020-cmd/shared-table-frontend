@@ -48,6 +48,15 @@
     return "$" + (Number.isFinite(num) ? num.toFixed(2) : "0.00");
   }
 
+  function showNotFound(msg) {
+    const content = document.getElementById("experience-content");
+    const empty = document.getElementById("experience-not-found");
+    const text = document.getElementById("experience-not-found-text");
+    if (content) content.classList.add("hidden");
+    if (text) text.textContent = String(msg || "This experience is unavailable or may have been removed.");
+    if (empty) empty.classList.remove("hidden");
+  }
+
   const experienceId = qs("id");
   const bookingForm = document.getElementById("booking-form");
   const dateInput = document.getElementById("booking-date");
@@ -91,8 +100,7 @@
 
   async function loadExperience() {
     if (!experienceId) {
-      window.tstsNotify("Missing experience id.", "error");
-      location.href = "explore.html";
+      showNotFound("This experience link is invalid. Please open a valid experience from Explore.");
       return;
     }
 
@@ -103,16 +111,14 @@
       return redirectToLogin();
     }
     if (!res.ok) {
-      window.tstsNotify("Experience not found.", "error");
-      location.href = "explore.html";
+      showNotFound("This experience is unavailable or no longer exists.");
       return;
     }
 
     const raw = await res.json();
     exp = normalizeExperience(raw);
     if (!exp) {
-      window.tstsNotify("Experience not found.", "error");
-      location.href = "explore.html";
+      showNotFound("This experience could not be loaded.");
       return;
     }
 
@@ -511,7 +517,6 @@
 
 
   loadExperience().catch(() => {
-    window.tstsNotify("Unable to load experience.", "error");
-    location.href = "explore.html";
+    showNotFound("We could not load this experience right now. Please try again.");
   });
 })();

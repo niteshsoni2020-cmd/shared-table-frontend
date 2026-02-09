@@ -1,8 +1,9 @@
 // js/admin.js
 // Single-truth networking: window.authFetch + window.getAuthToken from common.js
 
-function getToken() {
-  return (window.getAuthToken && window.getAuthToken()) || "";
+function redirectToLogin() {
+  const returnTo = encodeURIComponent(location.pathname + location.search);
+  location.href = "login.html?returnTo=" + returnTo;
 }
 
 async function getAdminReason() {
@@ -39,19 +40,31 @@ async function adminFetch(path, opts) {
 }
 
 async function mustBeAdmin() {
-  const token = getToken();
-  if (!token) {
-    location.href = "login.html?redirect=" + encodeURIComponent("admin.html");
-    return false;
-  }
   try {
-    const res = await window.authFetch("/api/auth/me", { method: "GET" });
-    if (!res.ok) {
-      location.href = "login.html?redirect=" + encodeURIComponent("admin.html");
+    if (!window.authFetch) {
+      redirectToLogin();
       return false;
     }
-    const data = await res.json().catch(() => ({}));
-    const u = (data && data.user) ? data.user : {};
+    const hasCsrfCookie = (function () {
+      try { return String(document.cookie || "").indexOf("tsts_csrf=") >= 0; } catch (_) { return false; }
+    })();
+    if (!hasCsrfCookie) {
+      redirectToLogin();
+      return false;
+    }
+    const res = await window.authFetch("/api/auth/me", { method: "GET" });
+    if (res && (res.status === 401 || res.status === 403)) {
+      if (window.clearAuth) window.clearAuth();
+      redirectToLogin();
+      return false;
+    }
+    if (!res.ok) {
+      redirectToLogin();
+      return false;
+    }
+    const payload = await res.json().catch(() => ({}));
+    const unwrapped = (window.tstsUnwrap ? window.tstsUnwrap(payload) : ((payload && payload.data !== undefined) ? payload.data : payload));
+    const u = (unwrapped && unwrapped.user) ? unwrapped.user : ((payload && payload.user) ? payload.user : (unwrapped || {}));
     if (u && u.isAdmin === true) {
       return true;
     }
@@ -66,7 +79,7 @@ async function mustBeAdmin() {
     document.body.replaceChildren(denied);
     return false;
   } catch (_) {
-    location.href = "login.html?redirect=" + encodeURIComponent("admin.html");
+    redirectToLogin();
     return false;
   }
 }

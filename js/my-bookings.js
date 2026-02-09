@@ -7,23 +7,54 @@ const tabHost = document.getElementById("tab-hosting");
 
 const guestModal = document.getElementById("guest-modal");
 const reviewModal = document.getElementById("review-modal");
+const complaintModal = document.getElementById("complaint-modal");
 
 const closeGuestBtn = document.getElementById("close-modal-btn");
 const reviewCancelBtn = document.getElementById("review-cancel-btn");
 const reviewForm = document.getElementById("review-form");
+const complaintCancelBtn = document.getElementById("complaint-cancel-btn");
+const complaintForm = document.getElementById("complaint-form");
+const complaintMessageInput = document.getElementById("complaint-message");
+const complaintWordCount = document.getElementById("complaint-word-count");
+const complaintStatus = document.getElementById("complaint-status");
+const complaintSubmitBtn = document.getElementById("complaint-submit-btn");
 
 let hostBookingsCache = []; // for modal lookup by booking id
+let guestBookingsCache = []; // for complaint modal lookup by booking id
 
-function token() {
-  return (window.getAuthToken && window.getAuthToken()) || "";
+function redirectToLogin() {
+  const returnTo = encodeURIComponent(location.pathname + location.search);
+  location.href = "login.html?returnTo=" + returnTo;
 }
 
-function requireAuthOrRedirect() {
-  if (!token()) {
-    location.href = "login.html";
+async function requireAuthOrRedirect() {
+  try {
+    if (!window.authFetch) {
+      redirectToLogin();
+      return false;
+    }
+    const hasCsrfCookie = (function () {
+      try { return String(document.cookie || "").indexOf("tsts_csrf=") >= 0; } catch (_) { return false; }
+    })();
+    if (!hasCsrfCookie) {
+      redirectToLogin();
+      return false;
+    }
+    const res = await window.authFetch("/api/auth/me", { method: "GET" });
+    if (res && (res.status === 401 || res.status === 403)) {
+      if (window.clearAuth) window.clearAuth();
+      redirectToLogin();
+      return false;
+    }
+    if (!res || !res.ok) {
+      window.tstsNotify("Unable to verify your session. Please refresh and try again.", "error");
+      return false;
+    }
+    return true;
+  } catch (_) {
+    window.tstsNotify("Unable to verify your session. Please refresh and try again.", "error");
     return false;
   }
-  return true;
 }
 
 function setLoading() {
@@ -62,6 +93,27 @@ function fmtTripDate(dt) {
   }
 }
 
+function isEmailLite(v) {
+  const s = String(v || "").trim();
+  if (!s) return false;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
+}
+
+function countWords(v) {
+  const s = String(v || "").trim();
+  if (!s) return 0;
+  return s.split(/\s+/).filter(Boolean).length;
+}
+
+function setComplaintStatus(msg, kind) {
+  if (!complaintStatus) return;
+  complaintStatus.textContent = String(msg || "");
+  complaintStatus.classList.remove("text-gray-500", "text-red-600", "text-green-600");
+  if (kind === "error") complaintStatus.classList.add("text-red-600");
+  else if (kind === "success") complaintStatus.classList.add("text-green-600");
+  else complaintStatus.classList.add("text-gray-500");
+}
+
 function toggleTab(which) {
   if (!tabTrips || !tabHost) return;
 
@@ -77,7 +129,7 @@ function toggleTab(which) {
 /* ====================== GUEST TRIPS ====================== */
 
 async function loadTrips() {
-  if (!requireAuthOrRedirect()) return;
+  if (!(await requireAuthOrRedirect())) return;
   setLoading();
 
   try {
@@ -90,6 +142,7 @@ async function loadTrips() {
     }
 
     if (!Array.isArray(data) || data.length === 0) {
+      guestBookingsCache = [];
       const El = window.tstsEl;
       contentEl.textContent = "";
       contentEl.appendChild(
@@ -103,6 +156,7 @@ async function loadTrips() {
       return;
     }
 
+    guestBookingsCache = data;
     contentEl.textContent = "";
     data.forEach(function(b) { contentEl.appendChild(renderTripCard(b)); });
   } catch (_) {
@@ -124,7 +178,11 @@ function renderTripCard(booking) {
 
   const isPast = dt ? (dt < today) : false;
   const status = safeStr(booking.status).toLowerCase();
+  const isCompleted = status === "completed";
   const isCancelled = status.includes("cancel");
+  const complaintId = safeStr(booking.complaintReportId);
+  const canFileComplaint = !!booking.canFileComplaint;
+  const complaintWindowEndsAt = safeDate(booking.complaintWindowEndsAt);
 
   const expId = exp._id || exp.id || booking.experienceId || booking.expId || "";
   const bookingId = booking._id || "";
@@ -132,20 +190,44 @@ function renderTripCard(booking) {
   const guests = booking.guests || booking.numGuests || booking.guestCount || 1;
   const city = exp.city || booking.city || "Location TBA";
 
-  var statusBadge, actionButton;
+  var statusBadge, actionArea, actionNote = null;
 
   if (isCancelled) {
     statusBadge = El("span", { className: "px-2 py-1 text-xs font-bold rounded bg-red-100 text-red-700", textContent: "CANCELLED" });
-    actionButton = El("span", { className: "text-sm text-gray-400 italic", textContent: "This booking was cancelled." });
-  } else if (isPast) {
-    statusBadge = El("span", { className: "px-2 py-1 text-xs font-bold rounded bg-gray-100 text-gray-600", textContent: "COMPLETED" });
-    actionButton = El("button", { 
+    actionArea = El("span", { className: "text-sm text-gray-400 italic", textContent: "This booking was cancelled." });
+  } else if (isCompleted) {
+    statusBadge = El("span", { className: "px-2 py-1 text-xs font-bold rounded bg-gray-100 text-gray-700", textContent: "COMPLETED" });
+
+    const reviewBtn = El("button", {
       className: "w-full md:w-auto px-5 py-2 bg-gray-900 text-white text-sm font-bold rounded-lg shadow hover:bg-black transition flex items-center justify-center gap-2",
       "data-action": "review", "data-booking-id": bookingId, "data-exp-id": expId
     }, [El("i", { className: "fas fa-star" }), " Write a Review"]);
+
+    const nodes = [reviewBtn];
+    if (canFileComplaint) {
+      nodes.push(
+        El("button", {
+          className: "w-full md:w-auto px-5 py-2 border border-amber-200 text-amber-700 text-sm font-bold rounded-lg hover:bg-amber-50 transition",
+          "data-action": "complaint",
+          "data-booking-id": bookingId
+        }, [El("i", { className: "fas fa-flag" }), " Report an Issue"])
+      );
+      if (complaintWindowEndsAt) {
+        actionNote = El("p", {
+          className: "text-xs text-amber-700 md:text-right",
+          textContent: "Complaint window closes on " + fmtTripDate(complaintWindowEndsAt) + "."
+        });
+      }
+    } else if (complaintId) {
+      actionNote = El("p", { className: "text-xs text-gray-500 md:text-right", textContent: "Issue already reported for this booking." });
+    }
+    actionArea = El("div", { className: "w-full md:w-auto flex flex-col gap-2 md:items-end" }, nodes);
+  } else if (isPast) {
+    statusBadge = El("span", { className: "px-2 py-1 text-xs font-bold rounded bg-blue-100 text-blue-700", textContent: "AWAITING COMPLETION" });
+    actionArea = El("span", { className: "text-sm text-gray-500 italic", textContent: "Completion is being finalized." });
   } else {
     statusBadge = El("span", { className: "px-2 py-1 text-xs font-bold rounded bg-green-100 text-green-700", textContent: "CONFIRMED" });
-    actionButton = El("button", {
+    actionArea = El("button", {
       className: "w-full md:w-auto px-5 py-2 border border-red-200 text-red-600 text-sm font-bold rounded-lg hover:bg-red-50 transition",
       "data-action": "cancel", "data-booking-id": bookingId, textContent: "Cancel Booking"
     });
@@ -168,7 +250,10 @@ function renderTripCard(booking) {
           El("span", { className: "flex items-center gap-2" }, [El("i", { className: "fas fa-map-marker-alt w-4" }), " " + city])
         ])
       ]),
-      El("div", { className: "mt-4 md:mt-0 pt-4 md:pt-0 flex justify-end items-end" }, [actionButton])
+      El("div", { className: "mt-4 md:mt-0 pt-4 md:pt-0 flex flex-col gap-2 items-stretch md:items-end" }, [
+        actionArea,
+        actionNote || El("span", { className: "hidden", textContent: "" })
+      ])
     ])
   ]);
 
@@ -187,7 +272,7 @@ function openReviewModal(bookingId, expId) {
 
 async function submitReview(e) {
   e.preventDefault();
-  if (!requireAuthOrRedirect()) return;
+  if (!(await requireAuthOrRedirect())) return;
 
   const submitBtn = e.target.querySelector('button[type="submit"]');
   const originalText = submitBtn ? submitBtn.textContent : "";
@@ -228,6 +313,149 @@ async function submitReview(e) {
   }
 }
 
+/* ====================== COMPLAINT ====================== */
+
+function getGuestBookingById(bookingId) {
+  const id = String(bookingId || "");
+  return (guestBookingsCache || []).find((b) => String((b && b._id) || "") === id) || null;
+}
+
+function openComplaintModalById(bookingId) {
+  const b = getGuestBookingById(bookingId);
+  if (!b) {
+    window.tstsNotify("Booking details are unavailable. Please refresh and try again.", "error");
+    return;
+  }
+
+  const status = String(b.status || "").toLowerCase();
+  if (status !== "completed") {
+    window.tstsNotify("Complaint can be filed only after booking completion.", "warning");
+    return;
+  }
+  if (String(b.complaintReportId || "").trim().length > 0) {
+    window.tstsNotify("An issue is already reported for this booking.", "info");
+    return;
+  }
+  if (!b.canFileComplaint) {
+    window.tstsNotify("Complaint window is not open for this booking.", "warning");
+    return;
+  }
+
+  const bid = document.getElementById("complaint-booking-id");
+  if (bid) bid.value = String(bookingId || "");
+  if (complaintForm) complaintForm.reset();
+  if (complaintWordCount) complaintWordCount.textContent = "0 / 200 words";
+  setComplaintStatus("", "info");
+
+  const endAt = safeDate(b.complaintWindowEndsAt);
+  if (endAt) {
+    setComplaintStatus("Window closes on " + fmtTripDate(endAt) + ".", "info");
+  }
+
+  if (complaintModal) complaintModal.classList.remove("hidden");
+}
+
+function closeComplaintModal() {
+  if (complaintModal) complaintModal.classList.add("hidden");
+}
+
+async function uploadComplaintEvidence(file) {
+  const fd = new FormData();
+  fd.append("photos", file);
+  const up = await window.authFetch("/api/upload", {
+    method: "POST",
+    body: fd
+  });
+  const out = await up.json().catch(() => ({}));
+  if (!up.ok) {
+    const msg = String((out && out.message) || "Evidence upload failed.");
+    throw new Error(msg);
+  }
+  const images = (out && Array.isArray(out.images)) ? out.images : [];
+  return images.slice(0, 1);
+}
+
+async function submitComplaint(e) {
+  e.preventDefault();
+  if (!(await requireAuthOrRedirect())) return;
+
+  const bid = String((document.getElementById("complaint-booking-id") || {}).value || "").trim();
+  const category = String((document.getElementById("complaint-category") || {}).value || "").trim();
+  const message = String((document.getElementById("complaint-message") || {}).value || "").trim();
+  const contactEmail = String((document.getElementById("complaint-contact-email") || {}).value || "").trim();
+  const contactPhone = String((document.getElementById("complaint-contact-phone") || {}).value || "").trim();
+  const evidenceInput = document.getElementById("complaint-evidence");
+  const evidenceFile = (evidenceInput && evidenceInput.files && evidenceInput.files[0]) ? evidenceInput.files[0] : null;
+
+  if (!bid) {
+    setComplaintStatus("Booking selection is invalid. Please reopen the form.", "error");
+    return;
+  }
+  if (!category) {
+    setComplaintStatus("Select complaint type.", "error");
+    return;
+  }
+
+  const wc = countWords(message);
+  if (wc < 1 || wc > 200) {
+    setComplaintStatus("Complaint description must be 1-200 words.", "error");
+    return;
+  }
+  if (!contactEmail && !contactPhone) {
+    setComplaintStatus("Provide an email or phone for follow-up.", "error");
+    return;
+  }
+  if (contactEmail && !isEmailLite(contactEmail)) {
+    setComplaintStatus("Contact email format is invalid.", "error");
+    return;
+  }
+
+  const submitText = complaintSubmitBtn ? complaintSubmitBtn.textContent : "Submit Complaint";
+  if (complaintSubmitBtn) {
+    complaintSubmitBtn.disabled = true;
+    complaintSubmitBtn.textContent = "Submitting...";
+  }
+
+  try {
+    let evidenceUrls = [];
+    if (evidenceFile) {
+      setComplaintStatus("Uploading evidence...", "info");
+      evidenceUrls = await uploadComplaintEvidence(evidenceFile);
+    }
+
+    const payload = {
+      category,
+      message,
+      contactEmail,
+      contactPhone,
+      evidenceUrls
+    };
+
+    const res = await window.authFetch(`/api/bookings/${encodeURIComponent(bid)}/complaint`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const out = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = String((out && out.message) || "Complaint submission failed.");
+      setComplaintStatus(msg, "error");
+      return;
+    }
+
+    window.tstsNotify("Issue submitted. Our team will review it shortly.", "success");
+    closeComplaintModal();
+    await loadTrips();
+  } catch (err) {
+    setComplaintStatus(String((err && err.message) || "Complaint submission failed."), "error");
+  } finally {
+    if (complaintSubmitBtn) {
+      complaintSubmitBtn.disabled = false;
+      complaintSubmitBtn.textContent = submitText;
+    }
+  }
+}
+
 /* ====================== CANCEL ====================== */
 
 async function cancelBooking(id) {
@@ -254,7 +482,7 @@ async function cancelBooking(id) {
 /* ====================== HOSTING DASHBOARD ====================== */
 
 async function loadHost() {
-  if (!requireAuthOrRedirect()) return;
+  if (!(await requireAuthOrRedirect())) return;
   setLoading();
 
   try {
@@ -380,13 +608,20 @@ function closeReviewModal() {
 
 /* ====================== EVENT WIRING ====================== */
 
-document.addEventListener("DOMContentLoaded", () => {
-  if (!requireAuthOrRedirect()) return;
+document.addEventListener("DOMContentLoaded", async () => {
+  if (!(await requireAuthOrRedirect())) return;
 
   if (tabTrips) tabTrips.addEventListener("click", () => { toggleTab("trips"); loadTrips(); });
   if (tabHost) tabHost.addEventListener("click", () => { toggleTab("hosting"); loadHost(); });
 
   if (reviewForm) reviewForm.addEventListener("submit", submitReview);
+  if (complaintForm) complaintForm.addEventListener("submit", submitComplaint);
+  if (complaintMessageInput) {
+    complaintMessageInput.addEventListener("input", () => {
+      const wc = countWords(complaintMessageInput.value || "");
+      if (complaintWordCount) complaintWordCount.textContent = String(wc) + " / 200 words";
+    });
+  }
 
   // Delegate clicks for dynamic buttons
   document.addEventListener("click", (e) => {
@@ -399,6 +634,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (action === "cancel") cancelBooking(bid);
     if (action === "review") openReviewModal(bid, expId);
+    if (action === "complaint") openComplaintModalById(bid);
     if (action === "guest") openGuestModalById(bid);
   });
 
@@ -407,11 +643,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Close review modal (cancel button)
   if (reviewCancelBtn) reviewCancelBtn.addEventListener("click", closeReviewModal);
+  if (complaintCancelBtn) complaintCancelBtn.addEventListener("click", closeComplaintModal);
 
   // Click outside to close
   document.addEventListener("click", (e) => {
     if (guestModal && !guestModal.classList.contains("hidden") && e.target === guestModal) closeGuestModal();
     if (reviewModal && !reviewModal.classList.contains("hidden") && e.target === reviewModal) closeReviewModal();
+    if (complaintModal && !complaintModal.classList.contains("hidden") && e.target === complaintModal) closeComplaintModal();
   });
 
   // ESC to close
@@ -419,6 +657,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.key !== "Escape") return;
     closeGuestModal();
     closeReviewModal();
+    closeComplaintModal();
   });
 
   // Default load

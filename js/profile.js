@@ -13,6 +13,21 @@
   const uploadBtn = document.getElementById("upload-btn");
   const uploadStatus = document.getElementById("upload-status");
 
+  function redirectToLogin() {
+    const returnTo = encodeURIComponent(location.pathname + location.search);
+    location.replace("login.html?returnTo=" + returnTo);
+  }
+
+  function handleUnauthorized(res) {
+    if (!res) return false;
+    if (res.status === 401 || res.status === 403) {
+      try { if (window.clearAuth) window.clearAuth(); } catch (_) {}
+      redirectToLogin();
+      return true;
+    }
+    return false;
+  }
+
   function setUploadStatus(kind, msg) {
     if (!uploadStatus) return;
     uploadStatus.textContent = msg || "";
@@ -38,10 +53,22 @@
 
   async function loadMe() {
     try {
+      const hasCsrfCookie = (function () {
+        try { return String(document.cookie || "").indexOf("tsts_csrf=") >= 0; } catch (_) { return false; }
+      })();
+      if (!hasCsrfCookie) {
+        redirectToLogin();
+        return;
+      }
       const res = await window.authFetch("/api/auth/me", { method: "GET" });
-      if (!res.ok) return;
+      if (handleUnauthorized(res)) return;
+      if (!res.ok) {
+        setUploadStatus("error", "Unable to load your profile. Please refresh and try again.");
+        return;
+      }
       const payload = await res.json();
-      const user = (payload && payload.user) ? payload.user : payload;
+      const unwrapped = (window.tstsUnwrap ? window.tstsUnwrap(payload) : ((payload && payload.data !== undefined) ? payload.data : payload));
+      const user = (unwrapped && unwrapped.user) ? unwrapped.user : ((payload && payload.user) ? payload.user : (unwrapped || {}));
 
       try { if (nameInput) nameInput.value = user.name || ""; } catch (_) {}
       try { if (bioInput) bioInput.value = user.bio || ""; } catch (_) {}
@@ -128,6 +155,7 @@
           body: JSON.stringify({ profilePic: secureUrl })
         });
 
+        if (handleUnauthorized(res)) return;
         if (!res.ok) {
           setUploadStatus("error", "Failed to save your profile picture.");
           return;
@@ -166,6 +194,7 @@
           body: JSON.stringify({ name, bio, handle, allowHandleSearch, showExperiencesToFriends })
         });
 
+        if (handleUnauthorized(res)) return;
         if (!res.ok) {
           setUploadStatus("error", "Failed to save profile. Please try again.");
           return;

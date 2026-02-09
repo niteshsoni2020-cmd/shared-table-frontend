@@ -1,7 +1,7 @@
 // Frontend/js/explore.js
 
 // 🔴 CONFIG
-const ENDPOINT = ((window.__TSTS_RUNTIME__ && window.__TSTS_RUNTIME__.apiBase) ? window.__TSTS_RUNTIME__.apiBase : "https://shared-table-api.onrender.com").replace(//api$/, "").replace(//$/, "") + "/api/experiences";
+const ENDPOINT = (() => { let b = ((window.__TSTS_RUNTIME__ && typeof window.__TSTS_RUNTIME__.apiBase === "string") ? window.__TSTS_RUNTIME__.apiBase : "https://shared-table-api.onrender.com"); while (b.endsWith("/")) b = b.slice(0, -1); if (b.endsWith("/api")) b = b.slice(0, -4); return b + "/api/experiences"; })();
 
 document.addEventListener("DOMContentLoaded", () => {
     // === DOM ELEMENTS ===

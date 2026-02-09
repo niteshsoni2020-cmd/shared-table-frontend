@@ -412,32 +412,40 @@ window.tstsPrompt = function(msg, defaultValue, opts) {
 })();
 
 (function () {
-  (function ensureFontAwesome() {
+  (function ensureLocalIconCss() {
     try {
-      const id = "tsts-fontawesome";
+      const id = "tsts-icon-font";
       if (document.getElementById(id)) return;
       const link = document.createElement("link");
       link.id = id;
       link.rel = "stylesheet";
-      link.href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css";
+      link.href = "/css/icon-font.css?v=20260209";
       link.referrerPolicy = "no-referrer";
       document.head.appendChild(link);
     } catch (_) {}
   })();
 
   const isLocal = (location.hostname === "localhost" || location.hostname === "127.0.0.1");
+  const runtimeCfg = (window.__TSTS_RUNTIME__ && typeof window.__TSTS_RUNTIME__ === "object")
+    ? window.__TSTS_RUNTIME__
+    : {};
+  const runtimeApiBase = String(runtimeCfg.apiBase || runtimeCfg.API_BASE || "").trim().replace(/\/$/, "");
+  const runtimeCloudinaryUrl = String(runtimeCfg.cloudinaryUrl || runtimeCfg.CLOUDINARY_URL || "").trim();
 
   // Optional override for QA:
   // localStorage.setItem("API_BASE", "http://localhost:4000");
   const storedBase = (() => {
     try { return localStorage.getItem("API_BASE") || ""; } catch (_) { return ""; }
   })();
+  const storedCloudinary = (() => {
+    try { return localStorage.getItem("CLOUDINARY_URL") || ""; } catch (_) { return ""; }
+  })();
 
-  const DEFAULT_PROD_API_ORIGIN = "https://shared-table-api.onrender.com";
-  const apiOrigin = storedBase || (isLocal ? "http://localhost:4000" : DEFAULT_PROD_API_ORIGIN);
+  // Runtime config priority: localStorage override > runtime config > local default > same-origin relative
+  const apiOrigin = String(storedBase || runtimeApiBase || (isLocal ? "http://localhost:4000" : "")).trim().replace(/\/$/, "");
   window.API_BASE = apiOrigin;
-// Cloudinary config (single-truth; used by profile.js)
-  window.CLOUDINARY_URL = window.CLOUDINARY_URL || "https://api.cloudinary.com/v1_1/dkqf90k20/image/upload";
+  // Cloudinary config (single-truth; used by profile.js / host.js)
+  window.CLOUDINARY_URL = String(window.CLOUDINARY_URL || runtimeCloudinaryUrl || storedCloudinary || "").trim();
 
 
   // === SEC-002: Cookie-based auth (no localStorage tokens) ===

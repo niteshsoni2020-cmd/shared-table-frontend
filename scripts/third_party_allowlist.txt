@@ -1,0 +1,11 @@
+api.cloudinary.com
+api.stripe.com
+cdn.jsdelivr.net
+cdn.tailwindcss.com
+fonts.googleapis.com
+fonts.gstatic.com
+hooks.stripe.com
+js.stripe.com
+res.cloudinary.com
+thesharedtablestory.com
+www.thesharedtablestory.com

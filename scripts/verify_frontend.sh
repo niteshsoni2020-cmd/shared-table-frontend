@@ -82,20 +82,27 @@ else
 fi
 echo ""
 
-# 7. Check common.js loads first in all HTML files
-echo "7. Checking common.js load order in HTML files..."
+# 7. Check runtime-config/common.js load order in all HTML files
+echo "7. Checking runtime-config/common.js load order in HTML files..."
 LOAD_ORDER_FAIL=0
 for html in *.html; do
   if grep -q 'src="js/' "$html" 2>/dev/null; then
-    FIRST_JS=$(grep -m1 'src="js/[^"]*\.js' "$html" 2>/dev/null | sed 's/.*src="js\/\([^"?]*\).*/\1/' || echo "")
-    if [ "$FIRST_JS" != "common.js" ]; then
-      echo "   ❌ $html: First JS is '$FIRST_JS', not common.js"
+    JS_LIST=$(grep 'src="js/[^"]*\.js' "$html" 2>/dev/null | sed 's/.*src="js\/\([^"?]*\).*/\1/' || true)
+    FIRST_JS=$(echo "$JS_LIST" | sed -n '1p')
+    SECOND_JS=$(echo "$JS_LIST" | sed -n '2p')
+    if [ "$FIRST_JS" = "runtime-config.js" ]; then
+      if [ "$SECOND_JS" != "common.js" ]; then
+        echo "   ❌ $html: second JS is '$SECOND_JS', expected common.js after runtime-config.js"
+        LOAD_ORDER_FAIL=1
+      fi
+    elif [ "$FIRST_JS" != "common.js" ]; then
+      echo "   ❌ $html: first JS is '$FIRST_JS', expected runtime-config.js or common.js"
       LOAD_ORDER_FAIL=1
     fi
   fi
 done
 if [ "$LOAD_ORDER_FAIL" -eq 0 ]; then
-  echo "   ✅ PASS: common.js loads first in all HTML files"
+  echo "   ✅ PASS: runtime-config/common.js load order is valid across HTML files"
   PASS=$((PASS + 1))
 else
   FAIL=$((FAIL + 1))

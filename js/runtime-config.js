@@ -24,6 +24,7 @@
   }
 
   var apiBase = cleanBase(cfg.API_BASE || cfg.apiBase || readMeta("tsts-api-base"));
+if (!apiBase || apiBase.charAt(0) === "/") apiBase = "https://shared-table-api.onrender.com";
   var cloudinaryUrl = cleanUrl(cfg.CLOUDINARY_URL || cfg.cloudinaryUrl || readMeta("tsts-cloudinary-url"));
 
   window.__TSTS_RUNTIME__ = Object.freeze({

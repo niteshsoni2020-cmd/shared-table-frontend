@@ -220,7 +220,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (filterState.guests) params.set("guests", filterState.guests);
 
         try {
-            const res = await window.authFetch(`/api${ENDPOINT}?${params.toString()}`, { method: "GET" });
+            const res = await window.authFetch(`${ENDPOINT}?${params.toString()}`, { method: "GET" });
             if (!res.ok) throw new Error("API Error");
             const data = await res.json().catch(() => null);
 

@@ -1,8 +1,5 @@
 // Frontend/js/explore.js
 
-// 🔴 CONFIG
-const ENDPOINT = (() => { let b = ((window.__TSTS_RUNTIME__ && typeof window.__TSTS_RUNTIME__.apiBase === "string") ? window.__TSTS_RUNTIME__.apiBase : "https://shared-table-api.onrender.com"); while (b.endsWith("/")) b = b.slice(0, -1); if (b.endsWith("/api")) b = b.slice(0, -4); return b + "/api/experiences"; })();
-
 document.addEventListener("DOMContentLoaded", () => {
     // === DOM ELEMENTS ===
     const elSearch = document.getElementById("search-input");
@@ -37,11 +34,26 @@ document.addEventListener("DOMContentLoaded", () => {
         location: "",
         date: "",
         guests: "",
-        category: "all",
+        categories: [],
         sort: "",
         minPrice: 0,
         maxPrice: 300
     };
+
+    function syncCategoryChips() {
+        const activeSet = new Set(Array.isArray(filterState.categories) ? filterState.categories : []);
+        categoryChips.forEach((chip) => {
+            chip.classList.remove("active", "bg-gray-900", "text-white", "border-transparent");
+            chip.classList.add("bg-white", "border-gray-200", "text-gray-600");
+            const key = String(chip.getAttribute("data-category") || "");
+            const isAll = key === "all";
+            const isActive = (isAll && activeSet.size === 0) || (!isAll && activeSet.has(key));
+            if (isActive) {
+                chip.classList.add("active", "bg-gray-900", "text-white", "border-transparent");
+                chip.classList.remove("bg-white", "border-gray-200", "text-gray-600");
+            }
+        });
+    }
 
     function tstsIsDeal(exp) {
         try {
@@ -155,7 +167,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // === URL PARAM HANDLER ===
     const urlParams = new URLSearchParams(window.location.search);
-    const urlCategory = urlParams.get("category");
+    const urlCategoryRaw = urlParams.getAll("category");
     const urlQuery = urlParams.get("q");
     const urlFilter = urlParams.get("filter");
 
@@ -164,17 +176,17 @@ document.addEventListener("DOMContentLoaded", () => {
         elSearch.value = filterState.search;
     }
 
-    if (urlCategory) {
-        filterState.category = urlCategory;
-        categoryChips.forEach(c => {
-            c.classList.remove("active", "bg-gray-900", "text-white", "border-transparent");
-            c.classList.add("bg-white", "border-gray-200", "text-gray-600");
-            if (c.getAttribute("data-category") === urlCategory) {
-                c.classList.add("active", "bg-gray-900", "text-white", "border-transparent");
-                c.classList.remove("bg-white", "border-gray-200", "text-gray-600");
+    if (Array.isArray(urlCategoryRaw) && urlCategoryRaw.length > 0) {
+        const picked = [];
+        for (const raw of urlCategoryRaw) {
+            const parts = String(raw || "").split(",").map((p) => p.trim()).filter(Boolean);
+            for (const p of parts) {
+                if (p !== "all" && !picked.includes(p)) picked.push(p);
             }
-        });
+        }
+        filterState.categories = picked;
     }
+    syncCategoryChips();
 
     window.TSTS_DEALS_UI_MODE = (String(urlFilter || "").trim().toLowerCase() === "deals");
 
@@ -213,7 +225,9 @@ document.addEventListener("DOMContentLoaded", () => {
         if (filterState.search) params.set("q", filterState.search);
         if (filterState.location) params.set("city", filterState.location);
         if (filterState.date) params.set("date", filterState.date);
-        if (filterState.category !== "all") params.set("category", filterState.category);
+        if (Array.isArray(filterState.categories) && filterState.categories.length > 0) {
+            filterState.categories.forEach((category) => params.append("category", category));
+        }
         if (filterState.sort) params.set("sort", filterState.sort);
         if (filterState.minPrice > 0) params.set("minPrice", filterState.minPrice);
         if (filterState.maxPrice < 300) params.set("maxPrice", filterState.maxPrice);
@@ -257,7 +271,7 @@ document.addEventListener("DOMContentLoaded", () => {
         filterState.location = "";
         filterState.date = "";
         filterState.guests = "";
-        filterState.category = "all";
+        filterState.categories = [];
         filterState.sort = "";
         filterState.minPrice = 0;
         filterState.maxPrice = 300;
@@ -272,14 +286,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (elPriceSlider && elPriceSlider.noUiSlider) elPriceSlider.noUiSlider.set([0, 300]);
 
         // Reset Category Chips
-        categoryChips.forEach(c => {
-            c.classList.remove("active", "bg-gray-900", "text-white", "border-transparent");
-            c.classList.add("bg-white", "border-gray-200", "text-gray-600");
-            if (c.getAttribute("data-category") === "all") {
-                c.classList.add("active", "bg-gray-900", "text-white", "border-transparent");
-                c.classList.remove("bg-white", "border-gray-200", "text-gray-600");
-            }
-        });
+        syncCategoryChips();
         
         // Remove URL params cleanly
         window.history.replaceState({}, document.title, window.location.pathname);
@@ -364,7 +371,9 @@ document.addEventListener("DOMContentLoaded", () => {
         if (filterState.location) addChip(`📍 ${filterState.location}`);
         if (filterState.date) addChip(`📅 ${filterState.date}`);
         if (filterState.guests) addChip(`👥 ${filterState.guests} Guests`);
-        if (filterState.category !== 'all') addChip(`🏷️ ${filterState.category}`);
+        if (Array.isArray(filterState.categories) && filterState.categories.length > 0) {
+            addChip("🏷️ " + filterState.categories.join(", "));
+        }
         if (filterState.minPrice > 0 || filterState.maxPrice < 300) addChip(`💰 $${filterState.minPrice} - $${filterState.maxPrice}`);
     };
 
@@ -387,14 +396,17 @@ document.addEventListener("DOMContentLoaded", () => {
     // Category Chips
     categoryChips.forEach(chip => {
         chip.addEventListener("click", () => {
-            categoryChips.forEach(c => {
-                c.classList.remove("active", "bg-gray-900", "text-white", "border-transparent");
-                c.classList.add("bg-white", "border-gray-200", "text-gray-600");
-            });
-            chip.classList.add("active", "bg-gray-900", "text-white", "border-transparent");
-            chip.classList.remove("bg-white", "border-gray-200", "text-gray-600");
-            
-            filterState.category = chip.getAttribute("data-category");
+            const key = String(chip.getAttribute("data-category") || "");
+            if (key === "all") {
+                filterState.categories = [];
+            } else {
+                const curr = Array.isArray(filterState.categories) ? [...filterState.categories] : [];
+                const idx = curr.indexOf(key);
+                if (idx >= 0) curr.splice(idx, 1);
+                else curr.push(key);
+                filterState.categories = curr;
+            }
+            syncCategoryChips();
             fetchExperiences();
         });
     });

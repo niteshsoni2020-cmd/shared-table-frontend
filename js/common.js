@@ -442,7 +442,9 @@ window.tstsPrompt = function(msg, defaultValue, opts) {
   })();
 
   // Runtime config priority: localStorage override > runtime config > local default > same-origin relative
-  const apiOrigin = String(storedBase || runtimeApiBase || (isLocal ? "http://localhost:4000" : "")).trim().replace(/\/$/, "");
+  let apiOrigin = String(storedBase || runtimeApiBase || (isLocal ? "http://localhost:4000" : "")).trim().replace(/\/$/, "");
+  if (apiOrigin && /\/api$/i.test(apiOrigin)) apiOrigin = apiOrigin.replace(/\/api$/i, "");
+  if (apiOrigin && apiOrigin.charAt(0) === "/") apiOrigin = "";
   window.API_BASE = apiOrigin;
   // Cloudinary config (single-truth; used by profile.js / host.js)
   window.CLOUDINARY_URL = String(window.CLOUDINARY_URL || runtimeCloudinaryUrl || storedCloudinary || "").trim();

@@ -7,9 +7,8 @@
     catch (_) { return null; }
   }
 
-  function getToken() {
-    try { return (window.getAuthToken && window.getAuthToken())  || ""; }
-    catch (_) { return ""; }
+  function hasCsrfCookie() {
+    try { return String(document.cookie || "").indexOf("tsts_csrf=") >= 0; } catch (_) { return false; }
   }
 
   function redirectToLogin() {
@@ -219,14 +218,17 @@
 
   async function initBookmarkState() {
     if (!bookmarkBtn) return;
-    const t = getToken();
-    if (!t) {
+    if (!hasCsrfCookie()) {
       bookmarkBtn.classList.add("hidden");
       return;
     }
 
     try {
       const res = await af("/api/my/bookmarks/details", { method: "GET" });
+      if (res.status === 401 || res.status === 403) {
+        bookmarkBtn.classList.add("hidden");
+        return;
+      }
       const data = await res.json().catch(() => null);
       if (!res.ok) return;
       const list = Array.isArray(data) ? data : [];
@@ -237,6 +239,7 @@
     bookmarkBtn.addEventListener("click", async () => {
       try {
         const res = await af("/api/bookmarks/" + encodeURIComponent(experienceId), { method: "POST" });
+        if (res.status === 401 || res.status === 403) return redirectToLogin();
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error((data && data.message) ? data.message : "Failed");
         const msg = String((data && data.message) || "").toLowerCase();
@@ -250,8 +253,7 @@
 
   async function initLikeState() {
     if (!likeBtn) return;
-    const t = getToken();
-    if (!t) {
+    if (!hasCsrfCookie()) {
       setLikeUI(false, 0);
       likeBtn.addEventListener("click", () => redirectToLogin());
       return;
@@ -259,6 +261,11 @@
 
     try {
       const res = await af("/api/experiences/" + encodeURIComponent(experienceId) + "/like", { method: "GET" });
+      if (res.status === 401 || res.status === 403) {
+        setLikeUI(false, 0);
+        likeBtn.addEventListener("click", () => redirectToLogin());
+        return;
+      }
       const data = await res.json().catch(() => ({}));
       if (res.ok) setLikeUI(!!data.liked, data.count);
     } catch (_) {}
@@ -266,6 +273,7 @@
     likeBtn.addEventListener("click", async () => {
       try {
         const res = await af("/api/experiences/" + encodeURIComponent(experienceId) + "/like", { method: "POST" });
+        if (res.status === 401 || res.status === 403) return redirectToLogin();
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error((data && data.message) ? data.message : "Like failed");
         setLikeUI(!!data.liked, data.count);
@@ -387,17 +395,22 @@
 
   async function loadComments() {
     if (!commentsSection || !commentsList) return;
-    const t = getToken();
-    if (!t) {
+    if (!hasCsrfCookie()) {
       commentsSection.classList.remove("hidden");
       if (commentHint) commentHint.textContent = "Login required to view/post comments.";
       if (commentForm) commentForm.classList.add("hidden");
       return;
     }
-
     try {
       const res = await af("/api/experiences/" + encodeURIComponent(experienceId) + "/comments", { method: "GET" });
       const data = await res.json().catch(() => null);
+
+      if (res.status === 401) {
+        commentsSection.classList.remove("hidden");
+        if (commentHint) commentHint.textContent = "Login required to view/post comments.";
+        if (commentForm) commentForm.classList.add("hidden");
+        return;
+      }
 
       if (res.status === 403) {
         commentsSection.classList.remove("hidden");
@@ -445,7 +458,7 @@
     bookingForm.addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      if (!getToken()) return redirectToLogin();
+      if (!hasCsrfCookie()) return redirectToLogin();
 
       if (termsBox && !termsBox.checked) {
         window.tstsNotify("Please accept the cancellation policy.", "warning");

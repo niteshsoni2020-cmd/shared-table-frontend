@@ -4,14 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Become a Host - The Shared Table Story</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
-    <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
-<link rel="manifest" href="manifest.json">
-    <style>html[data-auth-pending="1"] body{visibility:hidden;}</style>
-    <script>(function(){try{var t="";try{t=String(localStorage.getItem("token")||"");}catch(e){t="";}if(!t){var rt=encodeURIComponent(location.pathname+location.search);location.replace("login.html?returnTo="+rt);return;}}catch(e){}})();</script>
-</head>
-<body class="bg-gray-50 text-gray-900 flex flex-col min-h-screen">
+	    <link rel="stylesheet" href="css/tailwind.css?v=20260210">
+	    <link rel="stylesheet" href="css/fonts.css?v=20260210">
+	    <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
+	<link rel="manifest" href="manifest.json">
+	    <style>html[data-auth-pending="1"] body{visibility:hidden;}</style>
+	</head>
+	<body class="bg-gray-50 text-gray-900 flex flex-col min-h-screen">
 
     <nav id="navbar-placeholder"></nav>
 
@@ -26,9 +25,9 @@
                 <input type="text" id="title" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none" placeholder="e.g., Sunset Diwali Feast" required>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <span class="block text-sm font-bold text-gray-700 mb-2">Categories (Select all that apply)</span>
+	            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+	                <div>
+	                    <span class="block text-sm font-bold text-gray-700 mb-2">Categories (Select all that apply)</span>
                     <div class="space-y-2 bg-gray-50 p-3 rounded-lg border border-gray-200">
                         <label class="flex items-center space-x-2">
                             <input type="checkbox" name="tags" value="Culture" class="form-checkbox text-orange-600 h-4 w-4">
@@ -45,11 +44,34 @@
                     </div>
                 </div>
 
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-1" for="city">City</label>
-                    <input type="text" id="city" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none" placeholder="e.g. Melbourne" required>
-                </div>
-            </div>
+	                <div>
+	                    <label class="block text-sm font-bold text-gray-700 mb-1" for="city">City</label>
+	                    <input type="text" id="city" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none" placeholder="e.g. Melbourne" required>
+	                </div>
+	            </div>
+	
+	            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+	                <div>
+	                    <label class="block text-sm font-bold text-gray-700 mb-1" for="suburb">Suburb / Area</label>
+	                    <input type="text" id="suburb" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none" placeholder="e.g. Carlton" required>
+	                </div>
+	
+	                <div>
+	                    <label class="block text-sm font-bold text-gray-700 mb-1" for="postcode">Postcode</label>
+	                    <input type="text" id="postcode" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none" placeholder="e.g. 3053" required>
+	                </div>
+	
+	                <div class="md:col-span-3">
+	                    <label class="block text-sm font-bold text-gray-700 mb-1" for="addressLine">Street Address</label>
+	                    <input type="text" id="addressLine" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none" placeholder="e.g. 12 Lygon St" required>
+	                    <p class="text-xs text-gray-500 mt-1">Exact address is shared after booking confirmation.</p>
+	                </div>
+	
+	                <div class="md:col-span-3">
+	                    <label class="block text-sm font-bold text-gray-700 mb-1" for="addressNotes">Address Notes (Optional)</label>
+	                    <input type="text" id="addressNotes" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none" placeholder="e.g. Ring the left bell, enter via courtyard">
+	                </div>
+	            </div>
 
             <div>
                 <label class="block text-sm font-bold text-gray-700 mb-1" for="description">The Story (Description)</label>
@@ -82,10 +104,16 @@
                 </div>
             </div>
 
-            <div>
-                <label class="block text-sm font-bold text-gray-700 mb-1" for="startTime">Start Time</label>
-                <input type="time" id="startTime" class="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none" required>
-            </div>
+	            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+	                <div>
+	                    <label class="block text-sm font-bold text-gray-700 mb-1" for="startTime">Start Time</label>
+	                    <input type="time" id="startTime" class="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none" required>
+	                </div>
+	                <div>
+	                    <label class="block text-sm font-bold text-gray-700 mb-1" for="endTime">End Time (Optional)</label>
+	                    <input type="time" id="endTime" class="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none">
+	                </div>
+	            </div>
 
             <div>
                 <span class="block text-sm font-bold text-gray-700 mb-2">Cover Photo</span>
@@ -110,8 +138,8 @@
     </div>
 
     <footer id="footer-placeholder"></footer>
-    <script src="js/runtime-config.js?v=20260209"></script>
-  <script src="js/common.js?v=20251230_162600"></script>
-    <script src="js/host.js?v=20251230_125106"></script>
+    <script src="js/runtime-config.js?v=20260210"></script>
+  <script src="js/common.js?v=20260210"></script>
+    <script src="js/host.js?v=20260210"></script>
 </body>
 </html>

@@ -20,8 +20,8 @@
     <meta name="twitter:description" content="Connect with locals through authentic food and culture.">
     <meta name="twitter:image" content="/assets/og-image.jpg">
 
-    <script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/tailwind.css?v=20260210">
+    <link rel="stylesheet" href="css/fonts.css?v=20260210">
     
 
     <style>
@@ -189,26 +189,8 @@
 
     <footer id="footer-placeholder"></footer>
 
-    <script src="js/runtime-config.js?v=20260209"></script>
-  <script src="js/common.js?v=20260120"></script>
-    <script src="js/index.js?v=20260120"></script>
-    <script>
-      (function () {
-        try {
-          var a = document.querySelector("a[data-auth-link='host']");
-          if (!a) return;
-          a.addEventListener("click", function (e) {
-            try {
-              var token = "";
-              try { token = String(localStorage.getItem("token") || ""); } catch (err) { token = ""; }
-              if (token) return;
-              e.preventDefault();
-              var rt = encodeURIComponent("host.html");
-              location.href = "login.html?returnTo=" + rt;
-            } catch (err2) {}
-          });
-        } catch (err3) {}
-      })();
-    </script>
+    <script src="js/runtime-config.js?v=20260210"></script>
+  <script src="js/common.js?v=20260210"></script>
+    <script src="js/index.js?v=20260210"></script>
 </body>
 </html>

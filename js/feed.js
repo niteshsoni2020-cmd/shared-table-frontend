@@ -5,12 +5,12 @@
   const listEl = document.getElementById("list");
   const retryBtn = document.getElementById("retry-btn");
 
-  function token() {
-    return (window.getAuthToken && window.getAuthToken()) || "";
+  function hasCsrfCookie() {
+    try { return String(document.cookie || "").indexOf("tsts_csrf=") >= 0; } catch (_) { return false; }
   }
 
   function requireAuth() {
-    if (token()) return true;
+    if (hasCsrfCookie()) return true;
     const returnTo = encodeURIComponent("feed.html");
     location.href = "login.html?returnTo=" + returnTo;
     return false;

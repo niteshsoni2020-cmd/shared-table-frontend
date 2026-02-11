@@ -85,14 +85,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     async function loadExploreCurations() {
       if (!elExploreCurations || !elExploreCurationsList) return;
-
-      let token = "";
-      try { token = (window.getAuthToken && window.getAuthToken()) || ""; } catch (_) {}
-      if (!token) return;
+      try {
+        if (String(document.cookie || "").indexOf("tsts_csrf=") < 0) return;
+      } catch (_) {
+        return;
+      }
 
       try {
         const res = await window.authFetch("/api/curations", { method: "GET" });
-        if (!res || res.ok !== true) return;
+        if (!res || !res.ok) return;
 
         const payload = await res.json();
         const collections = payload && Array.isArray(payload.collections) ? payload.collections : [];

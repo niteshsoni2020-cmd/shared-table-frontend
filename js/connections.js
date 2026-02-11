@@ -12,13 +12,12 @@
   const connEmpty = document.getElementById("connections-empty");
   const connList = document.getElementById("connections-list");
   const connRefresh = document.getElementById("refresh-connections");
-
-  function token() {
-    return (window.getAuthToken && window.getAuthToken()) || "";
+  function hasCsrfCookie() {
+    try { return String(document.cookie || "").indexOf("tsts_csrf=") >= 0; } catch (_) { return false; }
   }
 
   function requireAuth() {
-    if (token()) return true;
+    if (hasCsrfCookie()) return true;
     const returnTo = encodeURIComponent("connections.html");
     location.href = "login.html?returnTo=" + returnTo;
     return false;

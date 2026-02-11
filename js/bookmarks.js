@@ -5,8 +5,15 @@
   const gridEl = document.getElementById("grid");
   const retryBtn = document.getElementById("retry-btn");
 
-  function token() {
-    return (window.getAuthToken && window.getAuthToken()) || "";
+  function hasCsrfCookie() {
+    try { return String(document.cookie || "").indexOf("tsts_csrf=") >= 0; } catch (_) { return false; }
+  }
+
+  function requireAuth() {
+    if (hasCsrfCookie()) return true;
+    const returnTo = encodeURIComponent("bookmarks.html");
+    location.href = "login.html?returnTo=" + returnTo;
+    return false;
   }
 
   function showOnly(which) {
@@ -46,11 +53,7 @@
   }
 
   async function load() {
-    if (!token()) {
-      const returnTo = encodeURIComponent("bookmarks.html");
-      location.href = "login.html?returnTo=" + returnTo;
-      return;
-    }
+    if (!requireAuth()) return;
 
     showOnly(loadingEl);
 

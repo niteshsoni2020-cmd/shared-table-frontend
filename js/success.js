@@ -21,9 +21,6 @@ const bookingId = urlParams.get("bookingId") || urlParams.get("booking_id");
 const sessionId = urlParams.get("sessionId") || urlParams.get("session_id");
 const experienceIdFromUrl = urlParams.get("experienceId"); // optional
 
-// Token for "my-bookings"
-const token = (window.getAuthToken && window.getAuthToken()) || "";
-
 // Utility: show/hide states
 function showLoading() {
   loadingStateEl.classList.remove("hidden");
@@ -76,15 +73,15 @@ async function verifyBooking(bookingId, sessionId) {
 
 // Get bookings for current user and find matching one
 async function fetchBookingDetails(bookingId) {
-  if (!token) {
-    throw new Error("You need to be logged in to view your booking.");
-  }
-
   const url = `/api/bookings/my-bookings`;
 
   const res = await window.authFetch(url, {
     method: "GET"
   });
+
+  if (res.status === 401 || res.status === 403) {
+    throw new Error("AUTH_REQUIRED");
+  }
 
   if (!res.ok) {
     throw new Error("Unable to load your bookings. Please try again.");
@@ -240,24 +237,24 @@ async function initSuccessPage() {
     // 1) Verify with backend (works without auth via sessionId proof)
     await verifyBooking(bookingId, sessionId);
 
-    // 2) Try to get booking details if logged in
-    if (token) {
-      try {
-        const booking = await fetchBookingDetails(bookingId);
-        populateBookingSummary(booking);
-      } catch (_) {
+    // 2) Try to get booking details (cookie-auth); fall back to generic success for unauthenticated viewers.
+    try {
+      const booking = await fetchBookingDetails(bookingId);
+      populateBookingSummary(booking);
+    } catch (e) {
+      const code = String((e && e.message) || "");
+      if (code === "AUTH_REQUIRED") {
+        successExpTitleEl.textContent = "Booking confirmed!";
+        successExpDateEl.textContent = "Please log in to view full details";
+        successExpGuestsEl.textContent = "";
+        if (inviteLinkInputEl) inviteLinkInputEl.value = window.location.origin + "/explore.html";
+      } else {
         // Show generic success if details unavailable
         successExpTitleEl.textContent = "Your experience is booked!";
         successExpDateEl.textContent = "Check your email for details";
         successExpGuestsEl.textContent = "";
         if (inviteLinkInputEl) inviteLinkInputEl.value = window.location.origin + "/explore.html";
       }
-    } else {
-      // Not logged in - show generic confirmation
-      successExpTitleEl.textContent = "Booking confirmed!";
-      successExpDateEl.textContent = "Please log in to view full details";
-      successExpGuestsEl.textContent = "";
-      if (inviteLinkInputEl) inviteLinkInputEl.value = window.location.origin + "/explore.html";
     }
 
     // 3) Show success state

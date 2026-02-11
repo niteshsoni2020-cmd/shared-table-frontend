@@ -1,7 +1,7 @@
 // js/index.js
 
-function getToken() {
-  try { return (window.getAuthToken && window.getAuthToken()) || ""; } catch (_) { return ""; }
+function hasCsrfCookie() {
+  try { return String(document.cookie || "").indexOf("tsts_csrf=") >= 0; } catch (_) { return false; }
 }
 
 async function loadHomeCurations() {
@@ -9,12 +9,11 @@ async function loadHomeCurations() {
   const list = document.getElementById("home-curations-list");
   if (!section || !list) return;
 
-  const token = getToken();
-  if (!token) return;
+  if (!hasCsrfCookie()) return;
 
   try {
     const res = await window.authFetch("/api/curations", { method: "GET" });
-    if (!res || res.ok !== true) return;
+    if (!res || !res.ok) return;
 
     const payload = await res.json();
     const collections = payload && Array.isArray(payload.collections) ? payload.collections : [];
@@ -105,10 +104,18 @@ async function loadHomeRecommendations() {
   const section = document.getElementById("home-recommend");
   const list = document.getElementById("home-recommend-list");
   if (!section || !list) return;
-  const token = getToken();
   try {
-    const endpoint = token ? "/api/recommendations" : "/api/experiences?sort=rating_desc";
-    const res = await window.authFetch(endpoint, { method: "GET" });
+    // Prefer personalized recommendations when authenticated; fall back to public experiences when not.
+    let res;
+    if (hasCsrfCookie()) {
+      res = await window.authFetch("/api/recommendations", { method: "GET" });
+      if (res && (res.status === 401 || res.status === 403)) {
+        res = await window.authFetch("/api/experiences?sort=rating_desc", { method: "GET" });
+      }
+    } else {
+      res = await window.authFetch("/api/experiences?sort=rating_desc", { method: "GET" });
+    }
+
     const payload = await res.json();
     const items = Array.isArray(payload) ? payload : (payload && payload.experiences) ? payload.experiences : (payload && payload.items) ? payload.items : [];
     const recs = items.slice(0, 4);

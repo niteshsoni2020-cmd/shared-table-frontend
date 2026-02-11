@@ -8,17 +8,25 @@
     location.replace("login.html?returnTo=" + returnTo);
   }
 
-  const form = document.getElementById("create-experience-form");
-  const titleInput = document.getElementById("title");
-  const descriptionInput = document.getElementById("description");
-  const priceInput = document.getElementById("price");
-  const dateInput = document.getElementById("startDate");
-  const timeInput = document.getElementById("startTime");
-  const locationInput = document.getElementById("city");
-  const imageInput = document.getElementById("imageInput");
-  const uploadPreview = document.getElementById("upload-preview");
-  const uploadPlaceholder = document.getElementById("upload-placeholder");
-  const submitBtn = document.getElementById("submit-btn");
+	  const form = document.getElementById("create-experience-form");
+	  const titleInput = document.getElementById("title");
+	  const descriptionInput = document.getElementById("description");
+	  const priceInput = document.getElementById("price");
+	  const dateInput = document.getElementById("startDate");
+	  const endDateInput = document.getElementById("endDate");
+	  const timeInput = document.getElementById("startTime");
+	  const endTimeInput = document.getElementById("endTime");
+	  const locationInput = document.getElementById("city");
+	  const suburbInput = document.getElementById("suburb");
+	  const postcodeInput = document.getElementById("postcode");
+	  const addressLineInput = document.getElementById("addressLine");
+	  const addressNotesInput = document.getElementById("addressNotes");
+	  const maxGuestsInput = document.getElementById("maxGuests");
+	  const availableDaysInput = document.getElementById("availableDays");
+	  const imageInput = document.getElementById("imageInput");
+	  const uploadPreview = document.getElementById("upload-preview");
+	  const uploadPlaceholder = document.getElementById("upload-placeholder");
+	  const submitBtn = document.getElementById("submit-btn");
 
   const CLOUDINARY_URL = (window.CLOUDINARY_URL || "");
 
@@ -57,16 +65,30 @@
     if (el) el.classList.add("hidden");
   }
 
+  async function ensureCsrfCookieReady() {
+    try {
+      const res = await window.authFetch("/api/csrf", { method: "GET" });
+      return !!(res && res.ok);
+    } catch (_) {
+      return false;
+    }
+  }
+
   async function requireAuth() {
     try {
-      if (!window.authFetch) {
+      // Fast-path: if no CSRF cookie, user is not logged in (avoid avoidable 401 + abort noise).
+      try {
+        const cookies = String(document.cookie || "");
+        if (cookies.indexOf("tsts_csrf=") < 0) {
+          redirectToLogin();
+          return false;
+        }
+      } catch (_) {
         redirectToLogin();
         return false;
       }
-      const hasCsrfCookie = (function () {
-        try { return String(document.cookie || "").indexOf("tsts_csrf=") >= 0; } catch (_) { return false; }
-      })();
-      if (!hasCsrfCookie) {
+
+      if (!window.authFetch) {
         redirectToLogin();
         return false;
       }
@@ -78,6 +100,13 @@
       }
       if (!res || !res.ok) {
         showNotice("error", "Unable to verify your session. Please refresh and try again.");
+        return false;
+      }
+
+      // Initialize CSRF cookie required for state-changing requests (create/update).
+      const okCsrf = await ensureCsrfCookieReady();
+      if (!okCsrf) {
+        showNotice("error", "Security token could not be initialized. Please refresh and try again.");
         return false;
       }
       return true;
@@ -96,6 +125,64 @@
     if (uploadPreview) uploadPreview.classList.remove("hidden");
     if (uploadPlaceholder) uploadPlaceholder.classList.add("hidden");
     if (uploadPreview) window.tstsSafeImg(uploadPreview, url, "/assets/experience-default.jpg");
+  }
+
+  function parseAvailableDays(raw) {
+    const s = String(raw || "").trim();
+    if (!s) return [];
+    const parts = s.split(/[,\s]+/).map((x) => String(x || "").trim()).filter((x) => x);
+    const map = {
+      sun: "Sun",
+      sunday: "Sun",
+      mon: "Mon",
+      monday: "Mon",
+      tue: "Tue",
+      tues: "Tue",
+      tuesday: "Tue",
+      wed: "Wed",
+      weds: "Wed",
+      wednesday: "Wed",
+      thu: "Thu",
+      thur: "Thu",
+      thurs: "Thu",
+      thursday: "Thu",
+      fri: "Fri",
+      friday: "Fri",
+      sat: "Sat",
+      saturday: "Sat",
+    };
+    const out = [];
+    for (const p of parts) {
+      const k = String(p).toLowerCase();
+      const v = map[k];
+      if (v && !out.includes(v)) out.push(v);
+    }
+    return out;
+  }
+
+  function getSelectedTags() {
+    try {
+      const nodes = document.querySelectorAll('input[name="tags"]:checked');
+      const tags = [];
+      for (const n of nodes) {
+        const v = String(n && n.value ? n.value : "").trim();
+        if (v) tags.push(v);
+      }
+      return tags;
+    } catch (_) {
+      return [];
+    }
+  }
+
+  function setSelectedTags(tags) {
+    const set = new Set((Array.isArray(tags) ? tags : []).map((t) => String(t || "").trim()).filter((t) => t));
+    try {
+      const nodes = document.querySelectorAll('input[name="tags"]');
+      for (const n of nodes) {
+        const v = String(n && n.value ? n.value : "").trim();
+        n.checked = set.has(v);
+      }
+    } catch (_) {}
   }
 
   async function getSignature() {
@@ -158,9 +245,24 @@
       if (titleInput) titleInput.value = exp.title || "";
       if (descriptionInput) descriptionInput.value = exp.description || "";
       if (priceInput) priceInput.value = exp.price != null ? String(exp.price) : "";
-      if (dateInput) dateInput.value = (exp.date || exp.experienceDate || "").slice(0, 10);
-      if (timeInput) timeInput.value = exp.time || "";
+      if (dateInput) dateInput.value = String(exp.startDate || exp.date || exp.experienceDate || "").slice(0, 10);
+      if (endDateInput) endDateInput.value = String(exp.endDate || "").slice(0, 10);
+
+      const ts0 = (Array.isArray(exp.timeSlots) && exp.timeSlots[0]) ? String(exp.timeSlots[0]) : "";
+      const tsParts = ts0.split("-");
+      const derivedStart = (tsParts[0] || "").trim();
+      const derivedEnd = (tsParts[1] || "").trim();
+
+      if (timeInput) timeInput.value = String(exp.startTime || exp.time || derivedStart || "").trim();
+      if (endTimeInput) endTimeInput.value = String(exp.endTime || derivedEnd || "").trim();
       if (locationInput) locationInput.value = exp.city || exp.location || "";
+      if (suburbInput) suburbInput.value = exp.suburb || "";
+      if (postcodeInput) postcodeInput.value = exp.postcode || "";
+      if (addressLineInput) addressLineInput.value = exp.addressLine || "";
+      if (addressNotesInput) addressNotesInput.value = exp.addressNotes || "";
+      if (maxGuestsInput) maxGuestsInput.value = (exp.maxGuests != null ? String(exp.maxGuests) : (exp.capacity != null ? String(exp.capacity) : ""));
+      if (availableDaysInput) availableDaysInput.value = Array.isArray(exp.availableDays) ? exp.availableDays.join(", ") : String(exp.availableDays || "");
+      setSelectedTags(exp.tags);
 
       if (existingImageUrl) setPreview(existingImageUrl);
 
@@ -193,12 +295,29 @@
         const title = titleInput ? String(titleInput.value || "").trim() : "";
         const description = descriptionInput ? String(descriptionInput.value || "").trim() : "";
         const price = priceInput ? safeNum(priceInput.value) : null;
-        const date = dateInput ? String(dateInput.value || "").trim() : "";
-        const time = timeInput ? String(timeInput.value || "").trim() : "";
+        const startDate = dateInput ? String(dateInput.value || "").trim() : "";
+        const endDate = endDateInput ? String(endDateInput.value || "").trim() : "";
+        const startTime = timeInput ? String(timeInput.value || "").trim() : "";
+        const endTime = endTimeInput ? String(endTimeInput.value || "").trim() : "";
         const city = locationInput ? String(locationInput.value || "").trim() : "";
+        const suburb = suburbInput ? String(suburbInput.value || "").trim() : "";
+        const postcode = postcodeInput ? String(postcodeInput.value || "").trim() : "";
+        const addressLine = addressLineInput ? String(addressLineInput.value || "").trim() : "";
+        const addressNotes = addressNotesInput ? String(addressNotesInput.value || "").trim() : "";
+        const capacity = maxGuestsInput ? safeNum(maxGuestsInput.value) : null;
+        const availableDays = availableDaysInput ? parseAvailableDays(availableDaysInput.value) : [];
+        const tags = getSelectedTags();
 
-        if (!title || !description || price == null || !date || !time || !city) {
+        if (!title || !description || price == null || !startDate || !endDate || !startTime || !city || !suburb || !postcode || !addressLine || capacity == null) {
           showNotice("error", "Please fill all required fields.");
+          return;
+        }
+        if (!/^[0-9]{4}$/.test(postcode)) {
+          showNotice("error", "Postcode must be 4 digits.");
+          return;
+        }
+        if (new Date(endDate) < new Date(startDate)) {
+          showNotice("error", "End date must be on or after start date.");
           return;
         }
 
@@ -222,11 +341,22 @@
           title,
           description,
           price,
-          date,
-          time,
-          city
+          city,
+          suburb,
+          postcode,
+          addressLine,
+          addressNotes,
+          capacity: Math.max(1, Math.floor(Number(capacity))),
+          startDate,
+          endDate,
+          startTime,
+          availableDays,
+          tags
         };
+        if (endTime) body.endTime = endTime;
+        if (startTime && endTime) body.timeSlots = [startTime + "-" + endTime];
         if (imageUrl) body.imageUrl = imageUrl;
+        else body.imageUrl = "/assets/experience-default.jpg";
 
         const url = isEditing ? ("/api/experiences/" + encodeURIComponent(editId)) : "/api/experiences";
         const method = isEditing ? "PUT" : "POST";

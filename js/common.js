@@ -899,8 +899,15 @@ window.tstsRequireAuth = function (opts) {
   function go() { location.replace(loginUrl + (loginUrl.indexOf("?") >= 0 ? "&" : "?") + q); }
 
   try {
+    // Fast-path: if we don't have the CSRF cookie, treat as logged out and redirect.
+    // This avoids avoidable 401 noise for public/guest contexts.
+    try {
+      const cookies = String(document.cookie || "");
+      if (cookies.indexOf("tsts_csrf=") < 0) { go(); return; }
+    } catch (_) { go(); return; }
+
     if (!window.authFetch) { go(); return; }
-    window.authFetch("/api/auth/me", { method: "GET", on401: "redirect" })
+    window.authFetch("/api/auth/me", { method: "GET" })
       .then(function (res) { if (!res || !res.ok) go(); })
       .catch(function () { go(); });
   } catch (_) { go(); }

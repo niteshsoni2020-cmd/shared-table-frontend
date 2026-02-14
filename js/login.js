@@ -103,10 +103,15 @@ async function handleLogin(e) {
             return;
         }
 
-        if (window.setAuth) window.setAuth(data.token, data.user);
-        
+        const payload = (window.tstsUnwrap && typeof window.tstsUnwrap === "function") ? window.tstsUnwrap(data) : (data && data.data !== undefined ? data.data : data);
+        const user = (payload && payload.user) ? payload.user : (data && data.user ? data.user : null);
+        const csrfToken = (payload && (payload.csrfToken || payload.token)) ? String(payload.csrfToken || payload.token) : String((data && (data.csrfToken || data.token)) || "");
 
-        if (data.user && data.user.email === "admin@sharedtable.com") {
+        if (window.setAuth) window.setAuth(csrfToken, user);
+
+        // Admin routing must be role-based, not email-hardcoded.
+        const isAdmin = !!(user && (user.isAdmin === true || String(user.role || "").toLowerCase() === "admin"));
+        if (isAdmin) {
             window.location.href = "admin.html";
             return;
         }
@@ -178,13 +183,18 @@ async function handleSignup(e) {
             return;
         }
 
-        showModal("Welcome Aboard! 🌏", "Your profile has been created successfully.", "success");
+        // Registration creates the account but does NOT establish a cookie session.
+        // Email verification is required before login (world-class baseline security).
+        showModal("Account Created", "Please check your email to verify your address, then log in to continue.", "success");
 
-        if (window.setAuth) window.setAuth(data.token, data.user);
-        
+        // Clear any stale auth state (register response may include legacy token fields; cookie auth is authoritative).
+        try { if (window.clearAuth) window.clearAuth(); } catch (_) {}
 
         setTimeout(() => {
-            window.location.href = "profile.html";
+            const params = new URLSearchParams(window.location.search);
+            const rawTarget = params.get("redirect") || params.get("returnTo") || "index.html";
+            const target = safeRedirectTarget(rawTarget);
+            window.location.href = "login.html?returnTo=" + encodeURIComponent(target);
         }, 1200);
 
     } catch (err) {

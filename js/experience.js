@@ -7,8 +7,17 @@
     catch (_) { return null; }
   }
 
-  function hasCsrfCookie() {
-    try { return String(document.cookie || "").indexOf("tsts_csrf=") >= 0; } catch (_) { return false; }
+  async function isAuthed() {
+    try {
+      if (!window.tstsGetSession) return false;
+      // Avoid noisy /api/auth/me 401s on public experience pages for guests.
+      // Logged-in sessions always set a local user cache via setAuth().
+      if (!localStorage.getItem("tsts_user")) return false;
+      const sess = await window.tstsGetSession({ force: false });
+      return !!(sess && sess.ok && sess.user);
+    } catch (_) {
+      return false;
+    }
   }
 
   function redirectToLogin() {
@@ -218,7 +227,7 @@
 
   async function initBookmarkState() {
     if (!bookmarkBtn) return;
-    if (!hasCsrfCookie()) {
+    if (!(await isAuthed())) {
       bookmarkBtn.classList.add("hidden");
       return;
     }
@@ -253,7 +262,7 @@
 
   async function initLikeState() {
     if (!likeBtn) return;
-    if (!hasCsrfCookie()) {
+    if (!(await isAuthed())) {
       setLikeUI(false, 0);
       likeBtn.addEventListener("click", () => redirectToLogin());
       return;
@@ -395,7 +404,7 @@
 
   async function loadComments() {
     if (!commentsSection || !commentsList) return;
-    if (!hasCsrfCookie()) {
+    if (!(await isAuthed())) {
       commentsSection.classList.remove("hidden");
       if (commentHint) commentHint.textContent = "Login required to view/post comments.";
       if (commentForm) commentForm.classList.add("hidden");
@@ -458,7 +467,7 @@
     bookingForm.addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      if (!hasCsrfCookie()) return redirectToLogin();
+      if (!(await isAuthed())) return redirectToLogin();
 
       if (termsBox && !termsBox.checked) {
         window.tstsNotify("Please accept the cancellation policy.", "warning");

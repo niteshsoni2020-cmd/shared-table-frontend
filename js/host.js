@@ -23,10 +23,11 @@
 	  const addressNotesInput = document.getElementById("addressNotes");
 	  const maxGuestsInput = document.getElementById("maxGuests");
 	  const availableDaysInput = document.getElementById("availableDays");
-	  const imageInput = document.getElementById("imageInput");
-	  const uploadPreview = document.getElementById("upload-preview");
-	  const uploadPlaceholder = document.getElementById("upload-placeholder");
-	  const submitBtn = document.getElementById("submit-btn");
+		  const imageInput = document.getElementById("imageInput");
+		  const uploadPreview = document.getElementById("upload-preview");
+		  const uploadPlaceholder = document.getElementById("upload-placeholder");
+		  const submitBtn = document.getElementById("submit-btn");
+      const tagLimitHint = document.getElementById("tag-limit-hint");
 
   const CLOUDINARY_URL = (window.CLOUDINARY_URL || "");
 
@@ -68,7 +69,17 @@
   async function ensureCsrfCookieReady() {
     try {
       const res = await window.authFetch("/api/csrf", { method: "GET" });
-      return !!(res && res.ok);
+      if (!res || !res.ok) return false;
+      try {
+        const payload = await res.json().catch(() => ({}));
+        const unwrapped = (window.tstsUnwrap ? window.tstsUnwrap(payload) : ((payload && payload.data !== undefined) ? payload.data : payload));
+        const tok = (unwrapped && unwrapped.csrfToken) ? unwrapped.csrfToken : (payload && payload.csrfToken);
+        const s = String(tok || "").trim();
+        if (s) {
+          try { localStorage.setItem("tsts_csrf_token", s); } catch (_) {}
+        }
+      } catch (_) {}
+      return true;
     } catch (_) {
       return false;
     }
@@ -76,29 +87,16 @@
 
   async function requireAuth() {
     try {
-      // Fast-path: if no CSRF cookie, user is not logged in (avoid avoidable 401 + abort noise).
-      try {
-        const cookies = String(document.cookie || "");
-        if (cookies.indexOf("tsts_csrf=") < 0) {
+      if (!window.tstsGetSession) {
+        redirectToLogin();
+        return false;
+      }
+      const sess = await window.tstsGetSession({ force: true });
+      if (!sess || !sess.ok || !sess.user) {
+        if (sess && (sess.status === 401 || sess.status === 403)) {
           redirectToLogin();
           return false;
         }
-      } catch (_) {
-        redirectToLogin();
-        return false;
-      }
-
-      if (!window.authFetch) {
-        redirectToLogin();
-        return false;
-      }
-      const res = await window.authFetch("/api/auth/me", { method: "GET" });
-      if (res && (res.status === 401 || res.status === 403)) {
-        if (window.clearAuth) window.clearAuth();
-        redirectToLogin();
-        return false;
-      }
-      if (!res || !res.ok) {
         showNotice("error", "Unable to verify your session. Please refresh and try again.");
         return false;
       }
@@ -168,10 +166,35 @@
         const v = String(n && n.value ? n.value : "").trim();
         if (v) tags.push(v);
       }
-      return tags;
+      return tags.slice(0, 2);
     } catch (_) {
       return [];
     }
+  }
+
+  function syncTagLimitUI() {
+    const LIMIT = 2;
+    let nodes = [];
+    try { nodes = Array.from(document.querySelectorAll('input[name="tags"]')); } catch (_) { nodes = []; }
+    const checked = nodes.filter((n) => n && n.checked);
+    const count = checked.length;
+
+    if (tagLimitHint) {
+      tagLimitHint.textContent = String(count) + "/" + String(LIMIT) + " selected";
+    }
+
+    const disableOthers = count >= LIMIT;
+    nodes.forEach((n) => {
+      try {
+        if (!n) return;
+        if (!n.checked) n.disabled = disableOthers;
+        const lbl = (typeof n.closest === "function") ? n.closest("label") : null;
+        if (lbl) {
+          if (n.disabled) lbl.classList.add("opacity-50", "cursor-not-allowed");
+          else lbl.classList.remove("opacity-50", "cursor-not-allowed");
+        }
+      } catch (_) {}
+    });
   }
 
   function setSelectedTags(tags) {
@@ -183,6 +206,7 @@
         n.checked = set.has(v);
       }
     } catch (_) {}
+    syncTagLimitUI();
   }
 
   async function getSignature() {
@@ -282,6 +306,18 @@
     });
   }
 
+  // Enforce category selection cap (max 2)
+  try {
+    const nodes = document.querySelectorAll('input[name="tags"]');
+    for (const n of nodes) {
+      n.addEventListener("change", function () {
+        hideNotice();
+        syncTagLimitUI();
+      });
+    }
+  } catch (_) {}
+  syncTagLimitUI();
+
   if (form) {
     form.addEventListener("submit", async function (e) {
       e.preventDefault();
@@ -310,6 +346,10 @@
 
         if (!title || !description || price == null || !startDate || !endDate || !startTime || !city || !suburb || !postcode || !addressLine || capacity == null) {
           showNotice("error", "Please fill all required fields.");
+          return;
+        }
+        if (!tags || tags.length < 1) {
+          showNotice("error", "Please select at least one category (up to 2).");
           return;
         }
         if (!/^[0-9]{4}$/.test(postcode)) {

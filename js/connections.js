@@ -12,12 +12,13 @@
   const connEmpty = document.getElementById("connections-empty");
   const connList = document.getElementById("connections-list");
   const connRefresh = document.getElementById("refresh-connections");
-  function hasCsrfCookie() {
-    try { return String(document.cookie || "").indexOf("tsts_csrf=") >= 0; } catch (_) { return false; }
-  }
 
-  function requireAuth() {
-    if (hasCsrfCookie()) return true;
+  async function requireAuth() {
+    try {
+      if (!window.tstsGetSession) throw new Error("missing_session_helper");
+      const sess = await window.tstsGetSession({ force: true });
+      if (sess && sess.ok && sess.user) return true;
+    } catch (_) {}
     const returnTo = encodeURIComponent("connections.html");
     location.href = "login.html?returnTo=" + returnTo;
     return false;
@@ -66,7 +67,7 @@
   }
 
   async function loadRequests() {
-    if (!requireAuth()) return;
+    if (!(await requireAuth())) return;
     showReq(reqLoading);
 
     try {
@@ -106,7 +107,7 @@
   }
 
   async function loadConnections() {
-    if (!requireAuth()) return;
+    if (!(await requireAuth())) return;
     showConn(connLoading);
 
     try {
@@ -146,7 +147,7 @@
   }
 
   async function connect() {
-    if (!requireAuth()) return;
+    if (!(await requireAuth())) return;
 
     let handle = handleEl ? String(handleEl.value || "").trim() : "";
     if (handle.startsWith("@")) handle = handle.substring(1);
@@ -232,8 +233,8 @@
     }
   }
 
-  document.addEventListener("DOMContentLoaded", () => {
-    if (!requireAuth()) return;
+  document.addEventListener("DOMContentLoaded", async () => {
+    if (!(await requireAuth())) return;
 
     if (connectBtn) connectBtn.addEventListener("click", connect);
     if (reqRefresh) reqRefresh.addEventListener("click", loadRequests);

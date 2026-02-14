@@ -3,22 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Shared Table Story - Connect Through Culture</title>
-    
-    <meta name="description" content="Don't just visit. Belong. Connect with locals through authentic food, culture, and nature experiences. Book your seat at the table today.">
-    <meta name="keywords" content="travel, experiences, food tours, culture, local guides, australia, shared table">
-    <meta name="author" content="The Shared Table Story">
+	    <title>The Shared Table Story - Real-World Connection</title>
+	    
+	    <meta name="description" content="Don't just visit. Belong. Connect with locals through food, stories, movement, and more. Book your seat at the table today.">
+	    <meta name="keywords" content="travel, experiences, food tours, culture, local guides, australia, shared table">
+	    <meta name="author" content="The Shared Table Story">
 
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://thesharedtablestory.com/">
-    <meta property="og:title" content="The Shared Table Story - Connect Through Culture">
-    <meta property="og:description" content="Join local hosts for authentic meals, cultural rituals, and nature tours. Arrive as a guest, leave as a friend.">
-    <meta property="og:image" content="/assets/og-image.jpg">
+	    <meta property="og:type" content="website">
+	    <meta property="og:url" content="https://thesharedtablestory.com/">
+	    <meta property="og:title" content="The Shared Table Story - Real-World Connection">
+	    <meta property="og:description" content="Join local hosts for shared meals, stories, outdoor moments, and community experiences. Arrive as a guest, leave as a friend.">
+	    <meta property="og:image" content="/assets/og-image.jpg">
 
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="The Shared Table Story">
-    <meta name="twitter:description" content="Connect with locals through authentic food and culture.">
-    <meta name="twitter:image" content="/assets/og-image.jpg">
+	    <meta name="twitter:card" content="summary_large_image">
+	    <meta name="twitter:title" content="The Shared Table Story">
+	    <meta name="twitter:description" content="Connect with locals through food, stories, and real-world moments.">
+	    <meta name="twitter:image" content="/assets/og-image.jpg">
 
     <link rel="stylesheet" href="css/tailwind.css?v=20260210">
     <link rel="stylesheet" href="css/fonts.css?v=20260210">
@@ -27,6 +27,17 @@
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
         h1, h2, h3, .serif { font-family: 'Playfair Display', serif; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        .tsts-carousel { scroll-snap-type: x mandatory; scroll-padding-left: 1rem; }
+        .tsts-carousel > * { scroll-snap-align: start; }
+        .tsts-cat-card summary { list-style: none; }
+        .tsts-cat-card summary::-webkit-details-marker { display: none; }
+        .tsts-cat-header { transition: opacity 220ms ease, transform 220ms ease; }
+        .tsts-cat-card[open] .tsts-cat-header { opacity: 0; transform: translateY(8px); pointer-events: none; }
+        .tsts-cat-more { opacity: 0; transform: translateY(10px); pointer-events: none; transition: opacity 220ms ease, transform 220ms ease; }
+        .tsts-cat-card[open] .tsts-cat-more { opacity: 1; transform: translateY(0); pointer-events: auto; }
+        .tsts-cat-card[open] .tsts-cat-overlay { background: rgba(0,0,0,0.55); }
     </style>
   <link rel="icon" type="image/png" href="/assets/icon-192.png">
   <link rel="apple-touch-icon" href="/assets/icon-192.png">
@@ -46,9 +57,9 @@
             <h1 class="text-4xl md:text-6xl font-bold mb-6 leading-tight serif">
                 Don't Just Visit.<br/>Belong.
             </h1>
-            <p class="text-xl md:text-2xl mb-8 font-light text-gray-100">
-                Connect with locals through culture, food, and nature.
-            </p>
+	            <p class="text-xl md:text-2xl mb-8 font-light text-gray-100">
+	                Connect with locals through food, stories, movement, and more.
+	            </p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
                 <a href="explore.html" role="button" aria-label="Browse and find experiences" class="bg-orange-600 hover:bg-orange-700 text-white px-8 py-4 rounded-full font-bold text-lg transition transform hover:scale-105 shadow-lg">
                     Find Your Experience
@@ -67,38 +78,13 @@
                 <p class="text-gray-600 max-w-2xl mx-auto">Choose how you want to experience the world.</p>
             </div>
             
-            <div class="grid md:grid-cols-3 gap-8">
-                
-                <a href="explore.html?category=Culture" class="group relative rounded-2xl overflow-hidden shadow-lg h-96 block">
-                    <div class="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition z-10"></div>
-                    <img src="/assets/category-culture.jpg" 
-                         alt="Culture and festivals experience" class="w-full h-full object-cover group-hover:scale-105 transition duration-700">
-                    <div class="absolute bottom-0 left-0 p-8 z-20 text-white">
-                        <h3 class="text-2xl font-bold serif mb-2">Culture & Festivals</h3>
-                        <p class="text-sm opacity-90 font-light">Rituals, heritage, and celebrations.</p>
-                    </div>
-                </a>
+            <div class="flex items-center justify-between mb-6">
+                <p class="text-sm text-gray-600 max-w-2xl">Eight pillars of real-world connection. Tap a card to read more, then explore stories in that category.</p>
+                <a href="explore.html" class="hidden md:inline-flex items-center gap-2 text-sm font-bold text-orange-600 hover:underline">View all</a>
+            </div>
 
-                <a href="explore.html?category=Food" class="group relative rounded-2xl overflow-hidden shadow-lg h-96 block">
-                    <div class="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition z-10"></div>
-                    <img src="/assets/category-food.jpg" 
-                         alt="Food and dining experience" class="w-full h-full object-cover group-hover:scale-105 transition duration-700">
-                    <div class="absolute bottom-0 left-0 p-8 z-20 text-white">
-                        <h3 class="text-2xl font-bold serif mb-2">Food & Dining</h3>
-                        <p class="text-sm opacity-90 font-light">Authentic meals at a shared table.</p>
-                    </div>
-                </a>
-
-                <a href="explore.html?category=Nature" class="group relative rounded-2xl overflow-hidden shadow-lg h-96 block">
-                    <div class="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition z-10"></div>
-                    <img src="/assets/category-nature.jpg" 
-                         alt="Nature and tours experience" class="w-full h-full object-cover group-hover:scale-105 transition duration-700">
-                    <div class="absolute bottom-0 left-0 p-8 z-20 text-white">
-                        <h3 class="text-2xl font-bold serif mb-2">Nature & Tours</h3>
-                        <p class="text-sm opacity-90 font-light">Walks, landscapes, and outdoor stories.</p>
-                    </div>
-                </a>
-
+            <div id="ways-to-connect-carousel" class="tsts-carousel flex gap-6 overflow-x-auto pb-4 scrollbar-hide" aria-label="Category carousel">
+                <!-- Populated by js/index.js (DOM-safe) -->
             </div>
         </div>
     </section>

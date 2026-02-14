@@ -24,8 +24,12 @@
 }
 
 .fa-arrow-left::before { content: "\2190"; }
+.fa-arrow-right::before { content: "\2192"; }
 .fa-arrow-rotate-left::before { content: "\21ba"; }
+.fa-arrow-rotate-right::before { content: "\21bb"; }
+.fa-rotate-right::before { content: "\21bb"; }
 .fa-bars::before { content: "\2630"; }
+.fa-book-open::before { content: "\1f4d6"; }
 .fa-bookmark::before { content: "\1f516"; }
 .fa-calendar::before { content: "\1f4c5"; }
 .fa-calendar-check::before { content: "\1f4c5"; }
@@ -45,10 +49,16 @@
 .fa-globe-asia::before { content: "\1f30f"; }
 .fa-heart::before { content: "\2665"; }
 .fa-info-circle::before { content: "\2139"; }
+.fa-lightbulb::before { content: "\1f4a1"; }
 .fa-lock::before { content: "\1f512"; }
 .fa-map-marker-alt::before { content: "\1f4cd"; }
+.fa-moon::before { content: "\1f319"; }
+.fa-mountain::before { content: "\1f3d4"; }
+.fa-paint-brush::before { content: "\1f58c"; }
 .fa-pencil-alt::before { content: "\270e"; }
+.fa-plug::before { content: "\1f50c"; }
 .fa-question::before { content: "\003f"; }
+.fa-compass::before { content: "\1f9ed"; }
 .fa-search::before { content: "\1f50d"; }
 .fa-shield-alt::before { content: "\1f6e1"; }
 .fa-shield-check::before { content: "\1f6e1"; }
@@ -58,6 +68,8 @@
 .fa-tag::before { content: "\1f3f7"; }
 .fa-times::before { content: "\00d7"; }
 .fa-tree::before { content: "\1f333"; }
+.fa-spa::before { content: "\1f9d8"; }
+.fa-dice::before { content: "\1f3b2"; }
 .fa-user-friends::before { content: "\1f465"; }
 .fa-user-shield::before { content: "\1f6e1"; }
 .fa-users::before { content: "\1f465"; }

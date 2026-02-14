@@ -14,9 +14,9 @@
 
     <nav id="navbar-placeholder"></nav>
 
-    <div class="container mx-auto px-4 py-12 max-w-3xl flex-grow">
-        <h1 class="text-3xl font-bold mb-2">Host an Experience</h1>
-        <p class="text-gray-600 mb-8">Share your culture, food, or nature with travellers.</p>
+	        <div class="container mx-auto px-4 py-12 max-w-3xl flex-grow">
+	        <h1 class="text-3xl font-bold mb-2">Host an Experience</h1>
+	        <p class="text-gray-600 mb-8">Share what you love with travellers.</p>
 
         <form id="create-experience-form" class="bg-white p-8 rounded-xl shadow-sm border border-gray-100 space-y-6">
             
@@ -27,22 +27,43 @@
 
 	            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 	                <div>
-	                    <span class="block text-sm font-bold text-gray-700 mb-2">Categories (Select all that apply)</span>
-                    <div class="space-y-2 bg-gray-50 p-3 rounded-lg border border-gray-200">
-                        <label class="flex items-center space-x-2">
-                            <input type="checkbox" name="tags" value="Culture" class="form-checkbox text-orange-600 h-4 w-4">
-                            <span>Culture & Festivals</span>
-                        </label>
-                        <label class="flex items-center space-x-2">
-                            <input type="checkbox" name="tags" value="Food" class="form-checkbox text-orange-600 h-4 w-4">
-                            <span>Food & Dining</span>
-                        </label>
-                        <label class="flex items-center space-x-2">
-                            <input type="checkbox" name="tags" value="Nature" class="form-checkbox text-orange-600 h-4 w-4">
-                            <span>Nature & Tours</span>
-                        </label>
-                    </div>
-                </div>
+		                    <span class="block text-sm font-bold text-gray-700 mb-2">Categories (Select up to 2)</span>
+	                    <div class="space-y-2 bg-gray-50 p-3 rounded-lg border border-gray-200">
+	                        <label class="flex items-center space-x-2">
+	                            <input type="checkbox" name="tags" value="food-gatherings" class="form-checkbox text-orange-600 h-4 w-4">
+	                            <span>Food & Gatherings</span>
+	                        </label>
+	                        <label class="flex items-center space-x-2">
+	                            <input type="checkbox" name="tags" value="explore-outdoors" class="form-checkbox text-orange-600 h-4 w-4">
+	                            <span>Explore & Outdoors</span>
+	                        </label>
+	                        <label class="flex items-center space-x-2">
+	                            <input type="checkbox" name="tags" value="culture-stories" class="form-checkbox text-orange-600 h-4 w-4">
+	                            <span>Culture & Stories</span>
+	                        </label>
+	                        <label class="flex items-center space-x-2">
+	                            <input type="checkbox" name="tags" value="social-nights" class="form-checkbox text-orange-600 h-4 w-4">
+	                            <span>Social & Nights</span>
+	                        </label>
+	                        <label class="flex items-center space-x-2">
+	                            <input type="checkbox" name="tags" value="move-wellness" class="form-checkbox text-orange-600 h-4 w-4">
+	                            <span>Move & Wellness</span>
+	                        </label>
+	                        <label class="flex items-center space-x-2">
+	                            <input type="checkbox" name="tags" value="create-express" class="form-checkbox text-orange-600 h-4 w-4">
+	                            <span>Create & Express</span>
+	                        </label>
+	                        <label class="flex items-center space-x-2">
+	                            <input type="checkbox" name="tags" value="learn-passion" class="form-checkbox text-orange-600 h-4 w-4">
+	                            <span>Learn & Passion</span>
+	                        </label>
+	                        <label class="flex items-center space-x-2">
+	                            <input type="checkbox" name="tags" value="games-play" class="form-checkbox text-orange-600 h-4 w-4">
+	                            <span>Games & Play</span>
+	                        </label>
+	                    </div>
+	                    <p id="tag-limit-hint" class="text-xs text-gray-500 mt-2">0/2 selected</p>
+	                </div>
 
 	                <div>
 	                    <label class="block text-sm font-bold text-gray-700 mb-1" for="city">City</label>

@@ -29,24 +29,16 @@ function redirectToLogin() {
 
 async function requireAuthOrRedirect() {
   try {
-    if (!window.authFetch) {
+    if (!window.tstsGetSession) {
       redirectToLogin();
       return false;
     }
-    const hasCsrfCookie = (function () {
-      try { return String(document.cookie || "").indexOf("tsts_csrf=") >= 0; } catch (_) { return false; }
-    })();
-    if (!hasCsrfCookie) {
+    const sess = await window.tstsGetSession({ force: true });
+    if (!sess || !sess.ok || !sess.user) {
       redirectToLogin();
       return false;
     }
-    const res = await window.authFetch("/api/auth/me", { method: "GET" });
-    if (res && (res.status === 401 || res.status === 403)) {
-      if (window.clearAuth) window.clearAuth();
-      redirectToLogin();
-      return false;
-    }
-    if (!res || !res.ok) {
+    if (sess.status && sess.status !== 200) {
       window.tstsNotify("Unable to verify your session. Please refresh and try again.", "error");
       return false;
     }

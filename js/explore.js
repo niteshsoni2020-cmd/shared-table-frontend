@@ -22,6 +22,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const activeFiltersBar = document.getElementById("active-filters-bar");
     const experiencesGrid = document.getElementById("experiences-grid");
     const noResultsEl = document.getElementById("no-results");
+    const loadErrorEl = document.getElementById("load-error");
+    const retryLoadBtn = document.getElementById("retry-load-btn");
 
     const elExploreCurations = document.getElementById("explore-curations");
     const elExploreCurationsList = document.getElementById("explore-curations-list");
@@ -39,6 +41,41 @@ document.addEventListener("DOMContentLoaded", () => {
         minPrice: 0,
         maxPrice: 300
     };
+
+    function syncUrlFromState() {
+        try {
+            const p = new URLSearchParams();
+            if (filterState.search) p.set("q", String(filterState.search));
+            if (filterState.location) p.set("city", String(filterState.location));
+            if (filterState.date) p.set("date", String(filterState.date));
+            if (filterState.guests) p.set("guests", String(filterState.guests));
+            if (Array.isArray(filterState.categories) && filterState.categories.length > 0) {
+                filterState.categories
+                    .map((c) => normalizeCategory(c))
+                    .filter((c) => c && c !== "all")
+                    .forEach((c) => p.append("category", c));
+            }
+            if (filterState.sort) p.set("sort", String(filterState.sort));
+            if (filterState.minPrice > 0) p.set("minPrice", String(filterState.minPrice));
+            if (filterState.maxPrice < 300) p.set("maxPrice", String(filterState.maxPrice));
+            if (window.TSTS_DEALS_UI_MODE) p.set("filter", "deals");
+
+            const qs = p.toString();
+            const next = window.location.pathname + (qs ? ("?" + qs) : "");
+            window.history.replaceState({}, document.title, next);
+        } catch (_) {
+            return;
+        }
+    }
+
+    function normalizeCategory(raw) {
+        try {
+            if (window.tstsNormalizeCategory && typeof window.tstsNormalizeCategory === "function") {
+                return window.tstsNormalizeCategory(raw);
+            }
+        } catch (_) {}
+        return String(raw || "").trim();
+    }
 
     function syncCategoryChips() {
         const activeSet = new Set(Array.isArray(filterState.categories) ? filterState.categories : []);
@@ -86,10 +123,13 @@ document.addEventListener("DOMContentLoaded", () => {
     async function loadExploreCurations() {
       if (!elExploreCurations || !elExploreCurationsList) return;
       try {
-        if (String(document.cookie || "").indexOf("tsts_csrf=") < 0) return;
-      } catch (_) {
-        return;
-      }
+        if (!window.tstsGetSession) return;
+        // Avoid noisy /api/auth/me 401s on public Explore for guests.
+        // Logged-in sessions always set a local user cache via setAuth().
+        if (!localStorage.getItem("tsts_user")) return;
+        const sess = await window.tstsGetSession({ force: false });
+        if (!sess || !sess.ok) return;
+      } catch (_) { return; }
 
       try {
         const res = await window.authFetch("/api/curations", { method: "GET" });
@@ -109,7 +149,10 @@ document.addEventListener("DOMContentLoaded", () => {
             const p = new URLSearchParams();
             if (c.filters && c.filters.q) p.set("q", String(c.filters.q));
             if (c.filters && c.filters.city) p.set("city", String(c.filters.city));
-            if (c.filters && c.filters.category) p.set("category", String(c.filters.category));
+            if (c.filters && c.filters.category) {
+              const norm = normalizeCategory(c.filters.category);
+              if (norm) p.set("category", String(norm));
+            }
             if (c.filters && c.filters.minPrice != null) p.set("minPrice", String(c.filters.minPrice));
             if (c.filters && c.filters.maxPrice != null) p.set("maxPrice", String(c.filters.maxPrice));
             if (c.filters && c.filters.date) p.set("date", String(c.filters.date));
@@ -182,7 +225,8 @@ document.addEventListener("DOMContentLoaded", () => {
         for (const raw of urlCategoryRaw) {
             const parts = String(raw || "").split(",").map((p) => p.trim()).filter(Boolean);
             for (const p of parts) {
-                if (p !== "all" && !picked.includes(p)) picked.push(p);
+                const n = normalizeCategory(p);
+                if (n && n !== "all" && !picked.includes(n)) picked.push(n);
             }
         }
         filterState.categories = picked;
@@ -215,19 +259,25 @@ document.addEventListener("DOMContentLoaded", () => {
     const fetchExperiences = async () => {
         // UI Loading - DOM-safe
         experiencesGrid.textContent = "";
+        experiencesGrid.classList.remove("hidden");
         var spinnerWrap = window.tstsEl("div", { className: "col-span-full text-center py-12" }, [
             window.tstsEl("i", { className: "fas fa-spinner fa-spin text-3xl text-orange-500" })
         ]);
         experiencesGrid.appendChild(spinnerWrap);
         noResultsEl.classList.add("hidden");
+        if (loadErrorEl) loadErrorEl.classList.add("hidden");
         updateActiveChips(); 
+        syncUrlFromState();
 
         const params = new URLSearchParams();
         if (filterState.search) params.set("q", filterState.search);
         if (filterState.location) params.set("city", filterState.location);
         if (filterState.date) params.set("date", filterState.date);
         if (Array.isArray(filterState.categories) && filterState.categories.length > 0) {
-            filterState.categories.forEach((category) => params.append("category", category));
+            filterState.categories
+                .map((c) => normalizeCategory(c))
+                .filter((c) => c && c !== "all")
+                .forEach((category) => params.append("category", category));
         }
         if (filterState.sort) params.set("sort", filterState.sort);
         if (filterState.minPrice > 0) params.set("minPrice", filterState.minPrice);
@@ -244,10 +294,10 @@ document.addEventListener("DOMContentLoaded", () => {
             if (window.TSTS_DEALS_UI_MODE) tstsSetDealsBanner("");
             renderExperiences(out);
         } catch (err) {
-            experiencesGrid.classList.remove("hidden");
+            experiencesGrid.classList.add("hidden");
             noResultsEl.classList.add("hidden");
             experiencesGrid.textContent = "";
-            experiencesGrid.appendChild(window.tstsEl("div", { className: "col-span-full text-center text-red-500 py-12", textContent: "Failed to load experiences." }));
+            if (loadErrorEl) loadErrorEl.classList.remove("hidden");
         }
     };
 
@@ -289,8 +339,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // Reset Category Chips
         syncCategoryChips();
         
-        // Remove URL params cleanly
-        window.history.replaceState({}, document.title, window.location.pathname);
+        syncUrlFromState();
 
         fetchExperiences();
     };
@@ -306,10 +355,12 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!experiences || !experiences.length) {
             experiencesGrid.classList.add("hidden");
             noResultsEl.classList.remove("hidden");
+            if (loadErrorEl) loadErrorEl.classList.add("hidden");
             return;
         }
         experiencesGrid.classList.remove("hidden");
         noResultsEl.classList.add("hidden");
+        if (loadErrorEl) loadErrorEl.classList.add("hidden");
 
         experiences.forEach(function(exp) {
             const imgUrl = safeUrl(exp.imageUrl || (exp.images && exp.images[0]), fallbackImg);
@@ -369,13 +420,19 @@ document.addEventListener("DOMContentLoaded", () => {
             activeFiltersBar.appendChild(span);
         };
 
-        if (filterState.location) addChip(`📍 ${filterState.location}`);
-        if (filterState.date) addChip(`📅 ${filterState.date}`);
-        if (filterState.guests) addChip(`👥 ${filterState.guests} Guests`);
+        if (filterState.location) addChip("City: " + String(filterState.location));
+        if (filterState.date) addChip("Date: " + (window.tstsFormatDateShort ? window.tstsFormatDateShort(filterState.date) : String(filterState.date)));
+        if (filterState.guests) addChip("Guests: " + String(filterState.guests));
         if (Array.isArray(filterState.categories) && filterState.categories.length > 0) {
-            addChip("🏷️ " + filterState.categories.join(", "));
+            filterState.categories
+                .map((c) => normalizeCategory(c))
+                .filter((c) => c && c !== "all")
+                .forEach((c) => {
+                    const label = (window.tstsCategoryLabel ? window.tstsCategoryLabel(c) : c);
+                    addChip(String(label || c));
+                });
         }
-        if (filterState.minPrice > 0 || filterState.maxPrice < 300) addChip(`💰 $${filterState.minPrice} - $${filterState.maxPrice}`);
+        if (filterState.minPrice > 0 || filterState.maxPrice < 300) addChip("Price: $" + filterState.minPrice + " - $" + filterState.maxPrice);
     };
 
     // === EVENT LISTENERS ===
@@ -397,7 +454,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Category Chips
     categoryChips.forEach(chip => {
         chip.addEventListener("click", () => {
-            const key = String(chip.getAttribute("data-category") || "");
+            const key = normalizeCategory(chip.getAttribute("data-category") || "");
             if (key === "all") {
                 filterState.categories = [];
             } else {
@@ -411,6 +468,12 @@ document.addEventListener("DOMContentLoaded", () => {
             fetchExperiences();
         });
     });
+
+    if (retryLoadBtn) {
+        retryLoadBtn.addEventListener("click", function () {
+            fetchExperiences();
+        });
+    }
 
     function debounce(fn, delay) {
         let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), delay); };

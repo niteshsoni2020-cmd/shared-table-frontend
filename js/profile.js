@@ -45,30 +45,24 @@
   }
 
   function getStoredUser() {
-    try { return JSON.parse(localStorage.getItem("user") || "{}") || {}; } catch (_) { return {}; }
+    try { return JSON.parse(localStorage.getItem("tsts_user") || "{}") || {}; } catch (_) { return {}; }
   }
   function setStoredUser(u) {
-    try { localStorage.setItem("user", JSON.stringify(u || {})); } catch (_) {}
+    try { localStorage.setItem("tsts_user", JSON.stringify(u || {})); } catch (_) {}
   }
 
   async function loadMe() {
     try {
-      const hasCsrfCookie = (function () {
-        try { return String(document.cookie || "").indexOf("tsts_csrf=") >= 0; } catch (_) { return false; }
-      })();
-      if (!hasCsrfCookie) {
+      if (!window.tstsGetSession) {
         redirectToLogin();
         return;
       }
-      const res = await window.authFetch("/api/auth/me", { method: "GET" });
-      if (handleUnauthorized(res)) return;
-      if (!res.ok) {
-        setUploadStatus("error", "Unable to load your profile. Please refresh and try again.");
+      const sess = await window.tstsGetSession({ force: true });
+      if (!sess || !sess.ok || !sess.user) {
+        redirectToLogin();
         return;
       }
-      const payload = await res.json();
-      const unwrapped = (window.tstsUnwrap ? window.tstsUnwrap(payload) : ((payload && payload.data !== undefined) ? payload.data : payload));
-      const user = (unwrapped && unwrapped.user) ? unwrapped.user : ((payload && payload.user) ? payload.user : (unwrapped || {}));
+      const user = sess.user || {};
 
       try { if (nameInput) nameInput.value = user.name || ""; } catch (_) {}
       try { if (bioInput) bioInput.value = user.bio || ""; } catch (_) {}

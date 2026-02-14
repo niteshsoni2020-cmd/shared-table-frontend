@@ -442,12 +442,126 @@ window.tstsPrompt = function(msg, defaultValue, opts) {
   })();
 
   // Runtime config priority: localStorage override > runtime config > local default > same-origin relative
-  let apiOrigin = String(storedBase || runtimeApiBase || (isLocal ? "http://localhost:4000" : "")).trim().replace(/\/$/, "");
+  // Local default must match the current hostname to avoid cookie domain mismatch (localhost vs 127.0.0.1).
+  const localDefaultApi = isLocal
+    ? ((location.hostname === "127.0.0.1") ? "http://127.0.0.1:4000" : "http://localhost:4000")
+    : "";
+  let apiOrigin = String(storedBase || runtimeApiBase || localDefaultApi).trim().replace(/\/$/, "");
   if (apiOrigin && /\/api$/i.test(apiOrigin)) apiOrigin = apiOrigin.replace(/\/api$/i, "");
   if (apiOrigin && apiOrigin.charAt(0) === "/") apiOrigin = "";
   window.API_BASE = apiOrigin;
   // Cloudinary config (single-truth; used by profile.js / host.js)
   window.CLOUDINARY_URL = String(window.CLOUDINARY_URL || runtimeCloudinaryUrl || storedCloudinary || "").trim();
+
+  // === CAT-001: Locked Category Pillars (slugs + labels; single source of truth) ===
+  // Rules:
+  // - Stable internal keys are slugs.
+  // - Display labels are separate from keys.
+  // - Legacy 3-pillar values (Culture/Food/Nature) are normalized for backward compatibility.
+  (function initCategoryPillars() {
+    const CATS = [
+      {
+        slug: "food-gatherings",
+        label: "Food & Gatherings",
+        teaser: "Shared tables. Real conversations.",
+        icon: "fa-utensils",
+        image: "/assets/category-food-gatherings.svg",
+        blurb: "Shared meals as social glue: supper clubs, beach BBQs, community brunches, coffee circles, and cultural food rituals."
+      },
+      {
+        slug: "explore-outdoors",
+        label: "Explore & Outdoors",
+        teaser: "Walk the land. Share the moment.",
+        icon: "fa-mountain",
+        image: "/assets/category-explore-outdoors.svg",
+        blurb: "Coastal walks, scenic trails, picnics, foraging, and light adventures designed for connection, not tourism."
+      },
+      {
+        slug: "culture-stories",
+        label: "Culture & Stories",
+        teaser: "Where tradition meets the present.",
+        icon: "fa-book-open",
+        image: "/assets/category-culture-stories.svg",
+        blurb: "Heritage nights, cultural rituals, seasonal traditions, and storytelling circles built with respect and belonging."
+      },
+      {
+        slug: "social-nights",
+        label: "Social & Nights",
+        teaser: "Meet new faces after sunset.",
+        icon: "fa-moon",
+        image: "/assets/category-social-nights.svg",
+        blurb: "Rooftop gatherings, trivia nights, open mic socials, and relaxed after-hours meetups with curated energy."
+      },
+      {
+        slug: "move-wellness",
+        label: "Move & Wellness",
+        teaser: "Move your body. Reset your mind.",
+        icon: "fa-spa",
+        image: "/assets/category-move-wellness.svg",
+        blurb: "Beach yoga, group runs, breathwork, outdoor fitness, and calm reset circles that feel safe and inclusive."
+      },
+      {
+        slug: "create-express",
+        label: "Create & Express",
+        teaser: "Make something. Share something.",
+        icon: "fa-paint-brush",
+        image: "/assets/category-create-express.svg",
+        blurb: "Art sessions, music jams, pottery, photography walks, and writing circles designed to unlock creative flow."
+      },
+      {
+        slug: "learn-passion",
+        label: "Learn & Passion",
+        teaser: "Curiosity brings people together.",
+        icon: "fa-lightbulb",
+        image: "/assets/category-learn-passion.svg",
+        blurb: "Books and coffee circles, skill-sharing, hobby clubs, and micro-talks that turn interests into community."
+      },
+      {
+        slug: "games-play",
+        label: "Games & Play",
+        teaser: "Fun brings strangers closer.",
+        icon: "fa-dice",
+        image: "/assets/category-games-play.svg",
+        blurb: "Board games, casual sports, lawn games, and playful socials where laughter does the connecting."
+      }
+    ];
+
+    const LEGACY_TO_SLUG = Object.freeze({
+      Culture: "culture-stories",
+      Food: "food-gatherings",
+      Nature: "explore-outdoors"
+    });
+
+    const bySlug = Object.create(null);
+    for (const c of CATS) bySlug[c.slug] = c;
+
+    function normalize(raw) {
+      const s0 = String(raw || "").trim();
+      if (!s0) return "";
+      // Case-insensitive legacy mapping
+      const low = s0.toLowerCase();
+      let mapped = "";
+      for (const k of Object.keys(LEGACY_TO_SLUG)) {
+        if (k.toLowerCase() === low) { mapped = LEGACY_TO_SLUG[k]; break; }
+      }
+      const s = (mapped || s0).trim();
+      return bySlug[s] ? s : "";
+    }
+
+    window.TSTS_CATEGORIES = Object.freeze(CATS.map((c) => Object.freeze({ ...c })));
+
+    window.tstsNormalizeCategory = function(v) {
+      return normalize(v);
+    };
+    window.tstsCategoryMeta = function(v) {
+      const slug = normalize(v);
+      return slug ? bySlug[slug] : null;
+    };
+    window.tstsCategoryLabel = function(v) {
+      const m = window.tstsCategoryMeta(v);
+      return m ? m.label : String(v || "").trim();
+    };
+  })();
 
 
   // === SEC-002: Cookie-based auth (no localStorage tokens) ===
@@ -455,6 +569,7 @@ window.tstsPrompt = function(msg, defaultValue, opts) {
   // This ensures CSRF works across tabs (cookies are shared, sessionStorage is not)
   
   const CSRF_COOKIE_NAME = window.__TSTS_CSRF_COOKIE__ || "tsts_csrf";
+  const CSRF_STORAGE_KEY = "tsts_csrf_token";
   
   // SEC-002: Response unwrapper helper for normalized { ok, data } responses
   window.tstsUnwrap = function(payload) {
@@ -462,8 +577,21 @@ window.tstsPrompt = function(msg, defaultValue, opts) {
     return payload;
   };
   
-  // Get CSRF token directly from cookie (double-submit pattern)
-  // Cookie is non-HttpOnly so JS can read it
+  function __getStoredCsrfToken() {
+    try { return String(localStorage.getItem(CSRF_STORAGE_KEY) || ""); } catch (_) { return ""; }
+  }
+
+  function __setStoredCsrfToken(v) {
+    try {
+      const s = String(v || "").trim();
+      if (s) localStorage.setItem(CSRF_STORAGE_KEY, s);
+      else localStorage.removeItem(CSRF_STORAGE_KEY);
+    } catch (_) {}
+  }
+
+  // CSRF token strategy:
+  // 1) Prefer cookie (same-origin deployments can read it).
+  // 2) Fall back to localStorage for cross-origin deployments where cookie is not readable from JS.
   function __getCsrfToken() {
     try {
       const cookies = String(document.cookie || "");
@@ -471,21 +599,45 @@ window.tstsPrompt = function(msg, defaultValue, opts) {
       for (let i = 0; i < parts.length; i++) {
         const part = parts[i].trim();
         if (part.startsWith(CSRF_COOKIE_NAME + "=")) {
-          return decodeURIComponent(part.slice(CSRF_COOKIE_NAME.length + 1));
+          const v = decodeURIComponent(part.slice(CSRF_COOKIE_NAME.length + 1));
+          if (v) return v;
         }
       }
-      return "";
-    } catch (_) { return ""; }
+    } catch (_) {}
+    return __getStoredCsrfToken();
   }
 
-  // SEC-002: setAuth now handles user data (no auth token in localStorage)
-  // CSRF token is managed by cookie - no need to store separately
+  async function __refreshCsrfToken(base) {
+    try {
+      const b = String(base || "").replace(/\/$/, "");
+      const url = b + "/api/csrf";
+      const controller = new AbortController();
+      const t = setTimeout(() => controller.abort(), 8000);
+      try {
+        const res = await fetch(url, { method: "GET", credentials: "include", signal: controller.signal });
+        if (!res || !res.ok) return "";
+        const payload = await res.json().catch(() => ({}));
+        const unwrapped = (window.tstsUnwrap ? window.tstsUnwrap(payload) : ((payload && payload.data !== undefined) ? payload.data : payload));
+        const token = (unwrapped && unwrapped.csrfToken) ? unwrapped.csrfToken : (payload && payload.csrfToken);
+        const s = String(token || "").trim();
+        if (s) __setStoredCsrfToken(s);
+        return s;
+      } finally {
+        clearTimeout(t);
+      }
+    } catch (_) {
+      return "";
+    }
+  }
+
+  // setAuth stores non-sensitive UI user data + CSRF token (public) for cross-origin CSRF header use.
   window.setAuth = function (csrfToken, user) {
     try {
-      // user: store in localStorage for UI display (non-sensitive)
       if (user != null) localStorage.setItem("tsts_user", JSON.stringify(user));
       else localStorage.removeItem("tsts_user");
-      
+
+      __setStoredCsrfToken(csrfToken);
+
       // Clean up legacy keys
       try { localStorage.removeItem("token"); } catch (_) {}
       try { localStorage.removeItem("user"); } catch (_) {}
@@ -502,6 +654,7 @@ window.tstsPrompt = function(msg, defaultValue, opts) {
   window.clearAuth = function () {
     try {
       localStorage.removeItem("tsts_user");
+      localStorage.removeItem(CSRF_STORAGE_KEY);
       // Clean up legacy keys
       localStorage.removeItem("token");
       localStorage.removeItem("user");
@@ -530,8 +683,8 @@ window.tstsPrompt = function(msg, defaultValue, opts) {
     const headers = Object.assign({}, (opts && opts.headers) || {});
     const method = (opts && opts.method) ? String(opts.method).toUpperCase() : "GET";
 
-    // SEC-035: Add CSRF token on state-changing requests
-    if (method !== "GET" && method !== "HEAD" && method !== "OPTIONS") {
+    const needsCsrf = (method !== "GET" && method !== "HEAD" && method !== "OPTIONS");
+    if (needsCsrf) {
       const csrfToken = __getCsrfToken();
       if (csrfToken) headers["X-CSRF-Token"] = csrfToken;
     }
@@ -564,6 +717,11 @@ window.tstsPrompt = function(msg, defaultValue, opts) {
     const t = setTimeout(() => controller.abort(), 15000);
 
     try {
+      // If CSRF token isn't readable (cross-origin), refresh it via /api/csrf once before state-changing calls.
+      if (needsCsrf && !headers["X-CSRF-Token"]) {
+        const refreshed = await __refreshCsrfToken(base);
+        if (refreshed) headers["X-CSRF-Token"] = refreshed;
+      }
       const response = await fetch(url, Object.assign({}, opts || {}, { headers, credentials: "include", signal: controller.signal }));
       
       // RF-03: Remove redirect logic from authFetch - tstsRequireAuth is the ONLY redirect authority
@@ -574,6 +732,67 @@ window.tstsPrompt = function(msg, defaultValue, opts) {
       clearTimeout(t);
     }
   };
+
+  // Single-truth session probe (cookie-auth); returns { ok, status, user, csrfToken }.
+  // Cache: prevents every page calling /api/auth/me multiple times during bootstrap.
+  window.tstsGetSession = (function () {
+    let inFlight = null;
+    let cache = { ts: 0, ok: false, status: 0, user: null, csrfToken: "" };
+    const TTL_MS = 8000;
+
+    function parseMe(payload) {
+      const unwrapped = (window.tstsUnwrap ? window.tstsUnwrap(payload) : ((payload && payload.data !== undefined) ? payload.data : payload));
+      const user = (unwrapped && unwrapped.user) ? unwrapped.user : ((payload && payload.user) ? payload.user : (unwrapped || null));
+      const csrfToken = (unwrapped && unwrapped.csrfToken) ? unwrapped.csrfToken : ((payload && payload.csrfToken) ? payload.csrfToken : "");
+      return { user, csrfToken };
+    }
+
+    return async function (opts) {
+      const o = opts || {};
+      const force = o.force === true;
+      const now = Date.now();
+
+      if (!force && cache.ts && (now - cache.ts) < TTL_MS) return cache;
+      if (!force && inFlight) return inFlight;
+
+      inFlight = (async function () {
+        const out = { ts: Date.now(), ok: false, status: 0, user: null, csrfToken: "" };
+        try {
+          if (!window.authFetch) return out;
+
+          const res = await window.authFetch("/api/auth/me", { method: "GET" });
+          out.status = res ? res.status : 0;
+
+          if (res && (res.status === 401 || res.status === 403)) {
+            try { if (window.clearAuth) window.clearAuth(); } catch (_) {}
+            cache = out;
+            return cache;
+          }
+          if (!res || !res.ok) {
+            cache = out;
+            return cache;
+          }
+
+          const payload = await res.json().catch(() => ({}));
+          const parsed = parseMe(payload);
+          out.ok = true;
+          out.user = parsed.user || null;
+          out.csrfToken = String(parsed.csrfToken || "");
+          try { if (window.setAuth) window.setAuth(out.csrfToken, out.user); } catch (_) {}
+
+          cache = out;
+          return cache;
+        } catch (_) {
+          cache = out;
+          return cache;
+        } finally {
+          inFlight = null;
+        }
+      })();
+
+      return inFlight;
+    };
+  })();
 
   function tstsParseDateLike(x) {
     try {
@@ -703,20 +922,19 @@ function injectFooter() {
 }
 
 // 3) AUTH STATE IN NAV - DOM-safe construction
-// RF-04: Gate auth UI by CSRF cookie ONLY (not localStorage - that can be stale)
-function applyAuthStateToNav() {
-  // Cookie auth: check if CSRF cookie exists (indicates logged-in state)
-  const csrfCookie = (function() {
-    try {
-      const cookies = String(document.cookie || "");
-      return cookies.indexOf("tsts_csrf=") >= 0;
-    } catch (_) { return false; }
-  })();
-  // RF-04: If no CSRF cookie, treat as logged out and clear stale localStorage
-  if (!csrfCookie) {
-    try { window.clearAuth(); } catch (_) {}
+// Auth must work when frontend and backend are on different hosts (cookies not readable from JS).
+async function applyAuthStateToNav() {
+  if (!window.tstsGetSession) return;
+  // Avoid noisy /api/auth/me 401s on public pages: only probe session when we have a stored user hint.
+  // Cookie auth remains the authority; this is just a guardrail for console cleanliness + perf.
+  try {
+    if (!localStorage.getItem("tsts_user")) return;
+  } catch (_) {
     return;
   }
+  const sess = await window.tstsGetSession({ force: false });
+  if (!sess || !sess.ok || !sess.user) return;
+  const user = sess.user || {};
 
   // Desktop auth menu - click-toggle dropdown
   const desktopAuth = document.getElementById("auth-section-desktop");
@@ -742,6 +960,10 @@ function applyAuthStateToNav() {
     dropdown.style.pointerEvents = "none";
     const wrapper = tstsEl("div", { className: "relative" }, [menuBtn, dropdown]);
     desktopAuth.appendChild(wrapper);
+
+    try {
+      if (user && user.profilePic) window.tstsSafeImg(userPic, user.profilePic, "/assets/avatar-default.svg");
+    } catch (_) {}
   }
 
   // Mobile auth menu
@@ -839,11 +1061,8 @@ function attachLogoutListeners() {
     } catch (_) {
       try { console.warn("Logout revoke failed", "network"); } catch (_) {}
     }
-    try {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-    } catch (_) {}
-    location.href = "index.html";
+    try { if (window.clearAuth) window.clearAuth(); } catch (_) {}
+    location.replace("index.html");
   };
 
   const desktopBtn = document.getElementById("logout-btn");
@@ -858,33 +1077,16 @@ async function loadNavProfilePic() {
     if (String(location.pathname || "").endsWith("/profile.html") || String(location.pathname || "").endsWith("profile.html")) return;
   } catch (_) {}
 
-  // SEC-002: Cookie auth - check if user is logged in via CSRF cookie or stored user
-  const csrfCookie = (function() {
-    try {
-      const cookies = String(document.cookie || "");
-      return cookies.indexOf("tsts_csrf=") >= 0;
-    } catch (_) { return false; }
-  })();
   const img = document.getElementById("nav-user-pic");
-  if (!csrfCookie || !img) return;
+  if (!img) return;
 
   try {
     const cached = (window.getAuthUser && window.getAuthUser()) || {};
     if (cached && cached.profilePic) { window.tstsSafeImg(img, cached.profilePic, "/assets/avatar-default.svg"); return; }
-
-    const res = await window.authFetch("/api/auth/me", { method: "GET" });
-
-    if (res.status === 401 || res.status === 403) {
-      if (window.clearAuth) window.clearAuth();
-      const returnTo = encodeURIComponent(location.pathname + location.search);
-      location.href = "login.html?returnTo=" + returnTo;
-      return;
-    }
-
-    if (!res.ok) return;
-    const payload = await res.json();
-    const u = (payload && (payload.data && payload.data.user)) ? payload.data.user : ((payload && payload.user) ? payload.user : payload);
-    if (u && u.profilePic) window.tstsSafeImg(img, u.profilePic, "/assets/avatar-default.svg");
+    if (!window.tstsGetSession) return;
+    const sess = await window.tstsGetSession({ force: false });
+    if (!sess || !sess.ok || !sess.user) return;
+    if (sess.user && sess.user.profilePic) window.tstsSafeImg(img, sess.user.profilePic, "/assets/avatar-default.svg");
   } catch (_) {}
 }
 
@@ -899,16 +1101,19 @@ window.tstsRequireAuth = function (opts) {
   function go() { location.replace(loginUrl + (loginUrl.indexOf("?") >= 0 ? "&" : "?") + q); }
 
   try {
-    // Fast-path: if we don't have the CSRF cookie, treat as logged out and redirect.
-    // This avoids avoidable 401 noise for public/guest contexts.
-    try {
-      const cookies = String(document.cookie || "");
-      if (cookies.indexOf("tsts_csrf=") < 0) { go(); return; }
-    } catch (_) { go(); return; }
-
-    if (!window.authFetch) { go(); return; }
-    window.authFetch("/api/auth/me", { method: "GET" })
-      .then(function (res) { if (!res || !res.ok) go(); })
-      .catch(function () { go(); });
-  } catch (_) { go(); }
+    if (!window.tstsGetSession) { go(); return Promise.resolve(false); }
+    return window.tstsGetSession({ force: true })
+      .then(function (sess) {
+        if (sess && sess.ok && sess.user) return true;
+        go();
+        return false;
+      })
+      .catch(function () {
+        go();
+        return false;
+      });
+  } catch (_) {
+    go();
+    return Promise.resolve(false);
+  }
 };

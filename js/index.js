@@ -1,7 +1,142 @@
 // js/index.js
 
-function hasCsrfCookie() {
-  try { return String(document.cookie || "").indexOf("tsts_csrf=") >= 0; } catch (_) { return false; }
+function hasSessionHint() {
+  // Cross-origin deployments cannot read backend cookies from the frontend origin.
+  // Use the stored UI user as a hint; real authority remains /api/auth/me on protected pages.
+  try { return !!(localStorage.getItem("tsts_user") || ""); } catch (_) { return false; }
+}
+
+function renderWaysToConnectCarousel() {
+  const wrap = document.getElementById("ways-to-connect-carousel");
+  if (!wrap || !window.tstsEl || !Array.isArray(window.TSTS_CATEGORIES)) return;
+
+  const El = window.tstsEl;
+  const safeImg = window.tstsSafeImg;
+  const cats = window.TSTS_CATEGORIES.slice(0);
+
+  wrap.textContent = "";
+
+  const cards = [];
+
+  cats.forEach((c) => {
+    const slug = String(c.slug || "").trim();
+    if (!slug) return;
+
+    const details = El("details", {
+      // NOTE: Use Tailwind fraction widths (prebuilt CSS); avoid arbitrary w-[..] which may not exist.
+      className: "tsts-cat-card group relative flex-shrink-0 w-10/12 sm:w-1/2 lg:w-1/3 h-96 rounded-2xl overflow-hidden shadow-lg bg-gray-900",
+      dataset: { category: slug }
+    });
+
+    const img = document.createElement("img");
+    img.className = "absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-700";
+    img.alt = String(c.label || "Category");
+    safeImg(img, String(c.image || ""), "/assets/hero-banner.jpg");
+
+    const overlay = El("div", { className: "tsts-cat-overlay absolute inset-0 bg-black/35 group-hover:bg-black/45 transition z-10" });
+
+    const header = El("div", { className: "tsts-cat-header absolute bottom-0 left-0 p-6 z-20 text-white" }, [
+      El("div", { className: "flex items-center gap-2 mb-2" }, [
+        El("span", { className: "inline-flex items-center justify-center w-9 h-9 rounded-full bg-white/10 border border-white/20 backdrop-blur", }, [
+          El("i", { className: "fas " + String(c.icon || "fa-compass") })
+        ]),
+        El("span", { className: "text-xs font-bold tracking-wide uppercase text-white/90", textContent: "Category" })
+      ]),
+      El("h3", { className: "text-2xl font-bold serif mb-2", textContent: String(c.label || "") }),
+      El("p", { className: "text-sm opacity-90 font-light", textContent: String(c.teaser || "") }),
+      El("div", { className: "mt-4 inline-flex items-center gap-2 text-xs font-bold px-3 py-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur", }, [
+        El("i", { className: "fas fa-info-circle" }),
+        El("span", { textContent: "Read more" })
+      ])
+    ]);
+
+    const summary = El("summary", { className: "relative h-96 block cursor-pointer select-none" }, [
+      overlay,
+      img,
+      header
+    ]);
+
+    // z-30 does not exist in our compiled Tailwind; use z-50 so expanded CTA sits above the summary header.
+    const more = El("div", { className: "tsts-cat-more absolute inset-x-0 bottom-0 z-50 p-6 text-white" }, [
+      El("div", { className: "rounded-2xl bg-black/55 border border-white/15 backdrop-blur px-5 py-4 shadow-xl" }, [
+        El("p", { className: "text-sm text-white/90 leading-relaxed", textContent: String(c.blurb || "") }),
+        El("div", { className: "mt-4 flex items-center gap-3" }, [
+          El("a", {
+            href: "explore.html?category=" + encodeURIComponent(slug),
+            className: "inline-flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2.5 rounded-lg font-bold text-sm transition shadow-sm"
+          }, [
+            El("span", { textContent: "Explore" }),
+            El("i", { className: "fas fa-arrow-right" })
+          ]),
+          El("button", {
+            type: "button",
+            className: "inline-flex items-center gap-2 bg-white/10 hover:bg-white/15 text-white px-4 py-2.5 rounded-lg font-bold text-sm transition border border-white/15",
+            onclick: function() { details.open = false; }
+          }, [
+            El("span", { textContent: "Close" })
+          ])
+        ])
+      ])
+    ]);
+
+    // Ensure only one expanded card at a time (keeps the carousel tidy).
+    details.addEventListener("toggle", function () {
+      if (!details.open) return;
+      for (const d of cards) {
+        if (d !== details) d.open = false;
+      }
+    });
+
+    details.appendChild(summary);
+    details.appendChild(more);
+    cards.push(details);
+    wrap.appendChild(details);
+  });
+
+  initCarouselAutoAdvance(wrap, cards);
+}
+
+function initCarouselAutoAdvance(container, cards) {
+  if (!container || !Array.isArray(cards) || cards.length < 2) return;
+
+  const AUTO_MS = 90000; // 1.5 min (within the 1–2 minute requirement)
+  let pauseUntil = 0;
+
+  function pause(ms) {
+    pauseUntil = Math.max(pauseUntil, Date.now() + ms);
+  }
+
+  const pauseEvents = ["wheel", "touchstart", "pointerdown", "keydown", "focusin"];
+  pauseEvents.forEach((evt) => {
+    try { container.addEventListener(evt, () => pause(120000), { passive: true }); } catch (_) {}
+  });
+  try { container.addEventListener("mouseenter", () => pause(120000)); } catch (_) {}
+  try { container.addEventListener("scroll", () => pause(20000), { passive: true }); } catch (_) {}
+
+  function currentIndex() {
+    const left = Number(container.scrollLeft || 0);
+    let idx = 0;
+    for (let i = 0; i < cards.length; i++) {
+      if (cards[i] && typeof cards[i].offsetLeft === "number" && cards[i].offsetLeft <= (left + 10)) idx = i;
+    }
+    return idx;
+  }
+
+  setInterval(function () {
+    try {
+      if (document.hidden) return;
+      if (Date.now() < pauseUntil) return;
+      if (cards.some((d) => d && d.open === true)) return;
+
+      const idx = currentIndex();
+      const next = (idx + 1) % cards.length;
+      const target = cards[next];
+      if (!target) return;
+      container.scrollTo({ left: target.offsetLeft, behavior: "smooth" });
+    } catch (_) {
+      return;
+    }
+  }, AUTO_MS);
 }
 
 async function loadHomeCurations() {
@@ -9,7 +144,7 @@ async function loadHomeCurations() {
   const list = document.getElementById("home-curations-list");
   if (!section || !list) return;
 
-  if (!hasCsrfCookie()) return;
+  if (!hasSessionHint()) return;
 
   try {
     const res = await window.authFetch("/api/curations", { method: "GET" });
@@ -70,7 +205,13 @@ function buildExploreHref(filters) {
   const p = new URLSearchParams();
   if (filters.q) p.set("q", String(filters.q));
   if (filters.city) p.set("city", String(filters.city));
-  if (filters.category) p.set("category", String(filters.category));
+  if (filters.category) {
+    const raw = String(filters.category);
+    const norm = (window.tstsNormalizeCategory && typeof window.tstsNormalizeCategory === "function")
+      ? window.tstsNormalizeCategory(raw)
+      : raw;
+    if (norm) p.set("category", String(norm));
+  }
   if (filters.minPrice != null) p.set("minPrice", String(filters.minPrice));
   if (filters.maxPrice != null) p.set("maxPrice", String(filters.maxPrice));
   if (filters.date) p.set("date", String(filters.date));
@@ -107,7 +248,7 @@ async function loadHomeRecommendations() {
   try {
     // Prefer personalized recommendations when authenticated; fall back to public experiences when not.
     let res;
-    if (hasCsrfCookie()) {
+    if (hasSessionHint()) {
       res = await window.authFetch("/api/recommendations", { method: "GET" });
       if (res && (res.status === 401 || res.status === 403)) {
         res = await window.authFetch("/api/experiences?sort=rating_desc", { method: "GET" });
@@ -146,7 +287,12 @@ function renderCard(exp) {
     const expId = (exp && (exp._id || exp.id)) || "";
     const title = exp.title || "";
     const city = exp.city || "";
-    const tag = (exp && Array.isArray(exp.tags) && exp.tags[0]) ? exp.tags[0] : "Experience";
+    const tagsRaw = (exp && Array.isArray(exp.tags)) ? exp.tags : [];
+    const labels = tagsRaw
+      .map((t) => (window.tstsCategoryLabel ? window.tstsCategoryLabel(t) : String(t || "").trim()))
+      .map((t) => String(t || "").trim())
+      .filter((t) => t);
+    const tag = labels.length ? labels.slice(0, 2).join(" · ") : "Experience";
     const price = (exp && (typeof exp.price === 'number' || typeof exp.price === 'string')) ? String(exp.price) : "";
 
     var imgEl = El("img", { className: "w-full h-full object-cover group-hover:scale-105 transition duration-500", loading: "lazy" });
@@ -174,6 +320,7 @@ function renderCard(exp) {
 
 // --- INIT ---
 document.addEventListener("DOMContentLoaded", () => {
+  renderWaysToConnectCarousel();
   updateMaxDiscountBanner();
   loadHomeRecommendations();
   loadHomeCurations();

@@ -41,30 +41,16 @@ async function adminFetch(path, opts) {
 
 async function mustBeAdmin() {
   try {
-    if (!window.authFetch) {
+    if (!window.tstsGetSession) {
       redirectToLogin();
       return false;
     }
-    const hasCsrfCookie = (function () {
-      try { return String(document.cookie || "").indexOf("tsts_csrf=") >= 0; } catch (_) { return false; }
-    })();
-    if (!hasCsrfCookie) {
+    const sess = await window.tstsGetSession({ force: true });
+    if (!sess || !sess.ok || !sess.user) {
       redirectToLogin();
       return false;
     }
-    const res = await window.authFetch("/api/auth/me", { method: "GET" });
-    if (res && (res.status === 401 || res.status === 403)) {
-      if (window.clearAuth) window.clearAuth();
-      redirectToLogin();
-      return false;
-    }
-    if (!res.ok) {
-      redirectToLogin();
-      return false;
-    }
-    const payload = await res.json().catch(() => ({}));
-    const unwrapped = (window.tstsUnwrap ? window.tstsUnwrap(payload) : ((payload && payload.data !== undefined) ? payload.data : payload));
-    const u = (unwrapped && unwrapped.user) ? unwrapped.user : ((payload && payload.user) ? payload.user : (unwrapped || {}));
+    const u = sess.user || {};
     if (u && u.isAdmin === true) {
       return true;
     }

@@ -8,12 +8,12 @@
   const categoryEl = document.getElementById("category");
   const messageEl = document.getElementById("message");
 
-  function hasCsrfCookie() {
-    try { return String(document.cookie || "").indexOf("tsts_csrf=") >= 0; } catch (_) { return false; }
-  }
-
-  function requireAuth() {
-    if (hasCsrfCookie()) return true;
+  async function requireAuth() {
+    try {
+      if (!window.tstsGetSession) throw new Error("missing_session_helper");
+      const sess = await window.tstsGetSession({ force: true });
+      if (sess && sess.ok && sess.user) return true;
+    } catch (_) {}
     const returnTo = encodeURIComponent("report.html");
     location.href = "login.html?returnTo=" + returnTo;
     return false;
@@ -49,7 +49,7 @@
 
   async function submit(e) {
     e.preventDefault();
-    if (!requireAuth()) return;
+    if (!(await requireAuth())) return;
 
     const payload = {
       targetType: targetTypeEl ? String(targetTypeEl.value || "").trim() : "",
@@ -95,8 +95,8 @@
     }
   }
 
-  document.addEventListener("DOMContentLoaded", () => {
-    if (!requireAuth()) return;
+  document.addEventListener("DOMContentLoaded", async () => {
+    if (!(await requireAuth())) return;
     fillFromUrl();
     if (form) form.addEventListener("submit", submit);
   });

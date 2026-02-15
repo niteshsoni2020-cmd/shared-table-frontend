@@ -73,17 +73,25 @@
 
     <section class="py-20 px-4 bg-gray-50">
         <div class="max-w-7xl mx-auto">
-            <div class="text-center mb-16">
-                <h2 class="text-3xl md:text-4xl font-bold mb-4 serif text-gray-900">Ways to Connect</h2>
-                <p class="text-gray-600 max-w-2xl mx-auto">Choose how you want to experience the world.</p>
-            </div>
-            
-            <div class="flex items-center justify-between mb-6">
-                <p class="text-sm text-gray-600 max-w-2xl">Eight pillars of real-world connection. Tap a card to read more, then explore stories in that category.</p>
-                <a href="explore.html" class="hidden md:inline-flex items-center gap-2 text-sm font-bold text-orange-600 hover:underline">View all</a>
+	            <div class="text-center mb-16">
+	                <h2 class="text-3xl md:text-4xl font-bold mb-4 serif text-gray-900">Ways to Connect</h2>
+	                <p class="text-gray-600 max-w-2xl mx-auto">Choose the kind of experience you're in the mood for.</p>
+	            </div>
+	            
+	            <div class="flex flex-col items-center gap-3 mb-6">
+	                <p class="text-xs text-gray-600 text-center max-w-2xl">Eight pillars. Real people. Shared moments.</p>
+	                <div class="flex items-center justify-center gap-2">
+	                    <button id="ways-to-connect-prev" type="button" aria-label="Previous categories" class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white border border-gray-200 text-gray-800 hover:border-orange-500 hover:text-orange-600 transition shadow-sm">
+	                        <i class="fas fa-chevron-left" aria-hidden="true"></i>
+	                    </button>
+                    <button id="ways-to-connect-next" type="button" aria-label="Next categories" class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white border border-gray-200 text-gray-800 hover:border-orange-500 hover:text-orange-600 transition shadow-sm">
+                        <i class="fas fa-chevron-right" aria-hidden="true"></i>
+                    </button>
+                    <a href="explore.html" class="hidden md:inline-flex items-center gap-2 text-sm font-bold text-orange-600 hover:underline">View all</a>
+                </div>
             </div>
 
-            <div id="ways-to-connect-carousel" class="tsts-carousel flex gap-6 overflow-x-auto pb-4 scrollbar-hide" aria-label="Category carousel">
+            <div id="ways-to-connect-carousel" class="tsts-carousel flex gap-6 overflow-x-auto pb-4 scrollbar-hide" aria-label="Category carousel" tabindex="0">
                 <!-- Populated by js/index.js (DOM-safe) -->
             </div>
         </div>

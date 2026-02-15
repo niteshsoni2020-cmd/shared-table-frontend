@@ -465,7 +465,7 @@ window.tstsPrompt = function(msg, defaultValue, opts) {
         label: "Food & Gatherings",
         teaser: "Shared tables. Real conversations.",
         icon: "fa-utensils",
-        image: "/assets/category-food-gatherings.svg",
+        image: "/assets/categories/food-gatherings.jpg",
         blurb: "Shared meals as social glue: supper clubs, beach BBQs, community brunches, coffee circles, and cultural food rituals."
       },
       {
@@ -473,7 +473,7 @@ window.tstsPrompt = function(msg, defaultValue, opts) {
         label: "Explore & Outdoors",
         teaser: "Walk the land. Share the moment.",
         icon: "fa-mountain",
-        image: "/assets/category-explore-outdoors.svg",
+        image: "/assets/categories/explore-outdoors.jpg",
         blurb: "Coastal walks, scenic trails, picnics, foraging, and light adventures designed for connection, not tourism."
       },
       {
@@ -481,7 +481,7 @@ window.tstsPrompt = function(msg, defaultValue, opts) {
         label: "Culture & Stories",
         teaser: "Where tradition meets the present.",
         icon: "fa-book-open",
-        image: "/assets/category-culture-stories.svg",
+        image: "/assets/categories/culture-stories.jpg",
         blurb: "Heritage nights, cultural rituals, seasonal traditions, and storytelling circles built with respect and belonging."
       },
       {
@@ -489,7 +489,7 @@ window.tstsPrompt = function(msg, defaultValue, opts) {
         label: "Social & Nights",
         teaser: "Meet new faces after sunset.",
         icon: "fa-moon",
-        image: "/assets/category-social-nights.svg",
+        image: "/assets/categories/social-nights.jpg",
         blurb: "Rooftop gatherings, trivia nights, open mic socials, and relaxed after-hours meetups with curated energy."
       },
       {
@@ -497,7 +497,7 @@ window.tstsPrompt = function(msg, defaultValue, opts) {
         label: "Move & Wellness",
         teaser: "Move your body. Reset your mind.",
         icon: "fa-spa",
-        image: "/assets/category-move-wellness.svg",
+        image: "/assets/categories/move-wellness.jpg",
         blurb: "Beach yoga, group runs, breathwork, outdoor fitness, and calm reset circles that feel safe and inclusive."
       },
       {
@@ -505,7 +505,7 @@ window.tstsPrompt = function(msg, defaultValue, opts) {
         label: "Create & Express",
         teaser: "Make something. Share something.",
         icon: "fa-paint-brush",
-        image: "/assets/category-create-express.svg",
+        image: "/assets/categories/create-express.jpg",
         blurb: "Art sessions, music jams, pottery, photography walks, and writing circles designed to unlock creative flow."
       },
       {
@@ -513,7 +513,7 @@ window.tstsPrompt = function(msg, defaultValue, opts) {
         label: "Learn & Passion",
         teaser: "Curiosity brings people together.",
         icon: "fa-lightbulb",
-        image: "/assets/category-learn-passion.svg",
+        image: "/assets/categories/learn-passion.jpg",
         blurb: "Books and coffee circles, skill-sharing, hobby clubs, and micro-talks that turn interests into community."
       },
       {
@@ -521,7 +521,7 @@ window.tstsPrompt = function(msg, defaultValue, opts) {
         label: "Games & Play",
         teaser: "Fun brings strangers closer.",
         icon: "fa-dice",
-        image: "/assets/category-games-play.svg",
+        image: "/assets/categories/games-play.jpg",
         blurb: "Board games, casual sports, lawn games, and playful socials where laughter does the connecting."
       }
     ];

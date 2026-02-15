@@ -93,7 +93,71 @@ function renderWaysToConnectCarousel() {
     wrap.appendChild(details);
   });
 
+  // Reset scroll so the first render never lands in blank trailing space
+  // after a resize or restored scroll position.
+  try { wrap.scrollLeft = 0; } catch (_) {}
+
   initCarouselAutoAdvance(wrap, cards);
+  initCarouselManualNav(wrap, cards);
+}
+
+function initCarouselManualNav(container, cards) {
+  if (!container || !Array.isArray(cards) || cards.length < 1) return;
+
+  const prevBtn = document.getElementById("ways-to-connect-prev");
+  const nextBtn = document.getElementById("ways-to-connect-next");
+  if (!prevBtn && !nextBtn) return;
+
+  function currentIndex() {
+    const left = Number(container.scrollLeft || 0);
+    let idx = 0;
+    for (let i = 0; i < cards.length; i++) {
+      if (cards[i] && typeof cards[i].offsetLeft === "number" && cards[i].offsetLeft <= (left + 10)) idx = i;
+    }
+    return idx;
+  }
+
+  function closeAll() {
+    for (const d of cards) {
+      try { if (d && d.open === true) d.open = false; } catch (_) {}
+    }
+  }
+
+  function go(delta) {
+    if (cards.length < 2) return;
+    const idx = currentIndex();
+    const next = (idx + delta + cards.length) % cards.length;
+    const target = cards[next];
+    if (!target) return;
+    container.scrollTo({ left: target.offsetLeft, behavior: "smooth" });
+  }
+
+  if (prevBtn) {
+    prevBtn.addEventListener("click", function () {
+      closeAll();
+      go(-1);
+    });
+  }
+  if (nextBtn) {
+    nextBtn.addEventListener("click", function () {
+      closeAll();
+      go(1);
+    });
+  }
+
+  // Keyboard navigation when the carousel is focused.
+  container.addEventListener("keydown", function (e) {
+    const k = String((e && e.key) || "");
+    if (k === "ArrowLeft") {
+      e.preventDefault();
+      closeAll();
+      go(-1);
+    } else if (k === "ArrowRight") {
+      e.preventDefault();
+      closeAll();
+      go(1);
+    }
+  });
 }
 
 function initCarouselAutoAdvance(container, cards) {

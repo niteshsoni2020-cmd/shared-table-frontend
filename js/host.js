@@ -93,7 +93,9 @@
       }
       const sess = await window.tstsGetSession({ force: true });
       if (!sess || !sess.ok || !sess.user) {
-        if (sess && (sess.status === 401 || sess.status === 403)) {
+        // Fail-closed for protected pages: treat auth probes that are effectively "not authenticated"
+        // (including local rate-limit 429 during UAT) as redirect-to-login.
+        if (sess && (sess.status === 401 || sess.status === 403 || sess.status === 429)) {
           redirectToLogin();
           return false;
         }
